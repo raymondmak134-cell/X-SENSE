@@ -1,0 +1,30 @@
+/* Fix 1: Product title wrapping */
+.font-\[\'Metropolis\:Semi_Bold\'\,sans-serif\].leading-\[1\.2\].text-\[18px\].text-black {
+  word-wrap: break-word;
+  white-space: normal;
+  overflow-wrap: break-word;
+}
+
+/* Fix 2: Dropdown text vertical centering */
+div.h-\[40px\].rounded-\[10px\] > div.overflow-clip {
+  display: flex;
+  align-items: center;
+}
+
+div.h-\[40px\].rounded-\[10px\] > div.overflow-clip > p.top-\[calc\(50\%-8px\)\] {
+  top: auto !important;
+}
+
+/* Fix 3: Price alignment - change from bottom alignment to center */
+div.font-\[\'Metropolis\:Medium\'\,sans-serif\].items-end {
+  align-items: center !important;
+}
+
+/* Fix 4: $30 OFF label centering */
+div.-translate-x-1\/2.bottom-\[93\.18%\].top-\[1\.4%\] {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  leading: normal !important;
+}
