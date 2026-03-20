@@ -1538,7 +1538,6 @@ export interface Spu {
   batteryLife: string;
   categoryId?: string;
   setupInstallation?: SetupInstallationData;
-  app?: any;
   specs?: SpecsData;
   manuals?: ManualItem[];
 }
@@ -1584,6 +1583,38 @@ const defaultCapabilities: SpuCapabilities = {
   nightMode: false,
   magneticMount: false,
 };
+
+const DEFAULT_SETUP_INSTALLATION: SetupInstallationData = {
+  quickStartGuideImages: [
+    { url: "/images/placeholder-quick-start-1.png", path: "" },
+    { url: "/images/placeholder-quick-start-2.png", path: "" },
+  ],
+};
+
+const DEFAULT_SPECS: SpecsData = {
+  itemModelNumber: "—",
+  alarmLoudness: "≥85dB at 3m/10ft",
+  operatingLife: "10 Years",
+  silenceDuration: "≥9min",
+  batteryLife: "10 Years (built-in lithium battery)",
+  color: "White",
+  powerSource: "Built-in 3V Lithium Battery",
+  maxInterconnectedUnits: "24",
+  sensorType: "Photoelectric",
+  indicatorLight: "Green LED (standby) / Red LED (alarm)",
+  standbyCurrent: "<6μA",
+  installationMethod: "Magnetic Mount / Screw Mount",
+  alarmCurrent: "<150mA",
+  usage: "Indoor",
+  operatingTemperature: "40°F–100°F (4.4°C–37.8°C)",
+  productWeight: "180g / 6.35oz",
+  operatingRelativeHumidity: "≤85% RH (non-condensing)",
+  productDimensions: "3.15\" × 3.15\" × 1.85\" (80 × 80 × 47mm)",
+};
+
+const DEFAULT_MANUALS: ManualItem[] = [
+  { name: "User Manual", coverImage: { url: "/images/placeholder-manual-cover.png", path: "" }, pdfUrl: "#" },
+];
 
 /* ========== 单选选择器 ========== */
 
@@ -2334,10 +2365,9 @@ function SpuForm({
     powerSource: spu?.powerSource ?? "",
     batteryLife: spu?.batteryLife ?? "",
     categoryId: spu?.categoryId ?? defaultCategoryId ?? "smoke-alarms",
-    setupInstallation: spu?.setupInstallation,
-    app: spu?.app,
-    specs: spu?.specs,
-    manuals: spu?.manuals,
+    setupInstallation: spu?.setupInstallation ?? { ...DEFAULT_SETUP_INSTALLATION, quickStartGuideImages: DEFAULT_SETUP_INSTALLATION.quickStartGuideImages?.map(img => ({ ...img })) },
+    specs: spu?.specs ?? { ...DEFAULT_SPECS },
+    manuals: spu?.manuals ?? DEFAULT_MANUALS.map(m => ({ ...m, coverImage: { ...m.coverImage } })),
   });
 
   const set = <K extends keyof typeof form>(k: K, v: (typeof form)[K]) =>
@@ -2490,7 +2520,6 @@ function SpuForm({
           <div className="grid grid-cols-2 gap-3">
             {([
               { key: "setupInstallation" as const, label: "Setup & Installation", icon: Wrench, color: "text-amber-600 bg-amber-50", getSummary: getSetupInstallationSummary },
-              { key: "app" as const, label: "App", icon: Smartphone, color: "text-blue-600 bg-blue-50", getSummary: () => null as string | null },
               { key: "specs" as const, label: "Specs", icon: ClipboardList, color: "text-violet-600 bg-violet-50", getSummary: getSpecsSummary },
               { key: "manuals" as const, label: "Manuals", icon: BookOpen, color: "text-emerald-600 bg-emerald-50", getSummary: getManualsSummary },
             ] as const).map(({ key, label, icon: Icon, color, getSummary }) => {
@@ -2638,7 +2667,6 @@ function SpuRow({
                     return !!(d?.installationVideoUrl || d?.quickStartGuideImages?.length);
                   },
                 },
-                { key: "app", label: "App", check: () => !!(spu as any).app },
                 { key: "specs", label: "Specs", check: () => !!spu.specs && SPECS_FIELDS.some(({ key }) => spu.specs?.[key]?.trim()) },
                 { key: "manuals", label: "Manuals", check: () => !!spu.manuals?.length && spu.manuals.some((m) => m.coverImage?.url || m.pdfUrl) },
               ]).map(({ key, label, check }) => {
