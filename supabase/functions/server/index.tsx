@@ -542,4 +542,54 @@ app.post("/make-server-69c33f4c/support/:key", async (c) => {
   }
 });
 
+// ──── FAQs CRUD (per category) ────
+
+const FAQ_PREFIX = "faq:";
+
+app.get("/make-server-69c33f4c/faqs/:categoryId", async (c) => {
+  try {
+    const categoryId = c.req.param("categoryId");
+    const data = await kv.get(`${FAQ_PREFIX}${categoryId}`);
+    if (!data || !data.items || data.items.length === 0) {
+      return c.json({ data: { items: [] } });
+    }
+    const sb = supabase();
+    const entries: { idx: number; path: string }[] = [];
+    data.items.forEach((item: any, i: number) => {
+      if (item.answerImagePath) {
+        entries.push({ idx: i, path: item.answerImagePath });
+      }
+    });
+    if (entries.length > 0) {
+      const paths = entries.map((e) => e.path);
+      const { data: signed, error } = await sb.storage
+        .from(BUCKET_NAME)
+        .createSignedUrls(paths, 60 * 60 * 24 * 7);
+      if (!error && signed) {
+        signed.forEach((s: any, j: number) => {
+          if (s.signedUrl) {
+            data.items[entries[j].idx].answerImageUrl = s.signedUrl;
+          }
+        });
+      }
+    }
+    return c.json({ data });
+  } catch (err) {
+    console.log(`Error fetching FAQs for ${c.req.param("categoryId")}: ${err}`);
+    return c.json({ error: `Error fetching FAQs: ${err}` }, 500);
+  }
+});
+
+app.post("/make-server-69c33f4c/faqs/:categoryId", async (c) => {
+  try {
+    const categoryId = c.req.param("categoryId");
+    const data = await c.req.json();
+    await kv.set(`${FAQ_PREFIX}${categoryId}`, data);
+    return c.json({ data });
+  } catch (err) {
+    console.log(`Error saving FAQs for ${c.req.param("categoryId")}: ${err}`);
+    return c.json({ error: `Error saving FAQs: ${err}` }, 500);
+  }
+});
+
 Deno.serve(app.fetch);

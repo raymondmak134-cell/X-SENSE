@@ -1522,6 +1522,7 @@ export interface SpecsData {
 }
 
 export interface ManualItem {
+  name?: string;
   coverImage: { url: string; path: string };
   pdfUrl: string;
 }
@@ -2145,36 +2146,50 @@ function ManualItemEditor({
           {error && <p className="text-[11px] text-[#ba0020] max-w-[120px]">{error}</p>}
         </div>
 
-        {/* PDF URL */}
-        <div className="flex-1 flex flex-col gap-1.5">
-          <label className="text-[12px] text-[#888]">PDF URL</label>
-          <div className="flex items-center gap-2">
-            <div className="relative flex-1">
-              <Link2 className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-[#bbb]" />
+        {/* Name & PDF URL */}
+        <div className="flex-1 flex flex-col gap-3">
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[12px] text-[#888]">Manual Name</label>
+            <div className="relative">
+              <FileText className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-[#bbb]" />
               <input
-                value={item.pdfUrl}
-                onChange={(e) => onChange({ ...item, pdfUrl: e.target.value })}
-                placeholder="Paste PDF URL..."
+                value={item.name ?? ""}
+                onChange={(e) => onChange({ ...item, name: e.target.value })}
+                placeholder="e.g. Quick Start Guide"
                 className="w-full h-[36px] pl-9 pr-3 rounded-lg border border-[#e0e0e0] text-[13px] outline-none focus:border-[#ba0020] transition-colors"
               />
             </div>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[12px] text-[#888]">PDF URL</label>
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1">
+                <Link2 className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-[#bbb]" />
+                <input
+                  value={item.pdfUrl}
+                  onChange={(e) => onChange({ ...item, pdfUrl: e.target.value })}
+                  placeholder="Paste PDF URL..."
+                  className="w-full h-[36px] pl-9 pr-3 rounded-lg border border-[#e0e0e0] text-[13px] outline-none focus:border-[#ba0020] transition-colors"
+                />
+              </div>
+              {item.pdfUrl && (
+                <button
+                  type="button"
+                  onClick={() => onChange({ ...item, pdfUrl: "" })}
+                  className="size-[36px] shrink-0 rounded-lg border border-[#e0e0e0] flex items-center justify-center text-[#ccc] hover:text-[#ba0020] hover:border-[#ba0020] transition-colors cursor-pointer"
+                >
+                  <Trash2 className="size-3.5" />
+                </button>
+              )}
+            </div>
             {item.pdfUrl && (
-              <button
-                type="button"
-                onClick={() => onChange({ ...item, pdfUrl: "" })}
-                className="size-[36px] shrink-0 rounded-lg border border-[#e0e0e0] flex items-center justify-center text-[#ccc] hover:text-[#ba0020] hover:border-[#ba0020] transition-colors cursor-pointer"
-              >
-                <Trash2 className="size-3.5" />
-              </button>
+              <div className="mt-1 px-3 py-1.5 bg-[#f8f8f8] rounded-lg border border-[#eee]">
+                <p className="text-[11px] text-[#999] truncate">
+                  <span className="text-[#aaa]">URL:</span> {item.pdfUrl}
+                </p>
+              </div>
             )}
           </div>
-          {item.pdfUrl && (
-            <div className="mt-1 px-3 py-1.5 bg-[#f8f8f8] rounded-lg border border-[#eee]">
-              <p className="text-[11px] text-[#999] truncate">
-                <span className="text-[#aaa]">URL:</span> {item.pdfUrl}
-              </p>
-            </div>
-          )}
         </div>
       </div>
     </div>
@@ -2191,6 +2206,7 @@ function ManualsEditor({
   onClose: () => void;
 }) {
   const emptyManual = (): ManualItem => ({
+    name: "",
     coverImage: { url: "", path: "" },
     pdfUrl: "",
   });
@@ -3135,6 +3151,18 @@ interface SupportAppData {
   androidVersion?: string;
 }
 
+interface FaqItem {
+  id: string;
+  question: string;
+  answer: string;
+  answerImageUrl?: string;
+  answerImagePath?: string;
+}
+
+interface FaqCategoryData {
+  items: FaqItem[];
+}
+
 function SupportAppPanel({ showToast }: { showToast: (msg: string, type?: "success" | "error") => void }) {
   const [data, setData] = useState<SupportAppData>({});
   const [loading, setLoading] = useState(true);
@@ -3333,16 +3361,537 @@ function SupportAppPanel({ showToast }: { showToast: (msg: string, type?: "succe
 
 /* ========== Support - FAQs 面板 ========== */
 
-function SupportFaqsPanel({ showToast }: { showToast: (msg: string, type?: "success" | "error") => void }) {
-  return (
-    <div className="flex flex-col items-center justify-center py-20 text-center">
-      <div className="size-[64px] rounded-2xl bg-amber-50 flex items-center justify-center mb-4">
-        <MessageSquare className="size-7 text-amber-500" />
+function FaqAnswerImageUploader({
+  imageUrl,
+  onUploaded,
+  onRemove,
+}: {
+  imageUrl?: string;
+  onUploaded: (url: string, path: string) => void;
+  onRemove: () => void;
+}) {
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+
+  const doUpload = async (file: File) => {
+    if (!file.type.startsWith("image/") || file.size > 5 * 1024 * 1024) return;
+    setUploading(true);
+    try {
+      const result = await uploadImage(file);
+      onUploaded(result.url, result.path);
+    } catch {
+      /* handled by caller */
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  if (imageUrl) {
+    return (
+      <div className="relative w-[120px] h-[90px] rounded-lg overflow-hidden border border-[#e0e0e0] group shrink-0">
+        <img src={imageUrl} alt="" className="size-full object-cover" />
+        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+          <button
+            type="button"
+            onClick={onRemove}
+            className="size-7 rounded-full bg-white/90 flex items-center justify-center text-[#ba0020] hover:bg-white transition-colors cursor-pointer"
+          >
+            <Trash2 className="size-3.5" />
+          </button>
+        </div>
       </div>
-      <h2 className="text-[18px] text-[#1a1a1a] mb-2">FAQs</h2>
-      <p className="text-[14px] text-[#999] max-w-[400px]">
-        Frequently asked questions will be managed here.
-      </p>
+    );
+  }
+
+  return (
+    <div
+      className="w-[120px] h-[90px] rounded-lg border-2 border-dashed border-[#e0e0e0] hover:border-[#ba0020] hover:bg-[#fafafa] flex flex-col items-center justify-center gap-1 cursor-pointer transition-colors shrink-0"
+      onClick={() => fileRef.current?.click()}
+    >
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) doUpload(f);
+          e.target.value = "";
+        }}
+      />
+      {uploading ? (
+        <Loader2 className="size-4 text-[#ba0020] animate-spin" />
+      ) : (
+        <>
+          <ImagePlus className="size-4 text-[#ccc]" />
+          <p className="text-[10px] text-[#bbb]">Add Image</p>
+        </>
+      )}
+    </div>
+  );
+}
+
+function SupportFaqsPanel({
+  showToast,
+  categories,
+}: {
+  showToast: (msg: string, type?: "success" | "error") => void;
+  categories: Category[];
+}) {
+  const [selectedCatId, setSelectedCatId] = useState<string>(categories[0]?.id ?? "");
+  const [faqData, setFaqData] = useState<FaqCategoryData>({ items: [] });
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newQuestion, setNewQuestion] = useState("");
+  const [newAnswer, setNewAnswer] = useState("");
+  const [newImageUrl, setNewImageUrl] = useState("");
+  const [newImagePath, setNewImagePath] = useState("");
+  const showToastRef = useRef(showToast);
+  showToastRef.current = showToast;
+
+  const loadFaqs = useCallback(async (catId: string) => {
+    try {
+      setLoading(true);
+      const result = await apiGet<{ data: FaqCategoryData | null }>(`/faqs/${catId}`);
+      setFaqData(result.data ?? { items: [] });
+    } catch (err: any) {
+      if (!err.message?.includes("404")) {
+        showToastRef.current(err.message || "Failed to load FAQs", "error");
+      }
+      setFaqData({ items: [] });
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (selectedCatId) loadFaqs(selectedCatId);
+  }, [selectedCatId, loadFaqs]);
+
+  useEffect(() => {
+    if (categories.length > 0 && !categories.find((c) => c.id === selectedCatId)) {
+      setSelectedCatId(categories[0].id);
+    }
+  }, [categories, selectedCatId]);
+
+  const saveFaqs = async (items: FaqItem[]) => {
+    setSaving(true);
+    try {
+      await apiPost(`/faqs/${selectedCatId}`, { items });
+      setFaqData({ items });
+      showToast("FAQs saved successfully!");
+    } catch (err: any) {
+      showToast(err.message || "Failed to save FAQs", "error");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleAddFaq = async () => {
+    if (!newQuestion.trim() || !newAnswer.trim()) {
+      showToast("Question and Answer are required", "error");
+      return;
+    }
+    const item: FaqItem = {
+      id: Date.now().toString(),
+      question: newQuestion.trim(),
+      answer: newAnswer.trim(),
+      answerImageUrl: newImageUrl || undefined,
+      answerImagePath: newImagePath || undefined,
+    };
+    const newItems = [...faqData.items, item];
+    await saveFaqs(newItems);
+    setNewQuestion("");
+    setNewAnswer("");
+    setNewImageUrl("");
+    setNewImagePath("");
+    setShowAddForm(false);
+  };
+
+  const handleUpdateFaq = async (id: string, updates: Partial<FaqItem>) => {
+    const newItems = faqData.items.map((item) =>
+      item.id === id ? { ...item, ...updates } : item
+    );
+    await saveFaqs(newItems);
+    setEditingId(null);
+  };
+
+  const handleDeleteFaq = async (id: string) => {
+    const newItems = faqData.items.filter((item) => item.id !== id);
+    await saveFaqs(newItems);
+  };
+
+  const handleMoveFaq = async (id: string, direction: "up" | "down") => {
+    const idx = faqData.items.findIndex((item) => item.id === id);
+    if (idx < 0) return;
+    const target = direction === "up" ? idx - 1 : idx + 1;
+    if (target < 0 || target >= faqData.items.length) return;
+    const newItems = [...faqData.items];
+    [newItems[idx], newItems[target]] = [newItems[target], newItems[idx]];
+    await saveFaqs(newItems);
+  };
+
+  const selectedCat = categories.find((c) => c.id === selectedCatId);
+
+  return (
+    <div className="max-w-[800px]">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-[20px] text-[#1a1a1a]">FAQs Management</h2>
+          <p className="text-[13px] text-[#999] mt-1">
+            Manage frequently asked questions for each product category
+          </p>
+        </div>
+      </div>
+
+      {/* Category tabs */}
+      <div className="flex flex-wrap items-center gap-1.5 bg-[#f5f5f5] rounded-xl p-[3px] mb-6">
+        {categories.map((cat) => (
+          <button
+            key={cat.id}
+            onClick={() => {
+              setSelectedCatId(cat.id);
+              setShowAddForm(false);
+              setEditingId(null);
+            }}
+            className={`px-4 py-[7px] rounded-lg text-[13px] transition-all cursor-pointer whitespace-nowrap ${
+              selectedCatId === cat.id
+                ? "bg-white text-[#1a1a1a] shadow-sm"
+                : "text-[#888] hover:text-[#555]"
+            }`}
+          >
+            {cat.name}
+          </button>
+        ))}
+      </div>
+
+      {/* Toolbar */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <MessageSquare className="size-4 text-[#ba0020]" />
+          <span className="text-[14px] text-[#1a1a1a]">{selectedCat?.name ?? ""}</span>
+          {!loading && (
+            <span className="text-[12px] text-[#aaa] ml-1">
+              ({faqData.items.length} {faqData.items.length === 1 ? "item" : "items"})
+            </span>
+          )}
+        </div>
+        <button
+          onClick={() => {
+            if (showAddForm) {
+              setShowAddForm(false);
+              setNewQuestion("");
+              setNewAnswer("");
+              setNewImageUrl("");
+              setNewImagePath("");
+            } else {
+              setShowAddForm(true);
+              setEditingId(null);
+            }
+          }}
+          className={`flex items-center gap-2 h-[38px] px-4 rounded-xl text-[13px] transition-colors cursor-pointer ${
+            showAddForm
+              ? "bg-[#f5f5f5] text-[#666] border border-[#e0e0e0]"
+              : "bg-[#ba0020] text-white hover:bg-[#a0001b]"
+          }`}
+        >
+          {showAddForm ? (
+            <>
+              <X className="size-3.5" />
+              Cancel
+            </>
+          ) : (
+            <>
+              <Plus className="size-3.5" />
+              Add FAQ
+            </>
+          )}
+        </button>
+      </div>
+
+      {/* Add FAQ form */}
+      {showAddForm && (
+        <div className="bg-white rounded-2xl border border-[#e8e8e8] p-6 mb-4">
+          <h3 className="text-[15px] text-[#1a1a1a] mb-4">New FAQ</h3>
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[13px] text-[#555]">Question <span className="text-[#ba0020]">*</span></label>
+              <input
+                value={newQuestion}
+                onChange={(e) => setNewQuestion(e.target.value)}
+                placeholder="Enter the question..."
+                className="h-[40px] px-3 rounded-xl border border-[#e0e0e0] text-[14px] outline-none focus:border-[#ba0020] transition-colors"
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[13px] text-[#555]">Answer <span className="text-[#ba0020]">*</span></label>
+              <textarea
+                value={newAnswer}
+                onChange={(e) => setNewAnswer(e.target.value)}
+                placeholder="Enter the answer..."
+                rows={4}
+                className="px-3 py-2.5 rounded-xl border border-[#e0e0e0] text-[14px] outline-none focus:border-[#ba0020] transition-colors resize-none leading-relaxed"
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[13px] text-[#555]">Answer Image <span className="text-[11px] text-[#bbb]">(optional)</span></label>
+              <FaqAnswerImageUploader
+                imageUrl={newImageUrl}
+                onUploaded={(url, path) => {
+                  setNewImageUrl(url);
+                  setNewImagePath(path);
+                }}
+                onRemove={() => {
+                  setNewImageUrl("");
+                  setNewImagePath("");
+                }}
+              />
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                onClick={() => {
+                  setShowAddForm(false);
+                  setNewQuestion("");
+                  setNewAnswer("");
+                  setNewImageUrl("");
+                  setNewImagePath("");
+                }}
+                className="h-[36px] px-4 rounded-lg text-[13px] text-[#666] bg-[#f5f5f5] hover:bg-[#eee] transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAddFaq}
+                disabled={saving || !newQuestion.trim() || !newAnswer.trim()}
+                className="h-[36px] px-5 rounded-lg text-[13px] bg-[#ba0020] text-white hover:bg-[#a0001b] transition-colors cursor-pointer disabled:opacity-60 flex items-center gap-2"
+              >
+                {saving && <Loader2 className="size-3.5 animate-spin" />}
+                Add FAQ
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* FAQ list */}
+      {loading ? (
+        <div className="flex flex-col items-center justify-center py-16">
+          <Loader2 className="size-8 animate-spin text-[#ba0020] mb-3" />
+          <p className="text-[14px] text-[#999]">Loading FAQs...</p>
+        </div>
+      ) : faqData.items.length === 0 && !showAddForm ? (
+        <div className="flex flex-col items-center justify-center py-16 text-center">
+          <div className="size-[56px] rounded-2xl bg-[#f5f5f5] flex items-center justify-center mb-4">
+            <MessageSquare className="size-6 text-[#ccc]" />
+          </div>
+          <p className="text-[14px] text-[#999]">No FAQs yet for {selectedCat?.name ?? "this category"}</p>
+          <p className="text-[12px] text-[#ccc] mt-1">Click "Add FAQ" to get started</p>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-3">
+          {faqData.items.map((item, idx) => {
+            const isEditing = editingId === item.id;
+            return (
+              <FaqItemCard
+                key={item.id}
+                item={item}
+                index={idx}
+                total={faqData.items.length}
+                isEditing={isEditing}
+                saving={saving}
+                onEdit={() => setEditingId(item.id)}
+                onCancelEdit={() => setEditingId(null)}
+                onSave={(updates) => handleUpdateFaq(item.id, updates)}
+                onDelete={() => handleDeleteFaq(item.id)}
+                onMove={(dir) => handleMoveFaq(item.id, dir)}
+              />
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function FaqItemCard({
+  item,
+  index,
+  total,
+  isEditing,
+  saving,
+  onEdit,
+  onCancelEdit,
+  onSave,
+  onDelete,
+  onMove,
+}: {
+  item: FaqItem;
+  index: number;
+  total: number;
+  isEditing: boolean;
+  saving: boolean;
+  onEdit: () => void;
+  onCancelEdit: () => void;
+  onSave: (updates: Partial<FaqItem>) => void;
+  onDelete: () => void;
+  onMove: (dir: "up" | "down") => void;
+}) {
+  const [q, setQ] = useState(item.question);
+  const [a, setA] = useState(item.answer);
+  const [imgUrl, setImgUrl] = useState(item.answerImageUrl ?? "");
+  const [imgPath, setImgPath] = useState(item.answerImagePath ?? "");
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  useEffect(() => {
+    if (isEditing) {
+      setQ(item.question);
+      setA(item.answer);
+      setImgUrl(item.answerImageUrl ?? "");
+      setImgPath(item.answerImagePath ?? "");
+    }
+  }, [isEditing, item]);
+
+  if (isEditing) {
+    return (
+      <div className="bg-white rounded-2xl border-2 border-[#ba0020]/20 p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h4 className="text-[14px] text-[#1a1a1a]">Edit FAQ #{index + 1}</h4>
+        </div>
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[13px] text-[#555]">Question</label>
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              className="h-[40px] px-3 rounded-xl border border-[#e0e0e0] text-[14px] outline-none focus:border-[#ba0020] transition-colors"
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[13px] text-[#555]">Answer</label>
+            <textarea
+              value={a}
+              onChange={(e) => setA(e.target.value)}
+              rows={4}
+              className="px-3 py-2.5 rounded-xl border border-[#e0e0e0] text-[14px] outline-none focus:border-[#ba0020] transition-colors resize-none leading-relaxed"
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[13px] text-[#555]">Answer Image <span className="text-[11px] text-[#bbb]">(optional)</span></label>
+            <FaqAnswerImageUploader
+              imageUrl={imgUrl}
+              onUploaded={(url, path) => {
+                setImgUrl(url);
+                setImgPath(path);
+              }}
+              onRemove={() => {
+                setImgUrl("");
+                setImgPath("");
+              }}
+            />
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <button
+              onClick={onCancelEdit}
+              className="h-[36px] px-4 rounded-lg text-[13px] text-[#666] bg-[#f5f5f5] hover:bg-[#eee] transition-colors cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() =>
+                onSave({
+                  question: q.trim(),
+                  answer: a.trim(),
+                  answerImageUrl: imgUrl || undefined,
+                  answerImagePath: imgPath || undefined,
+                })
+              }
+              disabled={saving || !q.trim() || !a.trim()}
+              className="h-[36px] px-5 rounded-lg text-[13px] bg-[#ba0020] text-white hover:bg-[#a0001b] transition-colors cursor-pointer disabled:opacity-60 flex items-center gap-2"
+            >
+              {saving && <Loader2 className="size-3.5 animate-spin" />}
+              Save
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-white rounded-2xl border border-[#e8e8e8] hover:border-[#d0d0d0] transition-colors overflow-hidden">
+      <div className="p-5">
+        <div className="flex items-start gap-4">
+          <span className="text-[12px] text-[#bbb] mt-0.5 shrink-0 w-[20px] text-right tabular-nums">{index + 1}</span>
+          <div className="flex-1 min-w-0">
+            <h4 className="text-[14px] text-[#1a1a1a] leading-snug mb-2">{item.question}</h4>
+            <p className="text-[13px] text-[#666] leading-relaxed whitespace-pre-wrap">{item.answer}</p>
+            {item.answerImageUrl && (
+              <div className="mt-3">
+                <img
+                  src={item.answerImageUrl}
+                  alt=""
+                  className="max-w-[200px] max-h-[150px] rounded-lg border border-[#e0e0e0] object-cover"
+                />
+              </div>
+            )}
+          </div>
+          <div className="flex items-center gap-1 shrink-0">
+            <button
+              onClick={() => onMove("up")}
+              disabled={index === 0 || saving}
+              className="size-7 rounded-lg flex items-center justify-center text-[#aaa] hover:bg-[#f5f5f5] hover:text-[#555] transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-default"
+              title="Move up"
+            >
+              <ChevronUp className="size-3.5" />
+            </button>
+            <button
+              onClick={() => onMove("down")}
+              disabled={index === total - 1 || saving}
+              className="size-7 rounded-lg flex items-center justify-center text-[#aaa] hover:bg-[#f5f5f5] hover:text-[#555] transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-default"
+              title="Move down"
+            >
+              <ChevronDown className="size-3.5" />
+            </button>
+            <button
+              onClick={onEdit}
+              className="size-7 rounded-lg flex items-center justify-center text-[#aaa] hover:bg-[#f5f5f5] hover:text-[#ba0020] transition-colors cursor-pointer"
+              title="Edit"
+            >
+              <Pencil className="size-3.5" />
+            </button>
+            {confirmDelete ? (
+              <div className="flex items-center gap-1 ml-1">
+                <button
+                  onClick={() => {
+                    onDelete();
+                    setConfirmDelete(false);
+                  }}
+                  disabled={saving}
+                  className="h-7 px-2.5 rounded-lg text-[11px] bg-[#ba0020] text-white hover:bg-[#a0001b] transition-colors cursor-pointer disabled:opacity-60"
+                >
+                  Delete
+                </button>
+                <button
+                  onClick={() => setConfirmDelete(false)}
+                  className="h-7 px-2 rounded-lg text-[11px] text-[#666] bg-[#f5f5f5] hover:bg-[#eee] transition-colors cursor-pointer"
+                >
+                  No
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setConfirmDelete(true)}
+                className="size-7 rounded-lg flex items-center justify-center text-[#aaa] hover:bg-[#fef2f2] hover:text-[#ba0020] transition-colors cursor-pointer"
+                title="Delete"
+              >
+                <Trash2 className="size-3.5" />
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -3655,7 +4204,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
             supportSubTab === "app" ? (
               <SupportAppPanel showToast={showToast} />
             ) : (
-              <SupportFaqsPanel showToast={showToast} />
+              <SupportFaqsPanel showToast={showToast} categories={allCategories} />
             )
           ) : (
           <>
