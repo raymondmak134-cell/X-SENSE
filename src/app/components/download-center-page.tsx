@@ -292,7 +292,11 @@ function useFaqs(categoryId: string | undefined) {
 
 /* ==================== View Supported Devices Dialog ==================== */
 
-function ViewSupportedDevicesDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+function stripConnectivitySuffix(name: string): string {
+  return name.replace(/\s+(Pro|Wi-Fi|Wi-fi|\+)$/i, "").replace(/\s*\(base\)\s*$/i, "").trim();
+}
+
+function ViewSupportedDevicesDialog({ open, onClose, spuName }: { open: boolean; onClose: () => void; spuName?: string }) {
   const overlayRef = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
   const [animating, setAnimating] = useState(false);
@@ -341,31 +345,30 @@ function ViewSupportedDevicesDialog({ open, onClose }: { open: boolean; onClose:
   return (
     <div
       ref={overlayRef}
-      className={`fixed inset-0 z-[200] flex items-center justify-center transition-all duration-300 ease-in-out ${
+      className={`fixed inset-0 z-[200] flex items-center justify-center px-[16px] md:px-0 transition-all duration-300 ease-in-out ${
         open && !animating ? "bg-[rgba(0,0,0,0.2)] opacity-100" : "bg-[rgba(0,0,0,0)] opacity-0"
       }`}
-      style={{ padding: "0 clamp(24px, 8vw, 120px)" }}
       onClick={(e) => {
         if (e.target === overlayRef.current) handleClose();
       }}
     >
       <div
-        className={`bg-white flex flex-col items-center w-[720px] overflow-hidden rounded-[32px] transition-all duration-300 ease-in-out ${
+        className={`bg-white flex flex-col items-center w-full md:w-[720px] gap-[12px] md:gap-0 overflow-hidden rounded-[32px] transition-all duration-300 ease-in-out ${
           open && !animating ? "scale-100 opacity-100" : "scale-95 opacity-0"
         }`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Title */}
-        <div className="content-stretch flex gap-[24px] items-start justify-center p-[24px] relative shrink-0 w-full">
-          <div className="opacity-40 shrink-0 size-[40px]" />
+        <div className="content-stretch flex gap-[24px] items-start justify-center px-[24px] py-[16px] md:p-[24px] relative shrink-0 w-full">
+          <div className="hidden md:block opacity-40 shrink-0 size-[40px]" />
           <div className="content-stretch flex flex-[1_0_0] flex-col gap-[4px] items-start justify-center min-h-px min-w-px relative self-stretch">
-            <p className="font-['Inter:Bold',sans-serif] font-bold leading-[34px] not-italic text-[24px] text-[#101820] text-center w-full">
+            <p className="font-['Inter:Semi_Bold',sans-serif] md:font-['Inter:Bold',sans-serif] font-semibold md:font-bold leading-[24px] md:leading-[34px] not-italic text-[18px] md:text-[24px] text-[#101820] md:text-center w-full">
               View Supported Devices
             </p>
           </div>
           <button
             onClick={handleClose}
-            className="opacity-40 overflow-clip relative shrink-0 size-[40px] cursor-pointer hover:opacity-60 transition-opacity border-none bg-transparent"
+            className="opacity-40 overflow-clip relative shrink-0 size-[32px] md:size-[40px] cursor-pointer hover:opacity-60 transition-opacity border-none bg-transparent"
           >
             <div className="absolute inset-[8.33%]">
               <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 33.3333 33.3333">
@@ -381,28 +384,66 @@ function ViewSupportedDevicesDialog({ open, onClose }: { open: boolean; onClose:
           </button>
         </div>
 
-        {/* Content */}
-        <div className="content-stretch flex items-start pb-[32px] px-[32px] relative shrink-0 w-full">
+        {/* Mobile Content */}
+        <div className="flex md:hidden items-center justify-center pb-[32px] px-[16px] shrink-0 w-full">
+          <div className="flex flex-1 flex-col gap-[16px] items-end w-full">
+            <div className="flex gap-[8px] items-start w-full">
+              <div className="flex gap-[4px] items-start font-['Inter:Semi_Bold',sans-serif] font-semibold text-[18px] leading-[24px] w-[136px] shrink-0">
+                <p className="text-[rgba(0,0,0,0.3)] whitespace-nowrap shrink-0">{spuName ? stripConnectivitySuffix(spuName) : "Smoke S1"}</p>
+                <div className="flex flex-col gap-[4px] text-[#16dd00] w-[47px] shrink-0">
+                  <p>Pro</p>
+                  <p>Wi-Fi</p>
+                </div>
+              </div>
+              <div className="bg-[rgba(22,221,0,0.1)] flex flex-1 gap-[4px] items-start p-[8px] rounded-[5px]">
+                <div className="flex h-[20px] items-center shrink-0">
+                  <svg className="shrink-0 size-[16px]" viewBox="0 0 16 16" fill="none">
+                    <path fillRule="evenodd" clipRule="evenodd" d="M8 14.667A6.667 6.667 0 108 1.333a6.667 6.667 0 000 13.334zm3.138-8.195a.667.667 0 00-.943-.943L7.333 8.39 5.805 6.862a.667.667 0 10-.943.943l2 2a.667.667 0 00.943 0l3.333-3.333z" fill="#16dd00"/>
+                  </svg>
+                </div>
+                <p className="flex-1 font-['Inter:Regular',sans-serif] font-normal leading-[20px] not-italic text-[14px] text-black">
+                  Devices with the suffix &ldquo;Pro&rdquo; or &ldquo;Wi-Fi&rdquo; support connection to the X-SENSE App.
+                </p>
+              </div>
+            </div>
+            <div className="w-full h-0 border-t border-dashed border-[rgba(0,0,0,0.15)]" />
+            <div className="flex gap-[8px] items-start justify-end w-full">
+              <div className="flex flex-col gap-[4px] items-end font-['Inter:Semi_Bold',sans-serif] font-semibold text-[18px] leading-[24px] text-[#ff3b3b] text-right w-[136px] shrink-0">
+                <p>+</p>
+                <p>(base)</p>
+              </div>
+              <div className="bg-[rgba(221,0,0,0.1)] flex flex-1 gap-[4px] items-start p-[8px] rounded-[5px]">
+                <div className="flex h-[20px] items-center shrink-0">
+                  <svg className="shrink-0 size-[16px]" viewBox="0 0 16 16" fill="none">
+                    <path fillRule="evenodd" clipRule="evenodd" d="M8 14.667A6.667 6.667 0 108 1.333a6.667 6.667 0 000 13.334zM6.862 5.919a.667.667 0 00-.943.943L7.057 8l-1.138 1.138a.667.667 0 10.943.943L8 8.943l1.138 1.138a.667.667 0 10.943-.943L8.943 8l1.138-1.138a.667.667 0 10-.943-.943L8 7.057 6.862 5.919z" fill="#ff3b3b"/>
+                  </svg>
+                </div>
+                <p className="flex-1 font-['Inter:Regular',sans-serif] font-normal leading-[20px] not-italic text-[14px] text-black">
+                  Devices with the suffix &ldquo;+&rdquo; or no suffix (base models) do not support connection.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Desktop Content */}
+        <div className="hidden md:flex content-stretch items-start pb-[32px] px-[32px] relative shrink-0 w-full">
           <div className="flex-[1_0_0] h-[196px] min-h-px min-w-px relative">
-            {/* Model name */}
             <p className="absolute font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[24px] left-[75px] not-italic text-[18px] text-[rgba(0,0,0,0.3)] top-[28px] whitespace-nowrap">
-              Smoke S1
+              {spuName ? stripConnectivitySuffix(spuName) : "Smoke S1"}
             </p>
-            {/* Supported variants */}
             <p className="absolute font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[24px] left-[164px] not-italic text-[18px] text-[#16dd00] top-[28px] whitespace-nowrap">
               Pro
             </p>
             <p className="absolute font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[24px] left-[164px] not-italic text-[18px] text-[#16dd00] top-[56px] whitespace-nowrap">
               Wi-Fi
             </p>
-            {/* Unsupported variants */}
             <p className="absolute font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[24px] left-[164px] not-italic text-[18px] text-[#ff3b3b] top-[102px] whitespace-nowrap">
               +
             </p>
             <p className="absolute font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[24px] left-[164px] not-italic text-[18px] text-[#ff3b3b] top-[130px] whitespace-nowrap">
               (base)
             </p>
-            {/* Green info box */}
             <div className="absolute bg-[rgba(22,221,0,0.1)] content-stretch flex gap-[4px] items-start left-[229px] p-[8px] rounded-[5px] top-[26px]">
               <div className="content-stretch flex h-[20px] items-center relative shrink-0">
                 <svg className="shrink-0 size-[16px]" viewBox="0 0 16 16" fill="none">
@@ -413,7 +454,6 @@ function ViewSupportedDevicesDialog({ open, onClose }: { open: boolean; onClose:
                 Devices with the suffix "Pro" or "Wi-Fi" support connection to the X-SENSE App.
               </p>
             </div>
-            {/* Red info box */}
             <div className="absolute bg-[rgba(221,0,0,0.1)] content-stretch flex gap-[4px] items-start left-[229px] p-[8px] rounded-[5px] top-[98px]">
               <div className="content-stretch flex h-[20px] items-center relative shrink-0">
                 <svg className="shrink-0 size-[16px]" viewBox="0 0 16 16" fill="none">
@@ -424,7 +464,6 @@ function ViewSupportedDevicesDialog({ open, onClose }: { open: boolean; onClose:
                 Devices with the suffix "+" or no suffix (base models) do not support connection.
               </p>
             </div>
-            {/* Divider line */}
             <div className="-translate-x-1/2 absolute h-0 left-1/2 top-[90px] w-[584px] border-t border-dashed border-[rgba(0,0,0,0.15)]" />
           </div>
         </div>
@@ -563,7 +602,7 @@ function AppTabContent({ spu, appData }: { spu: Spu | null; appData: SupportAppD
           )}
         </div>
       </div>
-      <ViewSupportedDevicesDialog open={showSupportedDevices} onClose={() => setShowSupportedDevices(false)} />
+      <ViewSupportedDevicesDialog open={showSupportedDevices} onClose={() => setShowSupportedDevices(false)} spuName={spu?.name} />
     </div>
   );
 }
@@ -1658,7 +1697,7 @@ function MobileAppTabContent({ spu, appData }: { spu: Spu | null; appData: Suppo
         </>
         )}
       </div>
-      <ViewSupportedDevicesDialog open={showSupportedDevices} onClose={() => setShowSupportedDevices(false)} />
+      <ViewSupportedDevicesDialog open={showSupportedDevices} onClose={() => setShowSupportedDevices(false)} spuName={spu?.name} />
     </div>
   );
 }
@@ -1764,6 +1803,10 @@ export default function DownloadCenterPage() {
       else next.add(id);
       return next;
     });
+  }, []);
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
   }, []);
 
   useEffect(() => {
