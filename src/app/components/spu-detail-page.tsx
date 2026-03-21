@@ -275,6 +275,7 @@ const MOBILE_GET_STARTED_CARDS = [
 ];
 
 function MobileGetStartedSection() {
+  const navigate = useNavigate();
   return (
     <div className="bg-white max-w-[1312px] relative shrink-0 w-full">
       <div className="flex flex-col items-center justify-center max-w-[inherit] size-full">
@@ -284,7 +285,11 @@ function MobileGetStartedSection() {
           </div>
           <div className="content-start flex flex-wrap gap-[16px] items-start relative shrink-0 w-full">
             {MOBILE_GET_STARTED_CARDS.map((card) => (
-              <div key={card.title} className="bg-[#f6f6f6] flex-[1_0_0] min-h-px min-w-[353px] relative rounded-[16px] cursor-pointer">
+              <div
+                key={card.title}
+                className="bg-[#f6f6f6] flex-[1_0_0] min-h-px min-w-[353px] relative rounded-[16px] cursor-pointer"
+                onClick={card.title === "Setup & Installation" ? () => navigate("/support/download-center") : undefined}
+              >
                 <div className="content-stretch flex gap-[8px] items-start min-w-[inherit] px-[32px] py-[24px] relative w-full">
                   {card.icon}
                   <div className="content-stretch flex flex-[1_0_0] flex-col gap-[8px] items-start min-h-px min-w-px not-italic relative">
@@ -368,6 +373,7 @@ function ProductHeroSection({ spu }: { spu: SpuData }) {
 /* ==================== Get Started Section ==================== */
 
 function GetStartedSection() {
+  const navigate = useNavigate();
   return (
     <div className="content-stretch flex flex-col items-center w-full" style={{ padding: "48px clamp(24px, 8vw, 120px)" }}>
       <div className="content-stretch flex flex-col gap-[48px] items-start max-w-[1312px] relative shrink-0 w-full">
@@ -378,7 +384,11 @@ function GetStartedSection() {
         {/* 4 Cards */}
         <div className="content-stretch flex gap-[16px] h-[320px] items-center justify-center max-w-[1312px] relative shrink-0 w-full">
           {GET_STARTED_CARDS.map((card) => (
-            <div key={card.title} className="bg-[#f6f6f6] flex-[1_0_0] h-full min-h-px min-w-px relative rounded-[16px] cursor-pointer">
+            <div
+              key={card.title}
+              className="bg-[#f6f6f6] flex-[1_0_0] h-full min-h-px min-w-px relative rounded-[16px] cursor-pointer"
+              onClick={card.title === "Setup & Installation" ? () => navigate("/support/download-center") : undefined}
+            >
               <div className="flex flex-col items-center justify-center size-full">
                 <div className="content-stretch flex flex-col gap-[8px] items-center justify-center px-[32px] relative size-full">
                   {card.icon}

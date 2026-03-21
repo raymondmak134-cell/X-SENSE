@@ -5,7 +5,6 @@ import ProductSelectDialog from "./product-select-dialog";
 import MobileSupportPage from "./mobile-support-page";
 import svgPaths from "../../imports/svg-zx55evvu35";
 import svgArrow from "../../imports/svg-umdpbk5rtp";
-import imgImage from "@/assets/placeholder-image-url";
 import imgFrame2117132003 from "@/assets/placeholder-image-url";
 import imgFrame2117131978 from "@/assets/placeholder-image-url";
 import imgFrame2117131979 from "@/assets/placeholder-image-url";
@@ -388,144 +387,112 @@ function ContactUsSection() {
         </div>
         <div className="content-stretch flex flex-col gap-[16px] items-start relative shrink-0 w-full">
           {/* Contact banner */}
-          <div className="bg-[#f2f0ed] h-[236px] max-w-[1312px] relative rounded-[16px] shrink-0 w-full">
-            <div className="flex flex-row items-center max-w-[inherit] overflow-clip rounded-[inherit] size-full">
-              <div className="content-stretch flex gap-[240px] items-center max-w-[inherit] pl-[40px] relative size-full">
-                <div className="content-stretch flex flex-[1_0_0] flex-col gap-[16px] items-start min-h-px min-w-px relative">
-                  <div className="content-stretch flex flex-col gap-[4px] items-start not-italic relative shrink-0 w-full">
-                    <p className="font-['Inter:Bold',sans-serif] font-bold leading-[34px] relative shrink-0 text-[24px] text-[rgba(0,0,0,0.9)] w-full">Still can't resolve the issue?</p>
-                    <div className="font-['Inter:Regular',sans-serif] font-normal leading-[22px] relative shrink-0 text-[16px] text-[rgba(0,0,0,0.54)] w-full whitespace-pre-wrap">
-                      <p className="mb-0">{`Sorry for the inconvenience. `}</p>
-                      <p>Please contact us for assistance. We will reply within 24 hours.</p>
-                    </div>
-                  </div>
-                  <div className="bg-[#ba0020] content-stretch flex gap-[4px] h-[40px] items-center justify-center px-[16px] py-[8px] relative rounded-[50px] shrink-0 cursor-pointer">
-                    <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[20px] not-italic relative shrink-0 text-[14px] text-center text-white whitespace-nowrap">Contact</p>
-                  </div>
+          <div className="bg-[#f2f0ed] content-stretch flex items-center max-w-[1312px] overflow-clip p-[40px] relative rounded-[16px] shrink-0 w-full">
+            <div className="content-stretch flex flex-[1_0_0] flex-col gap-[16px] items-start min-h-px min-w-px relative">
+              <div className="content-stretch flex flex-col gap-[4px] items-start not-italic relative shrink-0 w-full">
+                <p className="font-['Inter:Bold',sans-serif] font-bold leading-[34px] relative shrink-0 text-[24px] text-[rgba(0,0,0,0.9)] w-full">Still can't resolve the issue?</p>
+                <div className="font-['Inter:Regular',sans-serif] font-normal leading-[22px] relative shrink-0 text-[16px] text-[rgba(0,0,0,0.54)] w-full whitespace-pre-wrap">
+                  <p className="mb-0">{`Sorry for the inconvenience. `}</p>
+                  <p>Please contact us for assistance. We will reply within 24 hours.</p>
                 </div>
-                <div className="h-[236px] relative shrink-0 w-[321px]">
-                  <img alt="" className="absolute inset-0 max-w-none object-cover pointer-events-none size-full" src={imgImage} />
-                </div>
+              </div>
+              <div className="bg-[#101820] content-stretch flex gap-[4px] h-[40px] items-center justify-center px-[16px] py-[8px] relative rounded-[50px] shrink-0 cursor-pointer">
+                <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[20px] not-italic relative shrink-0 text-[14px] text-center text-white whitespace-nowrap">Contact</p>
               </div>
             </div>
           </div>
           {/* 3 contact info cards */}
           <div className="content-stretch flex gap-[16px] items-start justify-center max-w-[1312px] relative shrink-0 w-full">
             {/* Email Contacts */}
-            <div className="flex-[1_0_0] min-h-px min-w-px relative rounded-[16px] self-stretch" style={{ backgroundImage: "linear-gradient(90deg, rgb(246, 246, 246) 0%, rgb(246, 246, 246) 100%), linear-gradient(90deg, rgba(94, 127, 156, 0.1) 0%, rgba(94, 127, 156, 0.1) 100%)" }}>
-              <div className="flex flex-col items-center overflow-clip rounded-[inherit] size-full">
-                <div className="content-stretch flex flex-col items-center px-[40px] py-[24px] relative size-full">
-                  {/* Header */}
-                  <div className="content-stretch flex flex-col gap-[4px] items-start py-[12px] relative shrink-0 w-full">
-                    <div aria-hidden="true" className="absolute border-[rgba(0,0,0,0.1)] border-b border-solid inset-0 pointer-events-none" />
-                    <div className="relative rounded-[16px] shrink-0 size-[56px]">
-                      <div className="-translate-x-1/2 -translate-y-1/2 absolute left-1/2 overflow-clip size-[40px] top-1/2">
-                        <div className="absolute inset-[13.33%_5%]">
-                          <svg className="absolute block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 36.0002 29.333">
-                            <path d={svgPaths.p3abc4d00} fill="var(--fill-0, black)" fillOpacity="0.9" />
-                          </svg>
-                        </div>
-                      </div>
+            <div className="content-stretch flex flex-[1_0_0] flex-col items-center min-h-px min-w-px overflow-clip px-[40px] py-[24px] relative rounded-[16px] self-stretch" style={{ backgroundImage: "linear-gradient(90deg, rgb(246, 246, 246) 0%, rgb(246, 246, 246) 100%), linear-gradient(90deg, rgba(94, 127, 156, 0.1) 0%, rgba(94, 127, 156, 0.1) 100%)" }}>
+              <div className="border-[rgba(0,0,0,0.1)] border-b border-solid content-stretch flex flex-col gap-[4px] items-start py-[12px] relative shrink-0 w-full">
+                <div className="relative rounded-[16px] shrink-0 size-[56px]">
+                  <div className="-translate-x-1/2 -translate-y-1/2 absolute left-1/2 overflow-clip size-[40px] top-1/2">
+                    <div className="absolute inset-[13.33%_5%]">
+                      <svg className="absolute block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 36.0002 29.333">
+                        <path d={svgPaths.p3abc4d00} fill="var(--fill-0, black)" fillOpacity="0.9" />
+                      </svg>
                     </div>
-                    <p className="font-['Inter:Medium',sans-serif] font-medium leading-[24px] min-w-full not-italic relative shrink-0 text-[16px] text-black w-[min-content]">Email Contacts</p>
-                  </div>
-                  {/* Customer Service */}
-                  <div className="content-stretch flex flex-col gap-[4px] items-start not-italic py-[12px] relative shrink-0 w-full">
-                    <p className="font-['Inter:Regular',sans-serif] font-normal leading-[20px] relative shrink-0 text-[14px] text-[rgba(0,0,0,0.54)] w-full">Customer Service</p>
-                    <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[22px] relative shrink-0 text-[#5e0000] text-[16px] w-full">service@x-sense.com</p>
-                  </div>
-                  {/* Bulk Order */}
-                  <div className="content-stretch flex flex-col gap-[4px] items-start not-italic py-[12px] relative shrink-0 w-full">
-                    <p className="font-['Inter:Regular',sans-serif] font-normal leading-[20px] relative shrink-0 text-[14px] text-[rgba(0,0,0,0.54)] w-full">Small Bulk Order</p>
-                    <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[22px] relative shrink-0 text-[#5e0000] text-[16px] w-full">smallbulk@x-sense.com</p>
-                  </div>
-                  {/* Partnership */}
-                  <div className="content-stretch flex flex-col gap-[4px] items-start not-italic py-[12px] relative shrink-0 w-full">
-                    <p className="font-['Inter:Regular',sans-serif] font-normal leading-[20px] relative shrink-0 text-[14px] text-[rgba(0,0,0,0.54)] w-full">Business Partnership</p>
-                    <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[22px] relative shrink-0 text-[#5e0000] text-[16px] w-full">partners@x-sense.com</p>
                   </div>
                 </div>
+                <p className="font-['Inter:Medium',sans-serif] font-medium leading-[24px] min-w-full not-italic relative shrink-0 text-[16px] text-black w-[min-content]">Email Contacts</p>
+              </div>
+              <div className="content-stretch flex flex-col gap-[4px] items-start not-italic py-[12px] relative shrink-0 w-full">
+                <p className="font-['Inter:Regular',sans-serif] font-normal leading-[20px] relative shrink-0 text-[14px] text-[rgba(0,0,0,0.54)] w-full">Customer Service</p>
+                <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[22px] relative shrink-0 text-[#5e0000] text-[16px] w-full">service@x-sense.com</p>
+              </div>
+              <div className="content-stretch flex flex-col gap-[4px] items-start not-italic py-[12px] relative shrink-0 w-full">
+                <p className="font-['Inter:Regular',sans-serif] font-normal leading-[20px] relative shrink-0 text-[14px] text-[rgba(0,0,0,0.54)] w-full">Small Bulk Order</p>
+                <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[22px] relative shrink-0 text-[#5e0000] text-[16px] w-full">smallbulk@x-sense.com</p>
+              </div>
+              <div className="content-stretch flex flex-col gap-[4px] items-start not-italic py-[12px] relative shrink-0 w-full">
+                <p className="font-['Inter:Regular',sans-serif] font-normal leading-[20px] relative shrink-0 text-[14px] text-[rgba(0,0,0,0.54)] w-full">Business Partnership</p>
+                <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[22px] relative shrink-0 text-[#5e0000] text-[16px] w-full">partners@x-sense.com</p>
               </div>
             </div>
             {/* Phone Contacts */}
-            <div className="bg-[rgba(94,127,156,0.1)] flex-[1_0_0] min-h-px min-w-px relative rounded-[16px]">
-              <div className="flex flex-col items-center overflow-clip rounded-[inherit] size-full">
-                <div className="content-stretch flex flex-col items-center px-[40px] py-[24px] relative w-full">
-                  {/* Header */}
-                  <div className="content-stretch flex flex-col gap-[4px] items-start py-[12px] relative shrink-0 w-full">
-                    <div aria-hidden="true" className="absolute border-[rgba(0,0,0,0.1)] border-b border-solid inset-0 pointer-events-none" />
-                    <div className="relative rounded-[16px] shrink-0 size-[56px]">
-                      <div className="-translate-x-1/2 -translate-y-1/2 absolute left-[calc(50%+0.33px)] overflow-clip size-[40px] top-1/2">
-                        <div className="absolute inset-[5.36%_5.42%_6.02%_5.64%]">
-                          <svg className="absolute block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 35.5774 35.4491">
-                            <path d={svgPaths.p2a142700} fill="var(--fill-0, black)" fillOpacity="0.9" />
-                          </svg>
-                        </div>
-                      </div>
+            <div className="bg-[rgba(94,127,156,0.1)] content-stretch flex flex-[1_0_0] flex-col items-center min-h-px min-w-px overflow-clip px-[40px] py-[24px] relative rounded-[16px]">
+              <div className="border-[rgba(0,0,0,0.1)] border-b border-solid content-stretch flex flex-col gap-[4px] items-start py-[12px] relative shrink-0 w-full">
+                <div className="relative rounded-[16px] shrink-0 size-[56px]">
+                  <div className="-translate-x-1/2 -translate-y-1/2 absolute left-[calc(50%+0.33px)] overflow-clip size-[40px] top-1/2">
+                    <div className="absolute inset-[5.36%_5.42%_6.02%_5.64%]">
+                      <svg className="absolute block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 35.5774 35.4491">
+                        <path d={svgPaths.p2a142700} fill="var(--fill-0, black)" fillOpacity="0.9" />
+                      </svg>
                     </div>
-                    <p className="font-['Inter:Medium',sans-serif] font-medium leading-[24px] min-w-full not-italic relative shrink-0 text-[16px] text-black w-[min-content]">Phone Contacts</p>
-                  </div>
-                  {/* US */}
-                  <div className="content-stretch flex flex-col gap-[4px] items-start not-italic py-[12px] relative shrink-0 w-full">
-                    <div className="font-['Inter:Regular',sans-serif] font-normal leading-[20px] relative shrink-0 text-[14px] text-[rgba(0,0,0,0.54)] w-full">
-                      <p className="mb-0">United States</p>
-                      <p>(Mon-Fri 9 AM-5 PM (US Eastern Time)</p>
-                    </div>
-                    <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[22px] relative shrink-0 text-[#5e0000] text-[16px] w-full">+1(833)952-1880</p>
-                  </div>
-                  {/* UK */}
-                  <div className="content-stretch flex flex-col gap-[4px] items-start not-italic py-[12px] relative shrink-0 w-full">
-                    <div className="font-['Inter:Regular',sans-serif] font-normal leading-[20px] relative shrink-0 text-[14px] text-[rgba(0,0,0,0.54)] w-full">
-                      <p className="mb-0">United Kingdom</p>
-                      <p>Mon-Fri 9 AM-5 PM (GMT)</p>
-                    </div>
-                    <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[22px] relative shrink-0 text-[#5e0000] text-[16px] w-full">+44 (0) 808 501 5078</p>
-                  </div>
-                  {/* Germany */}
-                  <div className="content-stretch flex flex-col gap-[4px] items-start not-italic py-[12px] relative shrink-0 w-full">
-                    <div className="font-['Inter:Regular',sans-serif] font-normal leading-[20px] relative shrink-0 text-[14px] text-[rgba(0,0,0,0.54)] w-full">
-                      <p className="mb-0">Germany</p>
-                      <p>Mon-Fri9 AM-5 PM (CET)</p>
-                    </div>
-                    <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[22px] relative shrink-0 text-[#5e0000] text-[16px] w-full">+49 (0) 800 1821 385</p>
                   </div>
                 </div>
+                <p className="font-['Inter:Medium',sans-serif] font-medium leading-[24px] min-w-full not-italic relative shrink-0 text-[16px] text-black w-[min-content]">Phone Contacts</p>
+              </div>
+              <div className="content-stretch flex flex-col gap-[4px] items-start not-italic py-[12px] relative shrink-0 w-full">
+                <div className="font-['Inter:Regular',sans-serif] font-normal leading-[20px] relative shrink-0 text-[14px] text-[rgba(0,0,0,0.54)] w-full">
+                  <p className="mb-0">United States</p>
+                  <p>(Mon-Fri 9 AM-5 PM (US Eastern Time)</p>
+                </div>
+                <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[22px] relative shrink-0 text-[#5e0000] text-[16px] w-full">+1(833)952-1880</p>
+              </div>
+              <div className="content-stretch flex flex-col gap-[4px] items-start not-italic py-[12px] relative shrink-0 w-full">
+                <div className="font-['Inter:Regular',sans-serif] font-normal leading-[20px] relative shrink-0 text-[14px] text-[rgba(0,0,0,0.54)] w-full">
+                  <p className="mb-0">United Kingdom</p>
+                  <p>Mon-Fri 9 AM-5 PM (GMT)</p>
+                </div>
+                <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[22px] relative shrink-0 text-[#5e0000] text-[16px] w-full">+44 (0) 808 501 5078</p>
+              </div>
+              <div className="content-stretch flex flex-col gap-[4px] items-start not-italic py-[12px] relative shrink-0 w-full">
+                <div className="font-['Inter:Regular',sans-serif] font-normal leading-[20px] relative shrink-0 text-[14px] text-[rgba(0,0,0,0.54)] w-full">
+                  <p className="mb-0">Germany</p>
+                  <p>Mon-Fri9 AM-5 PM (CET)</p>
+                </div>
+                <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[22px] relative shrink-0 text-[#5e0000] text-[16px] w-full">+49 (0) 800 1821 385</p>
               </div>
             </div>
             {/* Office Location */}
-            <div className="bg-[rgba(217,190,161,0.15)] flex-[1_0_0] min-h-px min-w-px relative rounded-[16px] self-stretch">
-              <div className="flex flex-col items-center overflow-clip rounded-[inherit] size-full">
-                <div className="content-stretch flex flex-col items-center px-[40px] py-[24px] relative size-full">
-                  {/* Header */}
-                  <div className="content-stretch flex flex-col gap-[4px] items-start py-[12px] relative shrink-0 w-full">
-                    <div aria-hidden="true" className="absolute border-[rgba(0,0,0,0.1)] border-b border-solid inset-0 pointer-events-none" />
-                    <div className="relative rounded-[16px] shrink-0 size-[56px]">
-                      <div className="-translate-x-1/2 -translate-y-1/2 absolute left-[calc(50%-0.33px)] overflow-clip size-[40px] top-1/2">
-                        <div className="absolute inset-[35.48%_5.44%_5.42%_5.39%]">
-                          <svg className="absolute block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 35.667 23.6416">
-                            <path d={svgPaths.p117d5f00} fill="var(--fill-0, black)" />
-                          </svg>
-                        </div>
-                        <div className="absolute inset-[10.21%_24.43%_5.42%_24.37%]">
-                          <svg className="absolute block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 20.4805 33.75">
-                            <path d={svgPaths.p3ace9800} fill="var(--fill-0, black)" />
-                          </svg>
-                        </div>
-                        <div className="absolute inset-[22.08%_38.7%_34.77%_38.64%]">
-                          <svg className="absolute block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 9.0625 17.2568">
-                            <path d={svgPaths.p1977300} fill="var(--fill-0, black)" />
-                          </svg>
-                        </div>
-                      </div>
+            <div className="bg-[rgba(217,190,161,0.15)] content-stretch flex flex-[1_0_0] flex-col items-center min-h-px min-w-px overflow-clip px-[40px] py-[24px] relative rounded-[16px] self-stretch">
+              <div className="border-[rgba(0,0,0,0.1)] border-b border-solid content-stretch flex flex-col gap-[4px] items-start py-[12px] relative shrink-0 w-full">
+                <div className="relative rounded-[16px] shrink-0 size-[56px]">
+                  <div className="-translate-x-1/2 -translate-y-1/2 absolute left-[calc(50%-0.33px)] overflow-clip size-[40px] top-1/2">
+                    <div className="absolute inset-[35.48%_5.44%_5.42%_5.39%]">
+                      <svg className="absolute block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 35.667 23.6416">
+                        <path d={svgPaths.p117d5f00} fill="var(--fill-0, black)" />
+                      </svg>
                     </div>
-                    <p className="font-['Inter:Medium',sans-serif] font-medium leading-[24px] min-w-full not-italic relative shrink-0 text-[16px] text-black w-[min-content]">Office Location</p>
-                  </div>
-                  {/* USA */}
-                  <div className="content-stretch flex flex-col gap-[4px] items-start not-italic py-[12px] relative shrink-0 w-full">
-                    <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[22px] relative shrink-0 text-[#5e0000] text-[16px] w-full">X-SENSE USA LLC</p>
-                    <p className="font-['Inter:Regular',sans-serif] font-normal leading-[20px] relative shrink-0 text-[14px] text-[rgba(0,0,0,0.54)] w-full">1209 Orange St, Wilmington,DE 19801, United States</p>
+                    <div className="absolute inset-[10.21%_24.43%_5.42%_24.37%]">
+                      <svg className="absolute block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 20.4805 33.75">
+                        <path d={svgPaths.p3ace9800} fill="var(--fill-0, black)" />
+                      </svg>
+                    </div>
+                    <div className="absolute inset-[22.08%_38.7%_34.77%_38.64%]">
+                      <svg className="absolute block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 9.0625 17.2568">
+                        <path d={svgPaths.p1977300} fill="var(--fill-0, black)" />
+                      </svg>
+                    </div>
                   </div>
                 </div>
+                <p className="font-['Inter:Medium',sans-serif] font-medium leading-[24px] min-w-full not-italic relative shrink-0 text-[16px] text-black w-[min-content]">Office Location</p>
+              </div>
+              <div className="content-stretch flex flex-col gap-[4px] items-start not-italic py-[12px] relative shrink-0 w-full">
+                <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[22px] relative shrink-0 text-[#5e0000] text-[16px] w-full">X-SENSE USA LLC</p>
+                <p className="font-['Inter:Regular',sans-serif] font-normal leading-[20px] relative shrink-0 text-[14px] text-[rgba(0,0,0,0.54)] w-full">1209 Orange St, Wilmington,DE 19801, United States</p>
               </div>
             </div>
           </div>
