@@ -1497,6 +1497,7 @@ export interface SpuCapabilities {
 
 export interface SetupInstallationData {
   installationVideoUrl?: string;
+  installationVideoCoverImage?: { url: string; path: string };
   quickStartGuideImages?: Array<{ url: string; path: string }>;
 }
 
@@ -1746,6 +1747,11 @@ function SetupInstallationEditor({
   onClose: () => void;
 }) {
   const [videoUrl, setVideoUrl] = useState(data?.installationVideoUrl ?? "");
+  const [videoCover, setVideoCover] = useState<{ url: string; path: string }>(
+    data?.installationVideoCoverImage ?? { url: "", path: "" }
+  );
+  const [coverUploading, setCoverUploading] = useState(false);
+  const coverFileRef = useRef<HTMLInputElement>(null);
   const [images, setImages] = useState<Array<{ url: string; path: string }>>(
     data?.quickStartGuideImages ?? []
   );
@@ -1779,9 +1785,28 @@ function SetupInstallationEditor({
     setImages((prev) => prev.filter((_, i) => i !== idx));
   };
 
+  const doCoverUpload = async (file: File) => {
+    if (!file.type.startsWith("image/") || file.size > 5 * 1024 * 1024) {
+      setError("Please select a valid image file (PNG/JPG, under 5MB).");
+      return;
+    }
+    setError("");
+    setCoverUploading(true);
+    try {
+      const result = await uploadImage(file);
+      setVideoCover(result);
+    } catch (err: any) {
+      console.error("Cover upload error:", err);
+      setError(err.message || "Upload failed");
+    } finally {
+      setCoverUploading(false);
+    }
+  };
+
   const handleSave = () => {
     const result: SetupInstallationData = {};
     if (videoUrl.trim()) result.installationVideoUrl = videoUrl.trim();
+    if (videoCover.url) result.installationVideoCoverImage = videoCover;
     if (images.length > 0) result.quickStartGuideImages = images;
     onSave(Object.keys(result).length > 0 ? result : undefined as any);
   };
@@ -1844,6 +1869,58 @@ function SetupInstallationEditor({
                 </p>
               </div>
             )}
+
+            {/* Video Cover Image */}
+            <div className="flex flex-col gap-1.5 mt-2">
+              <label className="text-[12px] text-[#888]">Video Cover Image</label>
+              <input
+                ref={coverFileRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) doCoverUpload(f);
+                  e.target.value = "";
+                }}
+              />
+              {videoCover.url ? (
+                <div className="relative w-full h-[160px] rounded-lg overflow-hidden border border-[#e0e0e0] group bg-[#f5f5f5]">
+                  <img src={videoCover.url} alt="Video cover" className="size-full object-cover" />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => coverFileRef.current?.click()}
+                      className="size-8 rounded-full bg-white/90 flex items-center justify-center text-[#555] hover:bg-white transition-colors cursor-pointer"
+                    >
+                      <ImagePlus className="size-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setVideoCover({ url: "", path: "" })}
+                      className="size-8 rounded-full bg-white/90 flex items-center justify-center text-[#ba0020] hover:bg-white transition-colors cursor-pointer"
+                    >
+                      <Trash2 className="size-4" />
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => coverFileRef.current?.click()}
+                  disabled={coverUploading}
+                  className="w-full h-[80px] rounded-lg border-2 border-dashed border-[#e0e0e0] flex items-center justify-center gap-2 text-[13px] text-[#bbb] hover:border-[#ba0020] hover:text-[#ba0020] transition-colors cursor-pointer bg-transparent disabled:opacity-50"
+                >
+                  {coverUploading ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : (
+                    <ImagePlus className="size-4" />
+                  )}
+                  {coverUploading ? "Uploading..." : "Upload cover image"}
+                </button>
+              )}
+              <p className="text-[11px] text-[#ccc]">Displayed as the video thumbnail in Download Center</p>
+            </div>
           </div>
 
           {/* Quick Start Guide Images */}

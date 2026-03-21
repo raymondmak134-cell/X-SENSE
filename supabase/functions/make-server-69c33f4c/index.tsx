@@ -255,6 +255,61 @@ async function refreshSignedUrls<T extends Record<string, any>>(
   }
 }
 
+/**
+ * Refresh signed URLs for nested SPU fields:
+ *  - setupInstallation.installationVideoCoverImage
+ *  - setupInstallation.quickStartGuideImages[]
+ *  - manuals[].coverImage
+ */
+async function refreshSpuNestedUrls(spus: any[]): Promise<any[]> {
+  if (!spus || spus.length === 0) return spus;
+
+  const sb = supabase();
+  const pathList: string[] = [];
+  const appliers: Array<(signedUrl: string) => void> = [];
+
+  spus.forEach((spu) => {
+    const cover = spu.setupInstallation?.installationVideoCoverImage;
+    if (cover?.path) {
+      pathList.push(cover.path);
+      appliers.push((url) => { spu.setupInstallation.installationVideoCoverImage = { ...cover, url }; });
+    }
+    const guides = spu.setupInstallation?.quickStartGuideImages;
+    if (Array.isArray(guides)) {
+      guides.forEach((img: any, j: number) => {
+        if (img.path) {
+          pathList.push(img.path);
+          appliers.push((url) => { guides[j] = { ...img, url }; });
+        }
+      });
+    }
+    const manuals = spu.manuals;
+    if (Array.isArray(manuals)) {
+      manuals.forEach((m: any, j: number) => {
+        if (m.coverImage?.path) {
+          pathList.push(m.coverImage.path);
+          appliers.push((url) => { manuals[j] = { ...m, coverImage: { ...m.coverImage, url } }; });
+        }
+      });
+    }
+  });
+
+  if (pathList.length === 0) return spus;
+
+  try {
+    const { data, error } = await sb.storage
+      .from(BUCKET_NAME)
+      .createSignedUrls(pathList, 60 * 60 * 24 * 7);
+    if (error || !data) return spus;
+    data.forEach((signed: any, idx: number) => {
+      if (signed?.signedUrl) appliers[idx](signed.signedUrl);
+    });
+  } catch (err) {
+    console.log(`Error refreshing SPU nested URLs: ${err}`);
+  }
+  return spus;
+}
+
 // ============ Products CRUD ============
 
 const PRODUCTS_PREFIX = "product:";
@@ -355,7 +410,8 @@ app.get("/make-server-69c33f4c/spus", async (c) => {
       spus || [],
       [{ urlField: "imageUrl", pathField: "imagePath" }]
     );
-    return c.json({ spus: refreshed });
+    const final = await refreshSpuNestedUrls(refreshed);
+    return c.json({ spus: final });
   } catch (err) {
     console.log(`Error fetching SPUs: ${err}`);
     return c.json({ error: `Error fetching SPUs: ${err}` }, 500);
@@ -370,12 +426,12 @@ app.get("/make-server-69c33f4c/spus/:id", async (c) => {
     if (!spu) {
       return c.json({ error: `SPU not found: ${id}` }, 404);
     }
-    // Refresh signed URL for single SPU
     const refreshed = await refreshSignedUrls(
       [spu],
       [{ urlField: "imageUrl", pathField: "imagePath" }]
     );
-    return c.json({ spu: refreshed[0] });
+    const final = await refreshSpuNestedUrls(refreshed);
+    return c.json({ spu: final[0] });
   } catch (err) {
     console.log(`Error fetching SPU by id: ${err}`);
     return c.json({ error: `Error fetching SPU: ${err}` }, 500);

@@ -20,7 +20,16 @@ div.font-\[\'Metropolis\:Medium\'\,sans-serif\].items-end {
   align-items: center !important;
 }
 
-/* Fix 4: $30 OFF label centering */
+/* Fix 4: Hide scrollbar but keep scroll */
+.scrollbar-hide {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Fix 5: $30 OFF label centering */
 div.-translate-x-1\/2.bottom-\[93\.18%\].top-\[1\.4%\] {
   display: flex !important;
   flex-direction: column !important;

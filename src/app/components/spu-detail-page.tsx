@@ -103,24 +103,28 @@ const GET_STARTED_CARDS = [
     title: "Setup & Installation",
     description: "Watch the installation video to quickly set up your alarm detector",
     link: "Learn More >",
+    tab: "Setup & Installation",
   },
   {
     icon: <AppIcon />,
     title: "App",
-    description: "Official X-SENSE applications with thelatest features.",
+    description: "Official X-SENSE applications with the latest features.",
     link: "Download >",
+    tab: "App",
   },
   {
     icon: <FaqIcon />,
     title: "FAQ",
     description: "Browse FAQs and solutions to quickly resolve common issues.",
     link: "View Now >",
+    tab: "FAQs",
   },
   {
     icon: <SpecsIcon />,
     title: "Specs",
     description: "View product specifications and detailed parameters.",
     link: "View Now >",
+    tab: "Specs",
   },
 ];
 
@@ -164,6 +168,7 @@ function MobileGetStartedSkeleton() {
 /* ==================== Mobile Product Hero ==================== */
 
 function MobileProductHeroSection({ spu }: { spu: SpuData }) {
+  const navigate = useNavigate();
   return (
     <div className="bg-white max-w-[1312px] relative shrink-0 w-full">
       <div className="content-stretch flex flex-col items-start max-w-[inherit] px-[20px] py-[32px] relative w-full">
@@ -181,7 +186,10 @@ function MobileProductHeroSection({ spu }: { spu: SpuData }) {
           </div>
           <div className="content-stretch flex flex-col gap-[8px] items-start not-italic relative shrink-0 text-center w-full">
             <p className="font-['Inter:Bold',sans-serif] font-bold leading-[44px] relative shrink-0 text-[32px] text-black w-full">{spu.name}</p>
-            <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[22px] relative shrink-0 text-[#5e0000] text-[16px] w-full cursor-pointer">{`View Manuals >`}</p>
+            <p
+              className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[22px] relative shrink-0 text-[#5e0000] text-[16px] w-fit mx-auto cursor-pointer hover:underline"
+              onClick={() => navigate(`/support/download-center?spuId=${encodeURIComponent(spu.id)}&tab=Manuals`)}
+            >{`View Manuals >`}</p>
           </div>
         </div>
       </div>
@@ -253,28 +261,32 @@ const MOBILE_GET_STARTED_CARDS = [
     title: "Setup & Installation",
     description: "Watch the installation video to quickly set up your alarm detector",
     link: "Learn More >",
+    tab: "Setup & Installation",
   },
   {
     icon: <MobileAppIcon />,
     title: "App",
-    description: "Official X-SENSE applications with thelatest features.",
+    description: "Official X-SENSE applications with the latest features.",
     link: "Download >",
+    tab: "App",
   },
   {
     icon: <MobileFaqIcon />,
     title: "FAQ",
     description: "Browse FAQs and solutions to quickly resolve common issues.",
     link: "View Now >",
+    tab: "FAQs",
   },
   {
     icon: <MobileSpecsIcon />,
     title: "Specs",
     description: "View product specifications and detailed parameters.",
     link: "View Now >",
+    tab: "Specs",
   },
 ];
 
-function MobileGetStartedSection() {
+function MobileGetStartedSection({ spuId }: { spuId: string }) {
   const navigate = useNavigate();
   return (
     <div className="bg-white max-w-[1312px] relative shrink-0 w-full">
@@ -287,15 +299,15 @@ function MobileGetStartedSection() {
             {MOBILE_GET_STARTED_CARDS.map((card) => (
               <div
                 key={card.title}
-                className="bg-[#f6f6f6] flex-[1_0_0] min-h-px min-w-[353px] relative rounded-[16px] cursor-pointer"
-                onClick={card.title === "Setup & Installation" ? () => navigate("/support/download-center") : undefined}
+                className="group bg-[#f6f6f6] flex-[1_0_0] min-h-px min-w-full relative rounded-[16px] cursor-pointer"
+                onClick={() => navigate(`/support/download-center?spuId=${encodeURIComponent(spuId)}&tab=${encodeURIComponent(card.tab)}`)}
               >
                 <div className="content-stretch flex gap-[8px] items-start min-w-[inherit] px-[32px] py-[24px] relative w-full">
                   {card.icon}
                   <div className="content-stretch flex flex-[1_0_0] flex-col gap-[8px] items-start min-h-px min-w-px not-italic relative">
                     <p className="font-['Inter:Medium',sans-serif] font-medium leading-[24px] relative shrink-0 text-[16px] text-black w-full">{card.title}</p>
                     <p className="font-['Inter:Regular',sans-serif] font-normal leading-[20px] relative shrink-0 text-[14px] text-[rgba(0,0,0,0.54)] w-full">{card.description}</p>
-                    <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[20px] relative shrink-0 text-[#5e0000] text-[14px] w-full">{card.link}</p>
+                    <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[20px] relative shrink-0 text-[#5e0000] text-[14px] w-full group-hover:underline">{card.link}</p>
                   </div>
                 </div>
               </div>
@@ -345,6 +357,7 @@ function GetStartedSkeleton() {
 /* ==================== Product Hero Section ==================== */
 
 function ProductHeroSection({ spu }: { spu: SpuData }) {
+  const navigate = useNavigate();
   return (
     <div className="content-stretch flex flex-col items-center w-full" style={{ padding: "48px clamp(24px, 8vw, 120px)" }}>
       <div className="content-stretch flex flex-col items-center max-w-[1312px] relative shrink-0 w-full">
@@ -363,7 +376,10 @@ function ProductHeroSection({ spu }: { spu: SpuData }) {
         {/* Product info */}
         <div className="content-stretch flex flex-col gap-[8px] items-start not-italic relative shrink-0 text-center w-full">
           <p className="font-['Inter:Bold',sans-serif] font-bold leading-[72px] relative shrink-0 text-[56px] text-black w-full">{spu.name}</p>
-          <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[22px] relative shrink-0 text-[#5e0000] text-[16px] w-full cursor-pointer">{`View Manuals >`}</p>
+          <p
+            className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[22px] relative shrink-0 text-[#5e0000] text-[16px] w-fit mx-auto cursor-pointer hover:underline"
+            onClick={() => navigate(`/support/download-center?spuId=${encodeURIComponent(spu.id)}&tab=Manuals`)}
+          >{`View Manuals >`}</p>
         </div>
       </div>
     </div>
@@ -372,7 +388,7 @@ function ProductHeroSection({ spu }: { spu: SpuData }) {
 
 /* ==================== Get Started Section ==================== */
 
-function GetStartedSection() {
+function GetStartedSection({ spuId }: { spuId: string }) {
   const navigate = useNavigate();
   return (
     <div className="content-stretch flex flex-col items-center w-full" style={{ padding: "48px clamp(24px, 8vw, 120px)" }}>
@@ -386,15 +402,15 @@ function GetStartedSection() {
           {GET_STARTED_CARDS.map((card) => (
             <div
               key={card.title}
-              className="bg-[#f6f6f6] flex-[1_0_0] h-full min-h-px min-w-px relative rounded-[16px] cursor-pointer"
-              onClick={card.title === "Setup & Installation" ? () => navigate("/support/download-center") : undefined}
+              className="group bg-[#f6f6f6] flex-[1_0_0] h-full min-h-px min-w-px relative rounded-[16px] cursor-pointer"
+              onClick={() => navigate(`/support/download-center?spuId=${encodeURIComponent(spuId)}&tab=${encodeURIComponent(card.tab)}`)}
             >
               <div className="flex flex-col items-center justify-center size-full">
                 <div className="content-stretch flex flex-col gap-[8px] items-center justify-center px-[32px] relative size-full">
                   {card.icon}
                   <p className="font-['Inter:Medium',sans-serif] font-medium leading-[24px] min-w-full not-italic relative shrink-0 text-[16px] text-black text-center w-[min-content]">{card.title}</p>
                   <p className="font-['Inter:Regular',sans-serif] font-normal leading-[20px] min-w-full not-italic relative shrink-0 text-[14px] text-[rgba(0,0,0,0.54)] text-center w-[min-content]">{card.description}</p>
-                  <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[20px] min-w-full not-italic relative shrink-0 text-[#5e0000] text-[14px] text-center w-[min-content]">{card.link}</p>
+                  <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[20px] min-w-full not-italic relative shrink-0 text-[#5e0000] text-[14px] text-center w-[min-content] group-hover:underline">{card.link}</p>
                 </div>
               </div>
             </div>
@@ -483,7 +499,7 @@ export default function SpuDetailPage() {
             ) : (
               <>
                 <MobileProductHeroSection spu={spu} />
-                <MobileGetStartedSection />
+                <MobileGetStartedSection spuId={spu.id} />
               </>
             )}
             <MobileContactUs />
@@ -510,7 +526,7 @@ export default function SpuDetailPage() {
           ) : (
             <>
               <ProductHeroSection spu={spu} />
-              <GetStartedSection />
+              <GetStartedSection spuId={spu.id} />
             </>
           )}
           <ContactUsSection />
