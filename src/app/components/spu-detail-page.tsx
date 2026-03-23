@@ -494,7 +494,7 @@ function QrWelcomeDialog({ spuName, spuImage, onClose }: { spuName: string; spuI
           {/* Support link + icons */}
           <div className="flex items-center justify-between pr-[20px] w-full">
             <p className="flex-[1_0_0] min-h-px min-w-px font-['Inter:Medium',sans-serif] font-medium leading-[24px] text-[16px] text-white">
-              Find setup and troubleshooting here.
+              Find setup and<br />troubleshooting here.
             </p>
             <div className="flex gap-[4px] items-center shrink-0">
               <div className="overflow-clip relative shrink-0 size-[24px]">
