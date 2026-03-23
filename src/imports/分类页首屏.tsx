@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState, useCallback } from "react";
 import { type Product, filterProducts, type CheckboxStates as CheckboxStatesType, defaultCheckboxStates as defaultCBStates, useCategories } from "../app/components/use-products";
 import { SkuDropdown } from "../app/components/SkuDropdown";
 import svgPaths from "./svg-7h0tlbncam";
-import badgeSvgPaths from "./svg-tjcgcmfmss";
+
 import imgImage from "@/assets/placeholder-image-url";
 import imgProductImage from "@/assets/placeholder-image-url";
 import Footer from "./Footer";
@@ -678,7 +678,6 @@ function MobileConnectivityBadge({ connectivity }: { connectivity?: string[] }) 
   let textColor: string;
   let fillColor: string;
   let label: string;
-  let icon: React.ReactNode = null;
 
   switch (type) {
     case "Base Station Interconnected (App)":
@@ -686,43 +685,18 @@ function MobileConnectivityBadge({ connectivity }: { connectivity?: string[] }) 
       textColor = "text-white";
       fillColor = "#700013";
       label = "Base-connected (App)";
-      icon = (
-        <div className="overflow-clip relative shrink-0 size-[16px]">
-          <div className="absolute inset-[9.17%_5%]">
-            <svg className="absolute block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 14.3997 13.0665">
-              <path d={badgeSvgPaths.p30cd5800} fill="white" />
-            </svg>
-          </div>
-        </div>
-      );
       break;
     case "Wi-Fi (App)":
       bg = "bg-[#067ad9]";
       textColor = "text-white";
       fillColor = "#067AD9";
       label = "Wi-Fi (App)";
-      icon = (
-        <div className="overflow-clip relative shrink-0 size-[16px]">
-          <div className="absolute inset-[17.5%_4.94%_17.92%_4.94%]">
-            <svg className="absolute block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 14.4194 10.3333">
-              <path d={badgeSvgPaths.p3d8a2900} fill="white" />
-            </svg>
-          </div>
-        </div>
-      );
       break;
     case "Wireless Interconnected":
       bg = "bg-[#022542]";
       textColor = "text-white";
       fillColor = "#022542";
       label = "Wireless Interconnected";
-      icon = (
-        <div className="relative shrink-0 size-[16px]">
-          <svg className="absolute block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 16 16">
-            <path d={badgeSvgPaths.p2ca87700} stroke="white" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </div>
-      );
       break;
     case "Standalone":
       bg = "bg-[#f2f0ed]";
@@ -736,8 +710,7 @@ function MobileConnectivityBadge({ connectivity }: { connectivity?: string[] }) 
 
   return (
     <div className="absolute left-0 top-0 z-[5]" style={{ pointerEvents: "none" }}>
-      <div className={`${bg} flex gap-[4px] items-center justify-center overflow-clip pl-[20px] pr-[16px] py-[8px] rounded-tl-[32px] rounded-br-[14px]`}>
-        {icon}
+      <div className={`${bg} flex items-center justify-center overflow-clip pl-[20px] pr-[16px] py-[8px] rounded-tl-[32px] rounded-br-[14px]`}>
         <p className={`font-['Inter:Medium',sans-serif] font-medium leading-[20px] not-italic text-[14px] ${textColor} whitespace-nowrap`}>
           {label}
         </p>

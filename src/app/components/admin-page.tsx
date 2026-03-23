@@ -613,14 +613,8 @@ function SkuOptionsEditor({
               key={i}
               className="flex gap-3 items-start p-3 rounded-xl bg-[#fafafa] border border-[#f0f0f0]"
             >
-              {/* SKU image + Hover image */}
-              <div className="flex flex-col gap-1.5 shrink-0">
-                <SkuImageUploader
-                  imageUrl={sku.imageUrl}
-                  onUploaded={(url, path) => updateSku(i, { imageUrl: url, imagePath: path })}
-                  onRemove={() => updateSku(i, { imageUrl: "", imagePath: "" })}
-                  label="Main"
-                />
+              {/* SKU hover image */}
+              <div className="shrink-0">
                 <SkuImageUploader
                   imageUrl={sku.hoverImageUrl}
                   onUploaded={(url, path) => updateSku(i, { hoverImageUrl: url, hoverImagePath: path })}
@@ -819,11 +813,9 @@ function ProductForm({
     // At least one SKU with a price is required
     const firstSkuWithPrice = form.options.find((o) => o.price.trim());
     if (!firstSkuWithPrice && form.options.length === 0) return;
-    // Auto-derive top-level price and imageUrl from first SKU
+    // Auto-derive top-level price from first SKU
     const firstSku = form.options[0];
     const derivedPrice = firstSku?.price || "";
-    const derivedImageUrl = firstSku?.imageUrl || "";
-    const derivedImagePath = firstSku?.imagePath || "";
     // Always use SPU-derived values for powerSource/connectivity/features if linked
     const finalProductFeatures = form.spuId
       ? [...form.productFeatures.filter((f) => !allSpuDrivenLabels.includes(f)), ...derivedFeatureLabels]
@@ -831,8 +823,6 @@ function ProductForm({
     onSave({
       ...form,
       price: derivedPrice,
-      imageUrl: derivedImageUrl,
-      imagePath: derivedImagePath,
       powerSource: form.spuId ? derivedPowerSource : form.powerSource,
       connectivity: form.spuId ? derivedConnectivity : form.connectivity,
       productFeatures: finalProductFeatures,
@@ -884,6 +874,14 @@ function ProductForm({
             </div>
           </div>
         </div>
+
+        {/* Product Main Image */}
+        <ImageUploader
+          imageUrl={form.imageUrl}
+          imagePath={form.imagePath}
+          onUploaded={(url, path) => setForm((prev) => ({ ...prev, imageUrl: url, imagePath: path }))}
+          onRemove={() => setForm((prev) => ({ ...prev, imageUrl: "", imagePath: "" }))}
+        />
 
         {/* Category selector */}
         <div className="flex flex-col gap-2">

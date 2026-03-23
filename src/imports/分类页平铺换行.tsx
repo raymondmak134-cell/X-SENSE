@@ -17,8 +17,8 @@ import GlobalNav from "../app/components/global-nav";
 // Product card skeleton for loading state
 function ProductCardSkeleton() {
   return (
-    <div className="bg-white flex flex-col gap-[32px] items-start overflow-clip p-[20px] rounded-[32px] w-full" style={{ height: '100%' }}>
-      <div className="flex flex-col gap-[16px] items-start flex-[1_0_0] w-full">
+    <div className="bg-white flex flex-col gap-[20px] items-start overflow-clip p-[20px] rounded-[32px] w-full" style={{ height: '100%' }}>
+      <div className="flex flex-col gap-[16px] items-start shrink-0 w-full">
         {/* Image placeholder */}
         <div className="aspect-square w-full rounded-[16px] animate-pulse bg-[rgba(0,0,0,0.06)]" />
         {/* Product info */}
@@ -1336,7 +1336,7 @@ function Container32({ products, productsLoading }: { products: Product[]; produ
         products.map((product) => (
           <ProductCard
             key={product.id}
-            className="bg-white content-stretch flex flex-col gap-[32px] items-start overflow-clip p-[20px] relative rounded-[32px] w-full"
+            className="bg-white content-stretch flex flex-col gap-[20px] items-start overflow-clip p-[20px] relative rounded-[32px] w-full"
             product={product}
           />
         ))
