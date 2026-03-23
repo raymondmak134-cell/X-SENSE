@@ -769,7 +769,7 @@ function MobileProductCard({ product }: { product: Product }) {
   const [selectedSkuIndex, setSelectedSkuIndex] = useState(0);
   const selectedSku = product.options[selectedSkuIndex];
   const displayPrice = selectedSku?.price ? `$${selectedSku.price}` : product.price;
-  const displayImage = selectedSku?.imageUrl || product.imageUrl;
+  const displayImage = product.imageUrl;
 
   // Discount calculation
   const hasDiscount = selectedSku?.discountEnabled && selectedSku.discountPercent && selectedSku.price;

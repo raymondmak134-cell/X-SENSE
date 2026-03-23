@@ -120,7 +120,7 @@ export default function Container({ className, product }: { className?: string; 
 
   const selectedSku = options[selectedSkuIndex];
   const displayPrice = selectedSku?.price ? `$${selectedSku.price}` : defaultPrice;
-  const displayImage = selectedSku?.imageUrl || defaultImageUrl;
+  const displayImage = defaultImageUrl;
   const hoverImage = selectedSku?.hoverImageUrl || "";
 
   // Discount calculation
