@@ -148,78 +148,127 @@ export default function Container({ className, product, useNewCard }: { classNam
   if (useNewCard) {
     return (
       <div
-        className="bg-white relative rounded-[24px] w-full overflow-hidden flex flex-col group/card"
+        className="bg-white content-stretch flex flex-col gap-[20px] items-start overflow-clip pb-[20px] relative rounded-[32px] w-full"
         data-name="Container-V2"
         style={{ height: '100%' }}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-        {/* Full-bleed image area */}
-        <div className="relative w-full aspect-[4/3] overflow-hidden bg-[#f8f8f8]">
-          {imageLoading && (
-            <div className="absolute inset-0 z-10 bg-[rgba(0,0,0,0.06)]" style={{ animation: 'skuImagePulse 1.5s ease-in-out infinite' }} />
-          )}
-          <ImageWithFallback
-            alt={name}
-            className={`absolute inset-0 max-w-none object-cover pointer-events-none size-full transition-all duration-500 ease-in-out ${imageLoading ? 'opacity-0' : 'opacity-100'}`}
-            src={displayImage}
-            onLoad={handleImageLoaded}
-            style={{
-              transform: isHovered ? 'scale(1.05)' : 'scale(1)',
-            }}
-          />
-          {hoverImage && (
-            <img
-              src={hoverImage}
-              alt=""
-              className="absolute inset-0 size-full object-cover transition-all duration-500 ease-in-out"
-              style={{
-                opacity: isHovered ? 1 : 0,
-                transform: isHovered ? 'scale(1)' : 'scale(1.08)',
-                willChange: 'transform, opacity',
-              }}
+        {/* Product Container: image + name + pack badges */}
+        <div className="content-stretch flex flex-col gap-[8px] items-start relative shrink-0 w-full">
+          {/* Product image — full-bleed, fixed 250px height */}
+          <div className="bg-[#e8e8e8] h-[250px] shrink-0 w-full relative overflow-hidden">
+            <ImageWithFallback
+              alt={name}
+              className="absolute inset-0 max-w-none object-cover pointer-events-none size-full"
+              src={displayImage}
             />
-          )}
-          <ConnectivityBadge connectivity={product?.connectivity} />
-          {hasDiscount && (
-            <div className="absolute bg-[#ba0020] flex h-[24px] items-center justify-center px-[8px] rounded-[6px] right-[12px] top-[12px] z-[15] pointer-events-none">
-              <p className="font-['Inter:Medium',sans-serif] font-medium leading-[20px] not-italic text-[14px] text-white whitespace-nowrap">{selectedSku.discountPercent}% OFF</p>
+            {/* Hover V2 image overlay — same animation as old card */}
+            {hoverImage && (
+              <img
+                src={hoverImage}
+                alt=""
+                className="absolute inset-0 size-full object-cover transition-all duration-500 ease-in-out pointer-events-none"
+                style={{
+                  opacity: isHovered ? 1 : 0,
+                  transform: isHovered ? 'scale(1) translate3d(0,0,0)' : 'scale(1.08) translate3d(0,0,0)',
+                  willChange: 'transform, opacity',
+                  backfaceVisibility: 'hidden',
+                }}
+              />
+            )}
+          </div>
+
+          {/* Product name — fixed 2-line height */}
+          <div className="content-stretch flex flex-col items-start px-[16px] relative shrink-0 w-full">
+            <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[24px] not-italic relative shrink-0 text-[18px] text-black w-full h-[48px] overflow-hidden" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+              {name}
+            </p>
+          </div>
+
+          {/* Pack badges row — driven by SKU data */}
+          {options.some(o => o.packEnabled && o.packQty) && (
+            <div className="content-stretch flex gap-[8px] items-start px-[16px] relative shrink-0 w-full">
+              {options.map((sku, i) => {
+                if (!sku.packEnabled || !sku.packQty) return null;
+                const isActive = i === selectedSkuIndex;
+
+                if (sku.includeBaseStation) {
+                  return (
+                    <div
+                      key={i}
+                      className="border border-solid content-stretch flex flex-col items-center overflow-clip relative rounded-[12px] shrink-0 cursor-pointer"
+                      style={{ borderColor: isActive ? '#ba0020' : '#f6dbdb' }}
+                      onClick={() => setSelectedSkuIndex(i)}
+                    >
+                      <div className="content-stretch flex flex-col items-center justify-center px-[4px] relative shrink-0">
+                        <div className="content-stretch flex gap-[2px] items-center not-italic relative shrink-0 pr-[4px]" style={{ color: isActive ? '#ba0020' : '#f6dbdb' }}>
+                          <p className="font-['Inter:Bold',sans-serif] font-bold leading-[36px] relative shrink-0 text-[26px] text-center whitespace-nowrap">
+                            {sku.packQty}+1
+                          </p>
+                          <div className="flex flex-col font-['Inter:Extra_Bold',sans-serif] font-extrabold h-[21px] justify-center leading-[11px] relative shrink-0 text-[11px] w-[40px]">
+                            <p className="mb-0">Base</p>
+                            <p>Station</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="content-stretch flex items-center justify-center relative shrink-0 w-full" style={{ backgroundColor: isActive ? '#ba0020' : '#f6dbdb' }}>
+                        <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[16px] not-italic relative shrink-0 text-[12px] text-white whitespace-nowrap">
+                          Pack
+                        </p>
+                      </div>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div
+                    key={i}
+                    className="border border-solid content-stretch flex flex-col items-center min-w-[44px] overflow-clip relative rounded-[12px] shrink-0 cursor-pointer"
+                    style={{ borderColor: isActive ? '#ba0020' : '#f6dbdb' }}
+                    onClick={() => setSelectedSkuIndex(i)}
+                  >
+                    <div className="content-stretch flex flex-col items-center justify-center px-[4px] relative shrink-0">
+                      <p className="font-['Inter:Bold',sans-serif] font-bold leading-[36px] not-italic relative shrink-0 text-[26px] text-center whitespace-nowrap" style={{ color: isActive ? '#ba0020' : '#f6dbdb' }}>
+                        {sku.packQty}
+                      </p>
+                    </div>
+                    <div className="content-stretch flex items-center justify-center relative shrink-0 w-full" style={{ backgroundColor: isActive ? '#ba0020' : '#f6dbdb' }}>
+                      <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[16px] not-italic relative shrink-0 text-[12px] text-white whitespace-nowrap">
+                        Pack
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-          )}
-          {isHot && (
-            <div className="absolute top-[12px] right-[12px] z-[14] pointer-events-none" style={hasDiscount ? { top: '44px' } : {}}>
-              <span className="bg-white/90 backdrop-blur-sm text-[#ba0020] font-['Inter:Semi_Bold',sans-serif] font-semibold text-[12px] leading-[20px] px-[8px] py-[2px] rounded-[6px]">Hot</span>
-            </div>
-          )}
-          {selectedSku?.packEnabled && selectedSku.packQty && (
-            <PackBadge qty={selectedSku.packQty} />
           )}
         </div>
 
-        {/* Info section */}
-        <div className="flex flex-col flex-1 p-[16px] gap-[12px]">
-          <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[22px] not-italic text-[16px] text-black w-full h-[44px] overflow-hidden" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{name}</p>
-
-          <div className="relative shrink-0 w-full overflow-hidden" data-name="Product Features" style={{ height: '68px' }}>
-            <ProductFeatures features={features} />
-          </div>
-
-          {options.length > 0 && (
-            <SkuDropdown options={options} iconSize="sm" onSelect={setSelectedSkuIndex} />
-          )}
-
-          {/* Price + cart row */}
-          <div className="flex items-center justify-between mt-auto pt-[8px] border-t border-[rgba(0,0,0,0.06)]">
+        {/* Price Container */}
+        <div className="content-stretch flex items-center justify-between px-[16px] relative shrink-0 w-full">
+          <div className="content-stretch flex h-[34px] items-center relative shrink-0">
             {hasDiscount ? (
-              <div className="flex flex-col">
-                <p className="font-['Inter:Bold',sans-serif] font-bold leading-[28px] not-italic text-[22px] text-[#ba0020] whitespace-nowrap">{discountedPrice}</p>
-                <p className="[text-decoration-skip-ink:none] decoration-solid font-['Inter:Regular',sans-serif] font-normal leading-[14px] line-through text-[12px] text-[rgba(0,0,0,0.35)] whitespace-nowrap">{displayPrice}</p>
+              <div className="content-stretch flex gap-[4px] h-[34px] items-end justify-center not-italic relative shrink-0">
+                <p className="font-['Inter:Bold',sans-serif] font-bold leading-[34px] relative shrink-0 text-[24px] text-[#ba0020] whitespace-nowrap">
+                  {discountedPrice}
+                </p>
+                <p className="[text-decoration-skip-ink:none] decoration-solid font-['Inter:Regular',sans-serif] font-normal h-[20px] leading-[16px] line-through relative shrink-0 text-[12px] text-[rgba(0,0,0,0.4)]">
+                  {displayPrice}
+                </p>
               </div>
             ) : (
-              <p className="font-['Inter:Bold',sans-serif] font-bold leading-[28px] not-italic text-[22px] text-black whitespace-nowrap">{displayPrice}</p>
+              <p className="font-['Inter:Bold',sans-serif] font-bold leading-[34px] relative shrink-0 text-[24px] text-black whitespace-nowrap">
+                {displayPrice}
+              </p>
             )}
-            <div className="bg-[#101820] flex items-center justify-center w-[40px] h-[40px] rounded-full shrink-0 transition-colors duration-200 hover:bg-[#ba0020]">
-              <svg className="block w-[18px] h-[18px]" fill="none" viewBox="0 0 20.2399 20.2998">
+          </div>
+          <div
+            className="bg-[#ba0020] flex gap-[4px] h-[40px] items-center justify-center px-[16px] py-[8px] rounded-[50px] shrink-0 overflow-hidden transition-all duration-300 ease-in-out cursor-pointer"
+            style={{ width: isHovered ? 130 : 96 }}
+          >
+            <div className="overflow-clip relative shrink-0 size-[20px] flex items-center justify-center">
+              <svg className="block w-[20.24px] h-[20.3px]" fill="none" viewBox="0 0 20.2399 20.2998">
                 <g id="Union">
                   <path d={svgPaths.p38729380} fill="white" />
                   <path d={svgPaths.p1829b100} fill="white" />
@@ -228,14 +277,34 @@ export default function Container({ className, product, useNewCard }: { classNam
                 </g>
               </svg>
             </div>
+            <p
+              className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[20px] not-italic text-[14px] text-white text-center whitespace-nowrap transition-all duration-300 ease-in-out"
+              style={{
+                opacity: isHovered ? 1 : 0,
+                maxWidth: isHovered ? 80 : 0,
+                overflow: 'hidden',
+              }}
+            >
+              Add Cart
+            </p>
           </div>
         </div>
-        <style>{`
-          @keyframes skuImagePulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.4; }
-          }
-        `}</style>
+
+        {/* "Hot" label — positioned at bottom of image area */}
+        {isHot && (
+          <p className="absolute font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[20px] left-[16px] not-italic text-[14px] text-[#ba0020] top-[240.5px] whitespace-nowrap">
+            Hot
+          </p>
+        )}
+
+        {/* Discount tag — top-left corner, only shown when SKU has discount enabled */}
+        {hasDiscount && (
+          <div className="absolute bg-[#ba0020] content-stretch flex h-[24px] items-center justify-center left-[16px] px-[6px] rounded-[8px] top-[16px] w-[80px]">
+            <p className="font-['Inter:Medium',sans-serif] font-medium leading-[20px] not-italic relative shrink-0 text-[14px] text-white whitespace-nowrap">
+              {selectedSku.discountPercent}% OFF
+            </p>
+          </div>
+        )}
       </div>
     );
   }
