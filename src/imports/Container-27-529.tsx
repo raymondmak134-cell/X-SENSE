@@ -119,6 +119,7 @@ export default function Container({ className, product, useNewCard }: { classNam
   const [imageLoading, setImageLoading] = useState(false);
   const prevImageRef = useRef<string>("");
   const [isHovered, setIsHovered] = useState(false);
+  const [isImageHovered, setIsImageHovered] = useState(false);
 
   const selectedSku = options[selectedSkuIndex];
   const displayPrice = selectedSku?.price ? `$${selectedSku.price}` : defaultPrice;
@@ -156,22 +157,26 @@ export default function Container({ className, product, useNewCard }: { classNam
       >
         {/* Product Container: image + name + pack badges */}
         <div className="content-stretch flex flex-col gap-[8px] items-start relative shrink-0 w-full">
-          {/* Product image — full-bleed, fixed 250px height */}
-          <div className="bg-[#e8e8e8] h-[250px] shrink-0 w-full relative overflow-hidden">
+          {/* Product image — full-bleed, fixed 250px height; hover image triggers on image area only */}
+          <div
+            className="bg-[#e8e8e8] h-[250px] shrink-0 w-full relative overflow-hidden"
+            onMouseEnter={() => setIsImageHovered(true)}
+            onMouseLeave={() => setIsImageHovered(false)}
+          >
             <ImageWithFallback
               alt={name}
               className="absolute inset-0 max-w-none object-cover pointer-events-none size-full"
               src={displayImage}
             />
-            {/* Hover V2 image overlay — same animation as old card */}
+            {/* Hover V2 image overlay — triggers on image area hover */}
             {hoverImage && (
               <img
                 src={hoverImage}
                 alt=""
                 className="absolute inset-0 size-full object-cover transition-all duration-500 ease-in-out pointer-events-none"
                 style={{
-                  opacity: isHovered ? 1 : 0,
-                  transform: isHovered ? 'scale(1) translate3d(0,0,0)' : 'scale(1.08) translate3d(0,0,0)',
+                  opacity: isImageHovered ? 1 : 0,
+                  transform: isImageHovered ? 'scale(1) translate3d(0,0,0)' : 'scale(1.08) translate3d(0,0,0)',
                   willChange: 'transform, opacity',
                   backfaceVisibility: 'hidden',
                 }}
@@ -198,11 +203,11 @@ export default function Container({ className, product, useNewCard }: { classNam
                     <div
                       key={i}
                       className="border border-solid content-stretch flex flex-col items-center overflow-clip relative rounded-[12px] shrink-0 cursor-pointer"
-                      style={{ borderColor: isActive ? '#ba0020' : '#f6dbdb' }}
+                      style={{ borderColor: isActive ? '#101820' : '#DADADA' }}
                       onClick={() => setSelectedSkuIndex(i)}
                     >
                       <div className="content-stretch flex flex-col items-center justify-center px-[4px] relative shrink-0">
-                        <div className="content-stretch flex gap-[2px] items-center not-italic relative shrink-0 pr-[4px]" style={{ color: isActive ? '#ba0020' : '#f6dbdb' }}>
+                        <div className="content-stretch flex gap-[2px] items-center not-italic relative shrink-0 pr-[4px]" style={{ color: isActive ? '#101820' : '#DADADA' }}>
                           <p className="font-['Inter:Bold',sans-serif] font-bold leading-[36px] relative shrink-0 text-[26px] text-center whitespace-nowrap">
                             {sku.packQty}+1
                           </p>
@@ -212,7 +217,7 @@ export default function Container({ className, product, useNewCard }: { classNam
                           </div>
                         </div>
                       </div>
-                      <div className="content-stretch flex items-center justify-center relative shrink-0 w-full" style={{ backgroundColor: isActive ? '#ba0020' : '#f6dbdb' }}>
+                      <div className="content-stretch flex items-center justify-center relative shrink-0 w-full" style={{ backgroundColor: isActive ? '#101820' : '#DADADA' }}>
                         <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[16px] not-italic relative shrink-0 text-[12px] text-white whitespace-nowrap">
                           Pack
                         </p>
@@ -225,15 +230,15 @@ export default function Container({ className, product, useNewCard }: { classNam
                   <div
                     key={i}
                     className="border border-solid content-stretch flex flex-col items-center min-w-[44px] overflow-clip relative rounded-[12px] shrink-0 cursor-pointer"
-                    style={{ borderColor: isActive ? '#ba0020' : '#f6dbdb' }}
+                    style={{ borderColor: isActive ? '#101820' : '#DADADA' }}
                     onClick={() => setSelectedSkuIndex(i)}
                   >
                     <div className="content-stretch flex flex-col items-center justify-center px-[4px] relative shrink-0">
-                      <p className="font-['Inter:Bold',sans-serif] font-bold leading-[36px] not-italic relative shrink-0 text-[26px] text-center whitespace-nowrap" style={{ color: isActive ? '#ba0020' : '#f6dbdb' }}>
+                      <p className="font-['Inter:Bold',sans-serif] font-bold leading-[36px] not-italic relative shrink-0 text-[26px] text-center whitespace-nowrap" style={{ color: isActive ? '#101820' : '#DADADA' }}>
                         {sku.packQty}
                       </p>
                     </div>
-                    <div className="content-stretch flex items-center justify-center relative shrink-0 w-full" style={{ backgroundColor: isActive ? '#ba0020' : '#f6dbdb' }}>
+                    <div className="content-stretch flex items-center justify-center relative shrink-0 w-full" style={{ backgroundColor: isActive ? '#101820' : '#DADADA' }}>
                       <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[16px] not-italic relative shrink-0 text-[12px] text-white whitespace-nowrap">
                         Pack
                       </p>
@@ -264,8 +269,8 @@ export default function Container({ className, product, useNewCard }: { classNam
             )}
           </div>
           <div
-            className="bg-[#ba0020] flex gap-[4px] h-[40px] items-center justify-center px-[16px] py-[8px] rounded-[50px] shrink-0 overflow-hidden transition-all duration-300 ease-in-out cursor-pointer"
-            style={{ width: isHovered ? 130 : 96 }}
+            className="bg-[#ba0020] flex gap-[4px] h-[40px] items-center justify-center rounded-full shrink-0 overflow-hidden transition-all duration-300 ease-in-out cursor-pointer"
+            style={{ width: isHovered ? 130 : 40, paddingLeft: isHovered ? 16 : 0, paddingRight: isHovered ? 16 : 0 }}
           >
             <div className="overflow-clip relative shrink-0 size-[20px] flex items-center justify-center">
               <svg className="block w-[20.24px] h-[20.3px]" fill="none" viewBox="0 0 20.2399 20.2998">

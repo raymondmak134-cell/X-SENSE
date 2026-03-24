@@ -765,17 +765,132 @@ function MobileProductCardSkeleton() {
   );
 }
 
-function MobileProductCard({ product }: { product: Product }) {
+function MobileProductCard({ product, useNewCard }: { product: Product; useNewCard?: boolean }) {
   const [selectedSkuIndex, setSelectedSkuIndex] = useState(0);
   const selectedSku = product.options[selectedSkuIndex];
   const displayPrice = selectedSku?.price ? `$${selectedSku.price}` : product.price;
-  const displayImage = product.imageUrl;
+  const v2Image = (product as any).imageUrlV2 || "";
+  const displayImage = (useNewCard && v2Image) ? v2Image : product.imageUrl;
 
   // Discount calculation
   const hasDiscount = selectedSku?.discountEnabled && selectedSku.discountPercent && selectedSku.price;
   const discountedPrice = hasDiscount
     ? `$${(parseFloat(selectedSku.price) * (1 - parseInt(selectedSku.discountPercent, 10) / 100)).toFixed(2)}`
     : null;
+
+  if (useNewCard) {
+    const options = product.options;
+    const hasPacks = options.some(o => o.packEnabled && o.packQty);
+
+    return (
+      <div className="bg-white relative rounded-[32px] shrink-0 w-full overflow-clip" data-name="Product Card V2">
+        {/* Product Container: image + name + pack badges */}
+        <div className="content-stretch flex flex-col gap-[8px] items-start relative shrink-0 w-full">
+          {/* Full-bleed image */}
+          <div className="bg-[#e8e8e8] h-[250px] shrink-0 w-full relative overflow-hidden">
+            <ImageWithFallback alt={product.name} className="absolute inset-0 max-w-none object-cover pointer-events-none size-full" src={displayImage} />
+          </div>
+
+          {/* Product name — fixed 2-line height */}
+          <div className="content-stretch flex flex-col items-start px-[16px] relative shrink-0 w-full">
+            <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[24px] not-italic relative shrink-0 text-[18px] text-black w-full h-[48px] overflow-hidden" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+              {product.name}
+            </p>
+          </div>
+
+          {/* Pack badges row */}
+          {hasPacks && (
+            <div className="content-stretch flex gap-[8px] items-start px-[16px] relative shrink-0 w-full">
+              {options.map((sku, i) => {
+                if (!sku.packEnabled || !sku.packQty) return null;
+                const isActive = i === selectedSkuIndex;
+
+                if (sku.includeBaseStation) {
+                  return (
+                    <div
+                      key={i}
+                      className="border border-solid content-stretch flex flex-col items-center overflow-clip relative rounded-[12px] shrink-0 cursor-pointer"
+                      style={{ borderColor: isActive ? '#101820' : '#DADADA' }}
+                      onClick={() => setSelectedSkuIndex(i)}
+                    >
+                      <div className="content-stretch flex flex-col items-center justify-center px-[4px] relative shrink-0">
+                        <div className="content-stretch flex gap-[2px] items-center not-italic relative shrink-0 pr-[4px]" style={{ color: isActive ? '#101820' : '#DADADA' }}>
+                          <p className="font-['Inter:Bold',sans-serif] font-bold leading-[36px] relative shrink-0 text-[26px] text-center whitespace-nowrap">{sku.packQty}+1</p>
+                          <div className="flex flex-col font-['Inter:Extra_Bold',sans-serif] font-extrabold h-[21px] justify-center leading-[11px] relative shrink-0 text-[11px] w-[40px]">
+                            <p className="mb-0">Base</p>
+                            <p>Station</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="content-stretch flex items-center justify-center relative shrink-0 w-full" style={{ backgroundColor: isActive ? '#101820' : '#DADADA' }}>
+                        <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[16px] not-italic relative shrink-0 text-[12px] text-white whitespace-nowrap">Pack</p>
+                      </div>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div
+                    key={i}
+                    className="border border-solid content-stretch flex flex-col items-center min-w-[44px] overflow-clip relative rounded-[12px] shrink-0 cursor-pointer"
+                    style={{ borderColor: isActive ? '#101820' : '#DADADA' }}
+                    onClick={() => setSelectedSkuIndex(i)}
+                  >
+                    <div className="content-stretch flex flex-col items-center justify-center px-[4px] relative shrink-0">
+                      <p className="font-['Inter:Bold',sans-serif] font-bold leading-[36px] not-italic relative shrink-0 text-[26px] text-center whitespace-nowrap" style={{ color: isActive ? '#101820' : '#DADADA' }}>{sku.packQty}</p>
+                    </div>
+                    <div className="content-stretch flex items-center justify-center relative shrink-0 w-full" style={{ backgroundColor: isActive ? '#101820' : '#DADADA' }}>
+                      <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[16px] not-italic relative shrink-0 text-[12px] text-white whitespace-nowrap">Pack</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Price Container */}
+        <div className="content-stretch flex items-center justify-between px-[16px] py-[20px] relative shrink-0 w-full">
+          <div className="content-stretch flex h-[34px] items-center relative shrink-0">
+            {hasDiscount ? (
+              <div className="content-stretch flex gap-[4px] h-[34px] items-end justify-center not-italic relative shrink-0">
+                <p className="font-['Inter:Bold',sans-serif] font-bold leading-[34px] relative shrink-0 text-[24px] text-[#ba0020] whitespace-nowrap">{discountedPrice}</p>
+                <p className="[text-decoration-skip-ink:none] decoration-solid font-['Inter:Regular',sans-serif] font-normal h-[20px] leading-[16px] line-through relative shrink-0 text-[12px] text-[rgba(0,0,0,0.4)]">{displayPrice}</p>
+              </div>
+            ) : (
+              <p className="font-['Inter:Bold',sans-serif] font-bold leading-[34px] relative shrink-0 text-[24px] text-black whitespace-nowrap">{displayPrice}</p>
+            )}
+          </div>
+          <div className="bg-[#ba0020] content-stretch flex gap-[4px] h-[40px] items-center justify-center px-[16px] py-[8px] relative rounded-[50px] shrink-0 w-[96px]">
+            <div className="overflow-clip relative shrink-0 size-[20px]" data-name="icon/常规/购物车">
+              <div className="absolute inset-[7.08%_10.67%_8.33%_5%]" data-name="Union">
+                <svg className="absolute block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 16.8666 16.9165">
+                  <g id="Union">
+                    <path d={svgPaths.p2c3b9880} fill="var(--fill-0, white)" />
+                    <path d={svgPaths.p393cb180} fill="var(--fill-0, white)" />
+                    <path d={svgPaths.p1f161380} fill="var(--fill-0, white)" />
+                    <path d={svgPaths.p35d67700} fill="var(--fill-0, white)" />
+                  </g>
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* "Hot" label — at bottom of image */}
+        {product.isHot && (
+          <p className="absolute font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[20px] left-[16px] not-italic text-[14px] text-[#ba0020] top-[240.5px] whitespace-nowrap">Hot</p>
+        )}
+
+        {/* Discount tag — top-left */}
+        {hasDiscount && (
+          <div className="absolute bg-[#ba0020] content-stretch flex h-[24px] items-center justify-center left-[16px] px-[6px] rounded-[8px] top-[16px] w-[80px]">
+            <p className="font-['Inter:Medium',sans-serif] font-medium leading-[20px] not-italic relative shrink-0 text-[14px] text-white whitespace-nowrap">{selectedSku.discountPercent}% OFF</p>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white relative rounded-[32px] shrink-0 w-full" data-name="Product Card">
@@ -784,7 +899,7 @@ function MobileProductCard({ product }: { product: Product }) {
         <div className="content-stretch flex flex-col gap-[24px] items-start p-[20px] relative w-full">
           <div className="content-stretch flex flex-col gap-[16px] items-start relative shrink-0 w-full" data-name="Product Container">
             <div className="aspect-[307/307] relative shrink-0 w-full" data-name="Product Image">
-              <ImageWithFallback alt={product.name} className="absolute inset-0 max-w-none object-cover pointer-events-none size-full" src={displayImage} />
+              <ImageWithFallback alt={product.name} className="absolute inset-0 max-w-none object-cover pointer-events-none size-full" src={product.imageUrl} />
             </div>
             <div className="content-stretch flex flex-col gap-[12px] items-start relative shrink-0 w-full" data-name="Product Info">
               <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[24px] not-italic relative shrink-0 text-[18px] text-black w-full">{product.name}</p>
@@ -839,14 +954,14 @@ function MobileProductCard({ product }: { product: Product }) {
   );
 }
 
-function ProductListContainer({ products, productsLoading }: { products: Product[]; productsLoading?: boolean }) {
+function ProductListContainer({ products, productsLoading, useNewCard }: { products: Product[]; productsLoading?: boolean; useNewCard?: boolean }) {
   return (
     <div className="content-stretch flex flex-col gap-[16px] items-center relative shrink-0 w-full" data-name="Product List Container">
       {productsLoading ? (
         [0, 1, 2].map((i) => <MobileProductCardSkeleton key={`skeleton-${i}`} />)
       ) : (
         products.map((product) => (
-          <MobileProductCard key={product.id} product={product} />
+          <MobileProductCard key={product.id} product={product} useNewCard={useNewCard} />
         ))
       )}
     </div>
@@ -855,11 +970,11 @@ function ProductListContainer({ products, productsLoading }: { products: Product
 
 /* ========== 主内容区域 ========== */
 
-function MainContainer({ productCount, hasAnyChecked, onReset, filteredProducts, onCompare, productsLoading }: { productCount: number; hasAnyChecked: boolean; onReset: () => void; filteredProducts: Product[]; onCompare?: () => void; productsLoading?: boolean }) {
+function MainContainer({ productCount, hasAnyChecked, onReset, filteredProducts, onCompare, productsLoading, useNewCard }: { productCount: number; hasAnyChecked: boolean; onReset: () => void; filteredProducts: Product[]; onCompare?: () => void; productsLoading?: boolean; useNewCard?: boolean }) {
   return (
     <div className="content-stretch flex flex-col gap-[20px] items-start px-[20px] w-full" data-name="Main Container">
       <Header productCount={productCount} hasAnyChecked={hasAnyChecked} onReset={onReset} onCompare={onCompare} />
-      <ProductListContainer products={filteredProducts} productsLoading={productsLoading} />
+      <ProductListContainer products={filteredProducts} productsLoading={productsLoading} useNewCard={useNewCard} />
     </div>
   );
 }
@@ -876,6 +991,18 @@ export default function Component({ products = [], productsLoading = false, cate
 
   const handleReset = useCallback(() => {
     setCheckboxStates(defaultCheckboxStates);
+  }, []);
+
+  // Card style toggle (shared with desktop via localStorage)
+  const [useNewCard, setUseNewCard] = useState(() => {
+    try { return localStorage.getItem('cardStyle') === 'new'; } catch { return false; }
+  });
+  const toggleCardStyle = useCallback(() => {
+    setUseNewCard(prev => {
+      const next = !prev;
+      try { localStorage.setItem('cardStyle', next ? 'new' : 'old'); } catch {}
+      return next;
+    });
   }, []);
 
   return (
@@ -897,7 +1024,7 @@ export default function Component({ products = [], productsLoading = false, cate
 
           {/* 主内容区域 - 自然流式布局 */}
           <div className="pt-[20px] pb-[40px]">
-            <MainContainer productCount={filteredProducts.length} hasAnyChecked={hasAnyChecked} onReset={handleReset} filteredProducts={filteredProducts} onCompare={() => setCompareOpen(true)} productsLoading={productsLoading} />
+            <MainContainer productCount={filteredProducts.length} hasAnyChecked={hasAnyChecked} onReset={handleReset} filteredProducts={filteredProducts} onCompare={() => setCompareOpen(true)} productsLoading={productsLoading} useNewCard={useNewCard} />
           </div>
 
           {/* Footer */}
@@ -907,6 +1034,33 @@ export default function Component({ products = [], productsLoading = false, cate
 
       {/* 移动端比较对话框 */}
       <MobileCompareDialog open={compareOpen} onClose={() => setCompareOpen(false)} categoryId={categoryId} />
+
+      {/* Floating style toggle ball */}
+      <div
+        className="fixed right-[16px] bottom-[24px] z-[999] cursor-pointer select-none"
+        onClick={toggleCardStyle}
+      >
+        <div className={`
+          w-[48px] h-[48px] rounded-full shadow-lg flex items-center justify-center
+          transition-all duration-300 ease-in-out active:scale-95
+          ${useNewCard
+            ? 'bg-[#ba0020] text-white'
+            : 'bg-white text-[#333] border border-[rgba(0,0,0,0.1)]'
+          }
+        `}>
+          <div className="flex flex-col items-center gap-[1px]">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="3" width="7" height="7" rx="1" />
+              <rect x="14" y="3" width="7" height="7" rx="1" />
+              <rect x="3" y="14" width="7" height="7" rx="1" />
+              <rect x="14" y="14" width="7" height="7" rx="1" />
+            </svg>
+            <span className="text-[9px] font-semibold leading-none font-['Inter:Semi_Bold',sans-serif]">
+              {useNewCard ? 'NEW' : 'OLD'}
+            </span>
+          </div>
+        </div>
+      </div>
     </>
   );
 }
