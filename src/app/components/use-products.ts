@@ -11,10 +11,13 @@ export interface SkuOption {
   imagePath: string;
   hoverImageUrl: string;
   hoverImagePath: string;
+  hoverImageUrlV2: string;
+  hoverImagePathV2: string;
   packEnabled: boolean;
   packQty: string;
   discountEnabled: boolean;
   discountPercent: string;
+  includeBaseStation: boolean;
 }
 
 export interface Product {
@@ -22,6 +25,8 @@ export interface Product {
   name: string;
   imageUrl: string;
   imagePath: string;
+  imageUrlV2: string;
+  imagePathV2: string;
   features: string[];
   options: SkuOption[];
   price: string;
@@ -44,20 +49,26 @@ export function normalizeProduct(raw: any): Product {
       imagePath: "",
       hoverImageUrl: "",
       hoverImagePath: "",
+      hoverImageUrlV2: "",
+      hoverImagePathV2: "",
       packEnabled: false,
       packQty: "",
       discountEnabled: false,
       discountPercent: "",
+      includeBaseStation: false,
     }));
   } else if (Array.isArray(p.options)) {
     // Ensure existing object SKUs have hover fields
     p.options = p.options.map((o: any) => ({
       hoverImageUrl: "",
       hoverImagePath: "",
+      hoverImageUrlV2: "",
+      hoverImagePathV2: "",
       packEnabled: false,
       packQty: "",
       discountEnabled: false,
       discountPercent: "",
+      includeBaseStation: false,
       ...o,
     }));
   }

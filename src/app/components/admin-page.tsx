@@ -112,6 +112,8 @@ export interface Product {
   name: string;
   imageUrl: string;
   imagePath: string; // storage path for cleanup
+  imageUrlV2: string;
+  imagePathV2: string;
   features: string[];
   options: SkuOption[];
   price: string;
@@ -251,11 +253,13 @@ function ImageUploader({
   imagePath,
   onUploaded,
   onRemove,
+  label = "Product Image",
 }: {
   imageUrl: string;
   imagePath: string;
   onUploaded: (url: string, path: string) => void;
   onRemove: () => void;
+  label?: string;
 }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -301,7 +305,7 @@ function ImageUploader({
   if (imageUrl) {
     return (
       <div className="flex flex-col gap-2">
-        <label className="text-[13px] text-[#555]">Product Image</label>
+        <label className="text-[13px] text-[#555]">{label}</label>
         <div className="relative w-[160px] h-[160px] rounded-xl overflow-hidden border border-[#e0e0e0] group">
           <img
             src={imageUrl}
@@ -324,7 +328,7 @@ function ImageUploader({
 
   return (
     <div className="flex flex-col gap-2">
-      <label className="text-[13px] text-[#555]">Product Image</label>
+      <label className="text-[13px] text-[#555]">{label}</label>
       <div
         className={`relative w-full h-[140px] rounded-xl border-2 border-dashed flex flex-col items-center justify-center gap-2 cursor-pointer transition-colors ${
           dragOver
@@ -569,7 +573,7 @@ function SkuOptionsEditor({
   const addSku = () => {
     const name = newName.trim();
     if (!name) return;
-    onChange([...options, { name, price: "", imageUrl: "", imagePath: "", hoverImageUrl: "", hoverImagePath: "", packEnabled: false, packQty: "", discountEnabled: false, discountPercent: "" }]);
+    onChange([...options, { name, price: "", imageUrl: "", imagePath: "", hoverImageUrl: "", hoverImagePath: "", hoverImageUrlV2: "", hoverImagePathV2: "", packEnabled: false, packQty: "", discountEnabled: false, discountPercent: "", includeBaseStation: false }]);
     setNewName("");
   };
 
@@ -613,13 +617,19 @@ function SkuOptionsEditor({
               key={i}
               className="flex gap-3 items-start p-3 rounded-xl bg-[#fafafa] border border-[#f0f0f0]"
             >
-              {/* SKU hover image */}
-              <div className="shrink-0">
+              {/* SKU hover images */}
+              <div className="shrink-0 flex gap-2">
                 <SkuImageUploader
                   imageUrl={sku.hoverImageUrl}
                   onUploaded={(url, path) => updateSku(i, { hoverImageUrl: url, hoverImagePath: path })}
                   onRemove={() => updateSku(i, { hoverImageUrl: "", hoverImagePath: "" })}
                   label="Hover"
+                />
+                <SkuImageUploader
+                  imageUrl={sku.hoverImageUrlV2}
+                  onUploaded={(url, path) => updateSku(i, { hoverImageUrlV2: url, hoverImagePathV2: path })}
+                  onRemove={() => updateSku(i, { hoverImageUrlV2: "", hoverImagePathV2: "" })}
+                  label="Hover V2"
                 />
               </div>
 
@@ -701,6 +711,18 @@ function SkuOptionsEditor({
                     </>
                   )}
                 </div>
+                {/* Include Base Station toggle */}
+                <div className="flex items-center gap-2">
+                  <label className="flex items-center gap-1.5 cursor-pointer select-none shrink-0">
+                    <input
+                      type="checkbox"
+                      checked={!!sku.includeBaseStation}
+                      onChange={(e) => updateSku(i, { includeBaseStation: e.target.checked })}
+                      className="accent-[#ba0020] size-3.5 cursor-pointer"
+                    />
+                    <span className="text-[12px] text-[#999]">Include Base Station</span>
+                  </label>
+                </div>
               </div>
             </div>
           ))}
@@ -733,6 +755,8 @@ function ProductForm({
     name: product?.name ?? "",
     imageUrl: product?.imageUrl ?? "",
     imagePath: product?.imagePath ?? "",
+    imageUrlV2: product?.imageUrlV2 ?? "",
+    imagePathV2: product?.imagePathV2 ?? "",
     features: product?.features ?? [],
     options: product?.options ?? [],
     price: product?.price ?? "",
@@ -881,6 +905,15 @@ function ProductForm({
           imagePath={form.imagePath}
           onUploaded={(url, path) => setForm((prev) => ({ ...prev, imageUrl: url, imagePath: path }))}
           onRemove={() => setForm((prev) => ({ ...prev, imageUrl: "", imagePath: "" }))}
+        />
+
+        {/* Product Image V2 – for new product card style */}
+        <ImageUploader
+          label="Product Image V2"
+          imageUrl={form.imageUrlV2}
+          imagePath={form.imagePathV2}
+          onUploaded={(url, path) => setForm((prev) => ({ ...prev, imageUrlV2: url, imagePathV2: path }))}
+          onRemove={() => setForm((prev) => ({ ...prev, imageUrlV2: "", imagePathV2: "" }))}
         />
 
         {/* Category selector */}

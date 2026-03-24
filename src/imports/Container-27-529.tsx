@@ -12,6 +12,7 @@ interface ProductData {
   id: string;
   name: string;
   imageUrl: string;
+  imageUrlV2?: string;
   features: string[];
   options: SkuOption[];
   price: string;
@@ -101,9 +102,10 @@ function ConnectivityBadge({ connectivity }: { connectivity?: string[] }) {
   );
 }
 
-export default function Container({ className, product }: { className?: string; product?: ProductData }) {
+export default function Container({ className, product, useNewCard }: { className?: string; product?: ProductData; useNewCard?: boolean }) {
   const name = product?.name || "XS0B-MR Interconnected Smart Smoke Alarm";
   const defaultImageUrl = product?.imageUrl || imgProductImage;
+  const v2ImageUrl = product?.imageUrlV2 || "";
   const features = product?.features || [
     "Voice Alarm with Location",
     "Easy Magnetic Mount",
@@ -120,8 +122,10 @@ export default function Container({ className, product }: { className?: string; 
 
   const selectedSku = options[selectedSkuIndex];
   const displayPrice = selectedSku?.price ? `$${selectedSku.price}` : defaultPrice;
-  const displayImage = defaultImageUrl;
-  const hoverImage = selectedSku?.hoverImageUrl || "";
+  const displayImage = (useNewCard && v2ImageUrl) ? v2ImageUrl : defaultImageUrl;
+  const hoverImage = useNewCard
+    ? (selectedSku?.hoverImageUrlV2 || selectedSku?.hoverImageUrl || "")
+    : (selectedSku?.hoverImageUrl || "");
 
   // Discount calculation
   const hasDiscount = selectedSku?.discountEnabled && selectedSku.discountPercent && selectedSku.price;
@@ -140,6 +144,101 @@ export default function Container({ className, product }: { className?: string; 
   const handleImageLoaded = useCallback(() => {
     setImageLoading(false);
   }, []);
+
+  if (useNewCard) {
+    return (
+      <div
+        className="bg-white relative rounded-[24px] w-full overflow-hidden flex flex-col group/card"
+        data-name="Container-V2"
+        style={{ height: '100%' }}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
+        {/* Full-bleed image area */}
+        <div className="relative w-full aspect-[4/3] overflow-hidden bg-[#f8f8f8]">
+          {imageLoading && (
+            <div className="absolute inset-0 z-10 bg-[rgba(0,0,0,0.06)]" style={{ animation: 'skuImagePulse 1.5s ease-in-out infinite' }} />
+          )}
+          <ImageWithFallback
+            alt={name}
+            className={`absolute inset-0 max-w-none object-cover pointer-events-none size-full transition-all duration-500 ease-in-out ${imageLoading ? 'opacity-0' : 'opacity-100'}`}
+            src={displayImage}
+            onLoad={handleImageLoaded}
+            style={{
+              transform: isHovered ? 'scale(1.05)' : 'scale(1)',
+            }}
+          />
+          {hoverImage && (
+            <img
+              src={hoverImage}
+              alt=""
+              className="absolute inset-0 size-full object-cover transition-all duration-500 ease-in-out"
+              style={{
+                opacity: isHovered ? 1 : 0,
+                transform: isHovered ? 'scale(1)' : 'scale(1.08)',
+                willChange: 'transform, opacity',
+              }}
+            />
+          )}
+          <ConnectivityBadge connectivity={product?.connectivity} />
+          {hasDiscount && (
+            <div className="absolute bg-[#ba0020] flex h-[24px] items-center justify-center px-[8px] rounded-[6px] right-[12px] top-[12px] z-[15] pointer-events-none">
+              <p className="font-['Inter:Medium',sans-serif] font-medium leading-[20px] not-italic text-[14px] text-white whitespace-nowrap">{selectedSku.discountPercent}% OFF</p>
+            </div>
+          )}
+          {isHot && (
+            <div className="absolute top-[12px] right-[12px] z-[14] pointer-events-none" style={hasDiscount ? { top: '44px' } : {}}>
+              <span className="bg-white/90 backdrop-blur-sm text-[#ba0020] font-['Inter:Semi_Bold',sans-serif] font-semibold text-[12px] leading-[20px] px-[8px] py-[2px] rounded-[6px]">Hot</span>
+            </div>
+          )}
+          {selectedSku?.packEnabled && selectedSku.packQty && (
+            <PackBadge qty={selectedSku.packQty} />
+          )}
+        </div>
+
+        {/* Info section */}
+        <div className="flex flex-col flex-1 p-[16px] gap-[12px]">
+          <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[22px] not-italic text-[16px] text-black w-full h-[44px] overflow-hidden" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{name}</p>
+
+          <div className="relative shrink-0 w-full overflow-hidden" data-name="Product Features" style={{ height: '68px' }}>
+            <ProductFeatures features={features} />
+          </div>
+
+          {options.length > 0 && (
+            <SkuDropdown options={options} iconSize="sm" onSelect={setSelectedSkuIndex} />
+          )}
+
+          {/* Price + cart row */}
+          <div className="flex items-center justify-between mt-auto pt-[8px] border-t border-[rgba(0,0,0,0.06)]">
+            {hasDiscount ? (
+              <div className="flex flex-col">
+                <p className="font-['Inter:Bold',sans-serif] font-bold leading-[28px] not-italic text-[22px] text-[#ba0020] whitespace-nowrap">{discountedPrice}</p>
+                <p className="[text-decoration-skip-ink:none] decoration-solid font-['Inter:Regular',sans-serif] font-normal leading-[14px] line-through text-[12px] text-[rgba(0,0,0,0.35)] whitespace-nowrap">{displayPrice}</p>
+              </div>
+            ) : (
+              <p className="font-['Inter:Bold',sans-serif] font-bold leading-[28px] not-italic text-[22px] text-black whitespace-nowrap">{displayPrice}</p>
+            )}
+            <div className="bg-[#101820] flex items-center justify-center w-[40px] h-[40px] rounded-full shrink-0 transition-colors duration-200 hover:bg-[#ba0020]">
+              <svg className="block w-[18px] h-[18px]" fill="none" viewBox="0 0 20.2399 20.2998">
+                <g id="Union">
+                  <path d={svgPaths.p38729380} fill="white" />
+                  <path d={svgPaths.p1829b100} fill="white" />
+                  <path d={svgPaths.p18281200} fill="white" />
+                  <path d={svgPaths.p3f7e2080} fill="white" />
+                </g>
+              </svg>
+            </div>
+          </div>
+        </div>
+        <style>{`
+          @keyframes skuImagePulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+          }
+        `}</style>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -190,9 +289,7 @@ export default function Container({ className, product }: { className?: string; 
           {isHot && (
             <p className="absolute left-0 bottom-[100%] font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[20px] not-italic text-[14px] text-[#ba0020] whitespace-nowrap">Hot</p>
           )}
-          {/* 固定名称区域为2行高度，超出截断 */}
           <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[24px] not-italic relative shrink-0 text-[18px] text-black w-full h-[48px] overflow-hidden" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{name}</p>
-          {/* 固定features区域高度 — icon-based display for predefined features */}
           <div className="relative shrink-0 w-full overflow-hidden" data-name="Product Features" style={{ height: '72px' }}>
             <ProductFeatures features={features} />
           </div>
