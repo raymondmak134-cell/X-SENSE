@@ -6,7 +6,7 @@ import imgProductImage from "@/assets/placeholder-image-url";
 import { ImageWithFallback } from "../app/components/figma/ImageWithFallback";
 import { SkuDropdown } from "../app/components/SkuDropdown";
 import type { SkuOption } from "../app/components/use-products";
-import { ProductFeatures } from "../app/components/feature-icons";
+import { ProductFeatures, ALL_FEATURES, FEATURE_COLORS } from "../app/components/feature-icons";
 
 interface ProductData {
   id: string;
@@ -182,72 +182,56 @@ export default function Container({ className, product, useNewCard }: { classNam
                 }}
               />
             )}
+            {/* Features overlay — slide up on image hover */}
+            {features.length > 0 && (
+              <div
+                className="absolute left-[16px] bottom-[4px] z-[12] flex flex-col gap-[8px] items-start pointer-events-none transition-all duration-300 ease-in-out"
+                style={{
+                  opacity: isImageHovered ? 1 : 0,
+                  transform: isImageHovered ? 'translateY(0)' : 'translateY(12px)',
+                }}
+              >
+                {ALL_FEATURES.filter(f => features.includes(f)).map(f => (
+                  <div key={f} className="flex gap-[4px] items-center">
+                    <div className="rounded-full shrink-0 size-[8px]" style={{ backgroundColor: FEATURE_COLORS[f] || '#022542' }} />
+                    <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[16px] not-italic text-[12px] text-[rgba(0,0,0,0.9)] whitespace-nowrap">
+                      {f}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
-          {/* Product name — fixed 2-line height */}
-          <div className="content-stretch flex flex-col items-start px-[16px] relative shrink-0 w-full">
+          {/* Connectivity tag + Product name */}
+          <div className="content-stretch flex flex-col gap-[4px] items-start px-[16px] relative shrink-0 w-full">
+            {product?.connectivity?.[0] && (() => {
+              const type = product.connectivity[0];
+              const tagMap: Record<string, { bg: string; text: string; label: string }> = {
+                "Base Station Interconnected (App)": { bg: "#700013", text: "#f2f0ed", label: "Base-connected (App)" },
+                "Wireless Interconnected": { bg: "#022542", text: "#f2f0ed", label: "Wireless Interconnected" },
+                "Standalone": { bg: "#f2f0ed", text: "#101820", label: "Standalone" },
+                "Wi-Fi (App)": { bg: "#067ad9", text: "#f2f0ed", label: "Wi-Fi (App)" },
+              };
+              const tag = tagMap[type];
+              if (!tag) return null;
+              return (
+                <div className="flex items-center justify-center p-[4px]" style={{ backgroundColor: tag.bg }}>
+                  <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[16px] not-italic text-[12px] whitespace-nowrap" style={{ color: tag.text }}>
+                    {tag.label}
+                  </p>
+                </div>
+              );
+            })()}
             <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[24px] not-italic relative shrink-0 text-[18px] text-black w-full h-[48px] overflow-hidden" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
               {name}
             </p>
           </div>
 
-          {/* Pack badges row — driven by SKU data */}
-          {options.some(o => o.packEnabled && o.packQty) && (
-            <div className="content-stretch flex gap-[8px] items-start px-[16px] relative shrink-0 w-full">
-              {options.map((sku, i) => {
-                if (!sku.packEnabled || !sku.packQty) return null;
-                const isActive = i === selectedSkuIndex;
-
-                if (sku.includeBaseStation) {
-                  return (
-                    <div
-                      key={i}
-                      className="border border-solid content-stretch flex flex-col items-center overflow-clip relative rounded-[12px] shrink-0 cursor-pointer"
-                      style={{ borderColor: isActive ? '#101820' : '#DADADA' }}
-                      onClick={() => setSelectedSkuIndex(i)}
-                    >
-                      <div className="content-stretch flex flex-col items-center justify-center px-[4px] relative shrink-0">
-                        <div className="content-stretch flex gap-[2px] items-center not-italic relative shrink-0 pr-[4px]" style={{ color: isActive ? '#101820' : '#DADADA' }}>
-                          <p className="font-['Inter:Bold',sans-serif] font-bold leading-[36px] relative shrink-0 text-[26px] text-center whitespace-nowrap">
-                            {sku.packQty}+1
-                          </p>
-                          <div className="flex flex-col font-['Inter:Extra_Bold',sans-serif] font-extrabold h-[21px] justify-center leading-[11px] relative shrink-0 text-[11px] w-[40px]">
-                            <p className="mb-0">Base</p>
-                            <p>Station</p>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="content-stretch flex items-center justify-center relative shrink-0 w-full" style={{ backgroundColor: isActive ? '#101820' : '#DADADA' }}>
-                        <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[16px] not-italic relative shrink-0 text-[12px] text-white whitespace-nowrap">
-                          Pack
-                        </p>
-                      </div>
-                    </div>
-                  );
-                }
-
-                return (
-                  <div
-                    key={i}
-                    className="border border-solid content-stretch flex flex-col items-center min-w-[44px] overflow-clip relative rounded-[12px] shrink-0 cursor-pointer"
-                    style={{ borderColor: isActive ? '#101820' : '#DADADA' }}
-                    onClick={() => setSelectedSkuIndex(i)}
-                  >
-                    <div className="content-stretch flex flex-col items-center justify-center px-[4px] relative shrink-0">
-                      <p className="font-['Inter:Bold',sans-serif] font-bold leading-[36px] not-italic relative shrink-0 text-[26px] text-center whitespace-nowrap" style={{ color: isActive ? '#101820' : '#DADADA' }}>
-                        {sku.packQty}
-                      </p>
-                    </div>
-                    <div className="content-stretch flex items-center justify-center relative shrink-0 w-full" style={{ backgroundColor: isActive ? '#101820' : '#DADADA' }}>
-                      <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[16px] not-italic relative shrink-0 text-[12px] text-white whitespace-nowrap">
-                        Pack
-                      </p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+          {/* SKU dropdown */}
+          <div className="content-stretch flex flex-col items-start px-[16px] relative shrink-0 w-full">
+            <SkuDropdown options={options} iconSize="sm" onSelect={setSelectedSkuIndex} />
+          </div>
         </div>
 
         {/* Price Container */}
@@ -270,7 +254,7 @@ export default function Container({ className, product, useNewCard }: { classNam
           </div>
           <div
             className="bg-[#ba0020] flex gap-[4px] h-[40px] items-center justify-center rounded-full shrink-0 overflow-hidden transition-all duration-300 ease-in-out cursor-pointer"
-            style={{ width: isHovered ? 130 : 40, paddingLeft: isHovered ? 16 : 0, paddingRight: isHovered ? 16 : 0 }}
+            style={{ width: isHovered ? 110 : 40, paddingLeft: isHovered ? 12 : 0, paddingRight: isHovered ? 12 : 0 }}
           >
             <div className="overflow-clip relative shrink-0 size-[20px] flex items-center justify-center">
               <svg className="block w-[20.24px] h-[20.3px]" fill="none" viewBox="0 0 20.2399 20.2998">
@@ -286,7 +270,7 @@ export default function Container({ className, product, useNewCard }: { classNam
               className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[20px] not-italic text-[14px] text-white text-center whitespace-nowrap transition-all duration-300 ease-in-out"
               style={{
                 opacity: isHovered ? 1 : 0,
-                maxWidth: isHovered ? 80 : 0,
+                maxWidth: isHovered ? 100 : 0,
                 overflow: 'hidden',
               }}
             >
@@ -295,19 +279,20 @@ export default function Container({ className, product, useNewCard }: { classNam
           </div>
         </div>
 
-        {/* "Hot" label — positioned at bottom of image area */}
-        {isHot && (
-          <p className="absolute font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[20px] left-[16px] not-italic text-[14px] text-[#ba0020] top-[240.5px] whitespace-nowrap">
-            Hot
-          </p>
-        )}
-
-        {/* Discount tag — top-left corner, only shown when SKU has discount enabled */}
-        {hasDiscount && (
-          <div className="absolute bg-[#ba0020] content-stretch flex h-[24px] items-center justify-center left-[16px] px-[6px] rounded-[8px] top-[16px] w-[80px]">
-            <p className="font-['Inter:Medium',sans-serif] font-medium leading-[20px] not-italic relative shrink-0 text-[14px] text-white whitespace-nowrap">
-              {selectedSku.discountPercent}% OFF
-            </p>
+        {/* Hot + Discount tags — top-left corner */}
+        {(isHot || hasDiscount) && (
+          <div className="absolute flex flex-col gap-[2px] items-start left-[16px] top-[16px] z-[15] pointer-events-none text-[14px] leading-[20px] not-italic text-[#ba0020]">
+            {isHot && (
+              <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold shrink-0 whitespace-nowrap">
+                Hot
+              </p>
+            )}
+            {hasDiscount && (
+              <div className="bg-[rgba(186,0,32,0.2)] flex font-['Inter:Medium',sans-serif] font-medium items-center justify-center px-[4px] py-[2px] rounded-[6px] shrink-0 whitespace-nowrap">
+                <p className="shrink-0">{selectedSku.discountPercent}%</p>
+                <p className="shrink-0 text-center">OFF</p>
+              </div>
+            )}
           </div>
         )}
       </div>

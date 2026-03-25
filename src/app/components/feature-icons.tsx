@@ -27,7 +27,7 @@ export const POWER_FEATURES = [
 ];
 
 /* ---- Color per feature ---- */
-const FEATURE_COLORS: Record<string, string> = {
+export const FEATURE_COLORS: Record<string, string> = {
   "Voice Alarm with Location": "#BA0020",
   "Easy Magnetic Mount": "#067AD9",
   "10-Year Battery (NEVER-CHANGE)": "#022542",
