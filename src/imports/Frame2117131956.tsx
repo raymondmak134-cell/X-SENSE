@@ -3,6 +3,7 @@ import imgBanner from "@/assets/placeholder-image-url";
 import imgProductImage from "@/assets/placeholder-image-url";
 import imgProductImage1 from "@/assets/placeholder-image-url";
 import imgProductImage2 from "@/assets/placeholder-image-url";
+import SharedFooter from "./Footer";
 
 function Left() {
   return (
@@ -2203,15 +2204,7 @@ function Frame3() {
 }
 
 function Container34() {
-  return (
-    <div className="bg-white h-[576px] relative shrink-0 w-full" data-name="Container">
-      <div className="flex flex-col items-center size-full">
-        <div className="content-stretch flex flex-col items-center px-[120px] py-[40px] relative size-full">
-          <Frame3 />
-        </div>
-      </div>
-    </div>
-  );
+  return <SharedFooter />;
 }
 
 function Frame2() {

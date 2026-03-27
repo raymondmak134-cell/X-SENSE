@@ -13,6 +13,7 @@ import imgCombinationAlarms from "@/assets/placeholder-image-url";
 import imgHomeAlarms from "@/assets/placeholder-image-url";
 import imgHubBaseStation from "@/assets/placeholder-image-url";
 import imgAccessories from "@/assets/placeholder-image-url";
+import SharedFooter from "./Footer";
 const imgBanner = "/images/support-banner.png";
 
 function Heading() {
@@ -780,12 +781,7 @@ function Container() {
 }
 
 function Footer() {
-  return (
-    <div className="absolute content-stretch flex flex-col items-center left-0 px-[120px] py-[48px] right-0 top-[2877px]" data-name="Footer">
-      <div aria-hidden="true" className="absolute border-[rgba(0,0,0,0.1)] border-solid border-t inset-0 pointer-events-none" />
-      <Container />
-    </div>
-  );
+  return <SharedFooter />;
 }
 
 function Header() {

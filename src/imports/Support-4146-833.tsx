@@ -14,6 +14,7 @@ import imgImage5 from "@/assets/placeholder-image-url";
 import imgImage6 from "@/assets/placeholder-image-url";
 import imgImage7 from "@/assets/placeholder-image-url";
 import imgImage8 from "@/assets/placeholder-image-url";
+import SharedFooter from "./Footer";
 
 function Component() {
   return (
@@ -1296,14 +1297,7 @@ function HorizontalBorder1() {
 }
 
 function Footer() {
-  return (
-    <div className="bg-white content-stretch flex flex-col items-start relative shrink-0 w-full" data-name="Footer">
-      <HorizontalBorder />
-      <Container23 />
-      <Container28 />
-      <HorizontalBorder1 />
-    </div>
-  );
+  return <SharedFooter />;
 }
 
 function Frame1() {
