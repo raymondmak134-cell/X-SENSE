@@ -294,9 +294,9 @@ export default function Footer() {
                 unsubscribe at any time. For more details, please see our
               </p>
               <p>
-                <span className="text-[#ba0020]">Terms of Use</span>
+                <span className="underline cursor-pointer">Terms of Use</span>
                 <span>{` and `}</span>
-                <span className="text-[#ba0020]">Privacy Policy</span>
+                <span className="underline cursor-pointer">Privacy Policy</span>
                 <span>.</span>
               </p>
             </div>
