@@ -162,7 +162,7 @@ export default function Footer() {
   const [expandedSections, setExpandedSections] = useState<
     Record<string, boolean>
   >({});
-  const [agreed, setAgreed] = useState(false);
+  const [agreed, setAgreed] = useState(true);
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [toast, setToast] = useState<{
