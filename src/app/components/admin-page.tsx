@@ -149,6 +149,16 @@ export interface ProductCardItem {
   sellingPoint: string;
 }
 
+export interface GuideItem {
+  id: string;
+  tag: string;
+  title: string;
+  coverImageUrl: string;
+  coverImagePath: string;
+  categoryIds: string[];
+  createdAt?: number;
+}
+
 const POWER_SOURCE_OPTIONS = [
   "10-Year Sealed Lithium Battery",
   "Replaceable Battery (Included)",
@@ -579,6 +589,8 @@ function SkuOptionsEditor({
   onChange: (options: SkuOption[]) => void;
 }) {
   const [newName, setNewName] = useState("");
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [editingName, setEditingName] = useState("");
 
   const addSku = () => {
     const name = newName.trim();
@@ -646,9 +658,45 @@ function SkuOptionsEditor({
               {/* Name + Price */}
               <div className="flex-1 min-w-0 flex flex-col gap-2">
                 <div className="flex items-center gap-2">
-                  <span className="flex-1 min-w-0 text-[13px] text-[#333] truncate" title={sku.name}>
-                    {sku.name}
-                  </span>
+                  {editingIndex === i ? (
+                    <input
+                      autoFocus
+                      value={editingName}
+                      onChange={(e) => setEditingName(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          const trimmed = editingName.trim();
+                          if (trimmed) updateSku(i, { name: trimmed });
+                          setEditingIndex(null);
+                        } else if (e.key === "Escape") {
+                          setEditingIndex(null);
+                        }
+                      }}
+                      onBlur={() => {
+                        const trimmed = editingName.trim();
+                        if (trimmed) updateSku(i, { name: trimmed });
+                        setEditingIndex(null);
+                      }}
+                      className="flex-1 min-w-0 h-[26px] px-2 rounded-md border border-[#ba0020] text-[13px] text-[#333] outline-none"
+                    />
+                  ) : (
+                    <span
+                      className="flex-1 min-w-0 text-[13px] text-[#333] truncate cursor-pointer hover:text-[#ba0020] transition-colors"
+                      title={sku.name}
+                      onClick={() => { setEditingIndex(i); setEditingName(sku.name); }}
+                    >
+                      {sku.name}
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => { setEditingIndex(i); setEditingName(sku.name); }}
+                    className="shrink-0 text-[#ccc] hover:text-[#ba0020] transition-colors cursor-pointer"
+                    title="Rename SKU"
+                  >
+                    <Pencil className="size-3.5" />
+                  </button>
                   <button
                     type="button"
                     onClick={() => removeSku(i)}
@@ -4330,12 +4378,328 @@ function ProductCardPanel({
   );
 }
 
+/* ========== Shopping Guides Panel ========== */
+
+function GuidesPanel({
+  guides,
+  categories,
+  saving,
+  showModal,
+  onAdd,
+  onCloseModal,
+  onSave,
+  onDelete,
+  showToast,
+}: {
+  guides: GuideItem[];
+  categories: Category[];
+  saving: boolean;
+  showModal: boolean;
+  onAdd: () => void;
+  onCloseModal: () => void;
+  onSave: (guide: Omit<GuideItem, "id">) => void;
+  onDelete: (id: string) => void;
+  showToast: (msg: string, type?: "success" | "error") => void;
+}) {
+  const [tag, setTag] = useState("");
+  const [title, setTitle] = useState("");
+  const [coverImageUrl, setCoverImageUrl] = useState("");
+  const [coverImagePath, setCoverImagePath] = useState("");
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [catDropdownOpen, setCatDropdownOpen] = useState(false);
+  const [deletingGuideId, setDeletingGuideId] = useState<string | null>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!showModal) {
+      setTag("");
+      setTitle("");
+      setCoverImageUrl("");
+      setCoverImagePath("");
+      setSelectedCategoryIds([]);
+    }
+  }, [showModal]);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setCatDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setUploading(true);
+      const result = await uploadImage(file);
+      setCoverImageUrl(result.url);
+      setCoverImagePath(result.path);
+    } catch (err: any) {
+      showToast(err.message || "Failed to upload image", "error");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const toggleCategory = (catId: string) => {
+    setSelectedCategoryIds((prev) =>
+      prev.includes(catId) ? prev.filter((id) => id !== catId) : [...prev, catId]
+    );
+  };
+
+  const handleSubmit = () => {
+    if (!tag.trim()) { showToast("Please enter a tag", "error"); return; }
+    if (!title.trim()) { showToast("Please enter a title", "error"); return; }
+    onSave({
+      tag: tag.trim(),
+      title: title.trim(),
+      coverImageUrl,
+      coverImagePath,
+      categoryIds: selectedCategoryIds,
+      createdAt: Date.now(),
+    });
+  };
+
+  return (
+    <>
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-[20px] text-[#1a1a1a]">Shopping Guides</h2>
+        <button
+          onClick={onAdd}
+          className="flex items-center gap-2 h-[40px] px-5 rounded-xl text-[14px] bg-[#ba0020] text-white hover:bg-[#a0001b] transition-colors cursor-pointer"
+        >
+          <Plus className="size-4" />
+          Add Guide
+        </button>
+      </div>
+
+      {/* Guides list */}
+      <div className="bg-white rounded-2xl border border-[#eee] overflow-hidden">
+        <div className="flex items-center gap-4 px-6 py-3 border-b border-[#f0f0f0] bg-[#fafafa] text-[12px] text-[#aaa]">
+          <div className="shrink-0 w-[64px]">Cover</div>
+          <div className="shrink-0 w-[100px]">Tag</div>
+          <div className="flex-1">Title</div>
+          <div className="shrink-0 w-[200px]">Categories</div>
+          <div className="shrink-0 w-[68px] text-right">Actions</div>
+        </div>
+
+        {guides.length > 0 ? (
+          guides.map((guide) => (
+            <div key={guide.id} className="flex items-center gap-4 px-6 py-3 border-b border-[#f0f0f0] hover:bg-[#fafafa] transition-colors">
+              <div className="shrink-0 w-[64px] h-[48px] rounded-lg overflow-hidden bg-[#f5f5f5]">
+                {guide.coverImageUrl ? (
+                  <img src={guide.coverImageUrl} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-[#ccc]">
+                    <ImageIcon className="size-5" />
+                  </div>
+                )}
+              </div>
+              <div className="shrink-0 w-[100px]">
+                <span className="inline-block px-2 py-0.5 rounded-md bg-[#f0f0f0] text-[12px] text-[#666] truncate max-w-full">
+                  {guide.tag}
+                </span>
+              </div>
+              <div className="flex-1 text-[14px] text-[#1a1a1a] truncate">{guide.title}</div>
+              <div className="shrink-0 w-[200px] flex flex-wrap gap-1">
+                {guide.categoryIds.map((cid) => {
+                  const cat = categories.find((c) => c.id === cid);
+                  return cat ? (
+                    <span key={cid} className="inline-block px-1.5 py-0.5 rounded bg-[#fef2f2] text-[11px] text-[#ba0020]">
+                      {cat.name}
+                    </span>
+                  ) : null;
+                })}
+              </div>
+              <div className="shrink-0 w-[68px] flex justify-end">
+                <button
+                  onClick={() => setDeletingGuideId(guide.id)}
+                  className="size-8 flex items-center justify-center rounded-lg text-[#bbb] hover:text-[#ba0020] hover:bg-[#fef2f2] transition-colors cursor-pointer"
+                >
+                  <Trash2 className="size-4" />
+                </button>
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="py-16 flex flex-col items-center text-[#ccc]">
+            <BookOpen className="size-10 mb-3" />
+            <p className="text-[14px]">No guides yet</p>
+            <p className="text-[12px] mt-1">Click "Add Guide" to get started</p>
+          </div>
+        )}
+      </div>
+
+      {/* Delete confirm */}
+      {deletingGuideId && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center" onClick={() => setDeletingGuideId(null)}>
+          <div className="bg-white rounded-2xl shadow-xl w-[400px] overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <div className="px-6 py-5">
+              <h3 className="text-[16px] text-[#1a1a1a] mb-2">Delete Guide</h3>
+              <p className="text-[14px] text-[#666]">Are you sure you want to delete this guide? This action cannot be undone.</p>
+            </div>
+            <div className="px-6 py-4 border-t border-[#f0f0f0] flex justify-end gap-3">
+              <button onClick={() => setDeletingGuideId(null)} className="h-[38px] px-4 rounded-xl text-[13px] text-[#666] bg-[#f5f5f5] hover:bg-[#eee] transition-colors cursor-pointer">
+                Cancel
+              </button>
+              <button
+                onClick={() => { onDelete(deletingGuideId); setDeletingGuideId(null); }}
+                className="h-[38px] px-5 rounded-xl text-[13px] text-white bg-[#ba0020] hover:bg-[#a0001b] transition-colors cursor-pointer"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Guide Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center" onClick={onCloseModal}>
+          <div className="bg-white rounded-2xl shadow-xl w-[520px] max-h-[90vh] flex flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <div className="px-6 py-5 border-b border-[#f0f0f0]">
+              <h3 className="text-[18px] text-[#1a1a1a]">Add Shopping Guide</h3>
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-5">
+              {/* Tag */}
+              <div>
+                <label className="block text-[13px] text-[#555] mb-1.5">Tag</label>
+                <input
+                  value={tag}
+                  onChange={(e) => setTag(e.target.value)}
+                  placeholder="e.g. Buying Guide, Installation, Tips"
+                  className="w-full h-[40px] px-3 rounded-xl border border-[#e0e0e0] text-[14px] outline-none focus:border-[#ba0020] transition-colors"
+                />
+              </div>
+
+              {/* Title */}
+              <div>
+                <label className="block text-[13px] text-[#555] mb-1.5">Title</label>
+                <input
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Enter guide title"
+                  className="w-full h-[40px] px-3 rounded-xl border border-[#e0e0e0] text-[14px] outline-none focus:border-[#ba0020] transition-colors"
+                />
+              </div>
+
+              {/* Cover Image */}
+              <div>
+                <label className="block text-[13px] text-[#555] mb-1.5">Cover Image</label>
+                {coverImageUrl ? (
+                  <div className="relative group w-full h-[160px] rounded-xl overflow-hidden border border-[#e0e0e0]">
+                    <img src={coverImageUrl} alt="" className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <label className="flex items-center gap-1.5 h-[32px] px-3 rounded-lg text-[12px] text-white bg-white/20 hover:bg-white/30 transition-colors cursor-pointer">
+                        <RefreshCw className="size-3.5" />
+                        Replace
+                        <input type="file" accept="image/*" onChange={handleCoverUpload} className="hidden" />
+                      </label>
+                    </div>
+                  </div>
+                ) : (
+                  <label className="flex flex-col items-center justify-center w-full h-[120px] rounded-xl border-2 border-dashed border-[#e0e0e0] hover:border-[#ba0020] transition-colors cursor-pointer">
+                    {uploading ? (
+                      <Loader2 className="size-6 animate-spin text-[#ba0020]" />
+                    ) : (
+                      <>
+                        <Upload className="size-6 text-[#ccc] mb-2" />
+                        <span className="text-[13px] text-[#aaa]">Click to upload cover image</span>
+                      </>
+                    )}
+                    <input type="file" accept="image/*" onChange={handleCoverUpload} className="hidden" />
+                  </label>
+                )}
+              </div>
+
+              {/* Category Multi-select */}
+              <div>
+                <label className="block text-[13px] text-[#555] mb-1.5">Product Categories</label>
+                <div className="relative" ref={dropdownRef}>
+                  <button
+                    type="button"
+                    onClick={() => setCatDropdownOpen(!catDropdownOpen)}
+                    className="w-full min-h-[40px] px-3 py-2 rounded-xl border border-[#e0e0e0] text-[14px] text-left flex items-center gap-2 flex-wrap cursor-pointer hover:border-[#ba0020] transition-colors"
+                  >
+                    {selectedCategoryIds.length === 0 ? (
+                      <span className="text-[#aaa]">Select categories...</span>
+                    ) : (
+                      selectedCategoryIds.map((cid) => {
+                        const cat = categories.find((c) => c.id === cid);
+                        return cat ? (
+                          <span key={cid} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#fef2f2] text-[12px] text-[#ba0020]">
+                            {cat.name}
+                            <X
+                              className="size-3 cursor-pointer hover:text-[#800016]"
+                              onClick={(e) => { e.stopPropagation(); toggleCategory(cid); }}
+                            />
+                          </span>
+                        ) : null;
+                      })
+                    )}
+                    <ChevronDown className={`size-4 text-[#aaa] ml-auto shrink-0 transition-transform ${catDropdownOpen ? "rotate-180" : ""}`} />
+                  </button>
+
+                  {catDropdownOpen && (
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-xl border border-[#e0e0e0] shadow-lg z-10 max-h-[200px] overflow-y-auto">
+                      {categories.map((cat) => {
+                        const selected = selectedCategoryIds.includes(cat.id);
+                        return (
+                          <button
+                            key={cat.id}
+                            type="button"
+                            onClick={() => toggleCategory(cat.id)}
+                            className="flex items-center gap-2 w-full px-3 py-2.5 text-[13px] hover:bg-[#f5f5f5] transition-colors cursor-pointer"
+                          >
+                            <div className={`size-4 rounded border flex items-center justify-center shrink-0 ${selected ? "bg-[#ba0020] border-[#ba0020]" : "border-[#ddd]"}`}>
+                              {selected && <Check className="size-3 text-white" />}
+                            </div>
+                            <span className="text-[#333]">{cat.name}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Modal footer */}
+            <div className="px-6 py-4 border-t border-[#f0f0f0] flex items-center justify-end gap-3">
+              <button
+                onClick={onCloseModal}
+                className="h-[38px] px-4 rounded-xl text-[13px] text-[#666] bg-[#f5f5f5] hover:bg-[#eee] transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSubmit}
+                disabled={saving || uploading}
+                className="h-[38px] px-5 rounded-xl text-[13px] text-white bg-[#ba0020] hover:bg-[#a0001b] transition-colors cursor-pointer disabled:opacity-60 flex items-center gap-2"
+              >
+                {(saving || uploading) && <Loader2 className="size-3.5 animate-spin" />}
+                {uploading ? "Uploading..." : saving ? "Saving..." : "Save"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
 /* ========== 管理后台主体 ========== */
 
 function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   // Sidebar: which category selected & sub-tab
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>("smoke-alarms");
-  const [subTab, setSubTab] = useState<"products" | "spus" | "product-cards">("products");
+  const [subTab, setSubTab] = useState<"products" | "spus" | "product-cards" | "guides">("products");
   const [spuExpanded, setSpuExpanded] = useState(false);
   const [productsExpanded, setProductsExpanded] = useState(true);
   const [productCardExpanded, setProductCardExpanded] = useState(false);
@@ -4345,6 +4709,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const supportSubTab = isSupportSection ? selectedCategoryId.replace("__support_", "") as "app" | "faqs" : null;
   const isSpuSection = subTab === "spus" && !isManageCategories && !isSupportSection;
   const isProductCardSection = subTab === "product-cards" && !isManageCategories && !isSupportSection;
+  const isGuidesSection = selectedCategoryId === "__guides__";
 
   const [products, setProducts] = useState<Product[]>([]);
   const [allSpus, setAllSpus] = useState<Spu[]>([]);
@@ -4362,6 +4727,10 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   // Product Card states
   const [productCards, setProductCards] = useState<ProductCardItem[]>([]);
   const [showProductCardModal, setShowProductCardModal] = useState(false);
+
+  // Shopping Guides states
+  const [guides, setGuides] = useState<GuideItem[]>([]);
+  const [showGuideModal, setShowGuideModal] = useState(false);
 
   const showToast = (message: string, type: "success" | "error" = "success") => {
     setToast({ message, type });
@@ -4397,10 +4766,20 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     }
   }, []);
 
+  const loadGuides = useCallback(async () => {
+    try {
+      const data = await apiGet<{ guides: GuideItem[] }>("/guides");
+      setGuides(data.guides || []);
+    } catch {
+      // endpoint may not exist yet — silently ignore
+    }
+  }, []);
+
   useEffect(() => {
     loadProducts();
     loadProductCards();
-  }, [loadProducts, loadProductCards]);
+    loadGuides();
+  }, [loadProducts, loadProductCards, loadGuides]);
 
   const filteredProducts = products
     .filter((p) => (p.categoryId || "smoke-alarms") === selectedCategoryId)
@@ -4473,6 +4852,31 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       showToast(err.message || "Failed to save Product Card", "error");
     } finally {
       setSaving(false);
+    }
+  }, []);
+
+  const handleSaveGuide = useCallback(async (guide: Omit<GuideItem, "id">) => {
+    setSaving(true);
+    try {
+      const newGuide: GuideItem = { ...guide, id: Date.now().toString() };
+      await apiPost("/guides", newGuide);
+      setGuides((prev) => [newGuide, ...prev]);
+      setShowGuideModal(false);
+      showToast("Guide saved successfully!");
+    } catch (err: any) {
+      showToast(err.message || "Failed to save guide", "error");
+    } finally {
+      setSaving(false);
+    }
+  }, []);
+
+  const handleDeleteGuide = useCallback(async (id: string) => {
+    try {
+      await apiDelete(`/guides/${id}`);
+      setGuides((prev) => prev.filter((g) => g.id !== id));
+      showToast("Guide deleted successfully!");
+    } catch (err: any) {
+      showToast(err.message || "Failed to delete guide", "error");
     }
   }, []);
 
@@ -4552,7 +4956,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
           <button
             onClick={() => setProductsExpanded(!productsExpanded)}
             className={`flex items-center gap-2.5 w-full px-3 py-2.5 rounded-xl text-[14px] transition-colors cursor-pointer ${
-              !isManageCategories && !isSupportSection && !isSpuSection && !isProductCardSection
+              !isManageCategories && !isSupportSection && !isSpuSection && !isProductCardSection && !isGuidesSection
                 ? "bg-[#fef2f2] text-[#ba0020]"
                 : "text-[#555] hover:bg-[#f5f5f5]"
             }`}
@@ -4566,7 +4970,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
           {productsExpanded && (
             <div className="ml-3 border-l border-[#f0f0f0] flex flex-col gap-0.5 py-1">
               {allCategories.map((cat) => {
-                const active = !isSpuSection && !isProductCardSection && selectedCategoryId === cat.id && !isManageCategories && !isSupportSection;
+                const active = !isSpuSection && !isProductCardSection && !isGuidesSection && selectedCategoryId === cat.id && !isManageCategories && !isSupportSection;
                 const prodCount = products.filter((p) => (p.categoryId || "smoke-alarms") === cat.id).length;
                 return (
                   <button
@@ -4701,6 +5105,32 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
           {/* 分隔线 */}
           <div className="h-px bg-[#f0f0f0] my-2" />
 
+          {/* ── Shopping Guides ── */}
+          <button
+            onClick={() => {
+              setSelectedCategoryId("__guides__");
+              setShowForm(false);
+              setEditingProduct(null);
+              setSearch("");
+            }}
+            className={`flex items-center gap-2.5 w-full px-3 py-2.5 rounded-xl text-[14px] transition-colors cursor-pointer ${
+              isGuidesSection
+                ? "bg-[#fef2f2] text-[#ba0020]"
+                : "text-[#555] hover:bg-[#f5f5f5]"
+            }`}
+          >
+            <BookOpen className="size-4 shrink-0" />
+            <span className="flex-1 text-left">Shopping Guides</span>
+            {!loading && (
+              <span className={`text-[11px] shrink-0 tabular-nums ${isGuidesSection ? "text-[#ba0020]/60" : "text-[#ccc]"}`}>
+                {guides.length}
+              </span>
+            )}
+          </button>
+
+          {/* 分隔线 */}
+          <div className="h-px bg-[#f0f0f0] my-2" />
+
           {/* ── 分类管理入口 ── */}
           <button
             onClick={() => {
@@ -4762,6 +5192,11 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 <ChevronRight className="size-3.5 text-[#ccc]" />
                 <span className="text-[#1a1a1a]">{supportSubTab === "app" ? "App" : "FAQs"}</span>
               </>
+            ) : isGuidesSection ? (
+              <>
+                <BookOpen className="size-4 text-[#ba0020]" />
+                <span className="text-[#1a1a1a]">Shopping Guides</span>
+              </>
             ) : (
               <>
                 <span className="text-[#aaa]">{isSpuSection ? "SPUs" : "Products"}</span>
@@ -4776,6 +5211,18 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
         <div className="flex-1 p-8 min-w-0">
           {isManageCategories ? (
             <CategoryPanel categories={allCategories} onUpdate={loadProducts} showToast={showToast} />
+          ) : isGuidesSection ? (
+            <GuidesPanel
+              guides={guides}
+              categories={allCategories}
+              saving={saving}
+              showModal={showGuideModal}
+              onAdd={() => setShowGuideModal(true)}
+              onCloseModal={() => setShowGuideModal(false)}
+              onSave={handleSaveGuide}
+              onDelete={handleDeleteGuide}
+              showToast={showToast}
+            />
           ) : isProductCardSection ? (
             <ProductCardPanel
               cards={productCards}

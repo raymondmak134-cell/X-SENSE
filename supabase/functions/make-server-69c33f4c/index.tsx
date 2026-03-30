@@ -629,4 +629,56 @@ app.post("/make-server-69c33f4c/faqs/:categoryId", async (c) => {
   }
 });
 
+// ──── Shopping Guides CRUD ────
+
+const GUIDE_PREFIX = "guide:";
+
+app.get("/make-server-69c33f4c/guides", async (c) => {
+  try {
+    const guides = await kv.getByPrefix(GUIDE_PREFIX);
+    const refreshed = refreshPublicUrls(
+      guides || [],
+      [{ urlField: "coverImageUrl", pathField: "coverImagePath" }]
+    );
+    return c.json({ guides: refreshed });
+  } catch (err) {
+    console.log(`Error fetching guides: ${err}`);
+    return c.json({ error: `Error fetching guides: ${err}` }, 500);
+  }
+});
+
+app.post("/make-server-69c33f4c/guides", async (c) => {
+  try {
+    const guide = await c.req.json();
+    if (!guide.id) {
+      guide.id = Date.now().toString();
+    }
+    await kv.set(`${GUIDE_PREFIX}${guide.id}`, guide);
+    return c.json({ guide });
+  } catch (err) {
+    console.log(`Error saving guide: ${err}`);
+    return c.json({ error: `Error saving guide: ${err}` }, 500);
+  }
+});
+
+app.delete("/make-server-69c33f4c/guides/:id", async (c) => {
+  try {
+    const id = c.req.param("id");
+    const guide = await kv.get(`${GUIDE_PREFIX}${id}`);
+    if (guide?.coverImagePath) {
+      try {
+        const sb = supabase();
+        await sb.storage.from(BUCKET_NAME).remove([guide.coverImagePath]);
+      } catch (imgErr) {
+        console.log(`Warning: failed to delete cover image for guide ${id}: ${imgErr}`);
+      }
+    }
+    await kv.del(`${GUIDE_PREFIX}${id}`);
+    return c.json({ success: true });
+  } catch (err) {
+    console.log(`Error deleting guide ${c.req.param("id")}: ${err}`);
+    return c.json({ error: `Error deleting guide: ${err}` }, 500);
+  }
+});
+
 Deno.serve(app.fetch);
