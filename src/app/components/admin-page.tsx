@@ -4917,9 +4917,8 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const handleEditGuide = useCallback(async (guide: GuideItem) => {
     setSaving(true);
     try {
-      const { id, ...updates } = guide;
-      await apiPut(`/guides/${id}`, updates);
-      setGuides((prev) => prev.map((g) => (g.id === id ? guide : g)));
+      await apiPost("/guides", guide);
+      setGuides((prev) => prev.map((g) => (g.id === guide.id ? guide : g)));
       setShowGuideModal(false);
       showToast("Guide updated successfully!");
     } catch (err: any) {
