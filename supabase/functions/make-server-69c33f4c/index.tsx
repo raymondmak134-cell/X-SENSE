@@ -506,6 +506,58 @@ app.delete("/make-server-69c33f4c/categories/:id", async (c) => {
   }
 });
 
+// ──── Product Cards ────
+
+const PRODUCT_CARD_PREFIX = "product-card:";
+
+app.get("/make-server-69c33f4c/product-cards", async (c) => {
+  try {
+    const cards = await kv.getByPrefix(PRODUCT_CARD_PREFIX);
+    const refreshed = refreshPublicUrls(
+      cards || [],
+      [{ urlField: "coverImageUrl", pathField: "coverImagePath" }]
+    );
+    return c.json({ productCards: refreshed });
+  } catch (err) {
+    console.log(`Error fetching product cards: ${err}`);
+    return c.json({ error: `Error fetching product cards: ${err}` }, 500);
+  }
+});
+
+app.post("/make-server-69c33f4c/product-cards", async (c) => {
+  try {
+    const card = await c.req.json();
+    if (!card.id) {
+      return c.json({ error: "Product card id is required" }, 400);
+    }
+    await kv.set(`${PRODUCT_CARD_PREFIX}${card.id}`, card);
+    return c.json({ productCard: card });
+  } catch (err) {
+    console.log(`Error saving product card: ${err}`);
+    return c.json({ error: `Error saving product card: ${err}` }, 500);
+  }
+});
+
+app.delete("/make-server-69c33f4c/product-cards/:id", async (c) => {
+  try {
+    const id = c.req.param("id");
+    const card = await kv.get(`${PRODUCT_CARD_PREFIX}${id}`);
+    if (card?.coverImagePath) {
+      try {
+        const sb = supabase();
+        await sb.storage.from(BUCKET_NAME).remove([card.coverImagePath]);
+      } catch (imgErr) {
+        console.log(`Warning: failed to delete cover image for product card ${id}: ${imgErr}`);
+      }
+    }
+    await kv.del(`${PRODUCT_CARD_PREFIX}${id}`);
+    return c.json({ success: true });
+  } catch (err) {
+    console.log(`Error deleting product card ${c.req.param("id")}: ${err}`);
+    return c.json({ error: `Error deleting product card: ${err}` }, 500);
+  }
+});
+
 // ──── Support Config ────
 
 const SUPPORT_PREFIX = "support:";
