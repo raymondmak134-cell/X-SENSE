@@ -36,6 +36,7 @@ import {
   Image as ImageIcon,
   LifeBuoy,
   MessageSquare,
+  CreditCard,
 } from "lucide-react";
 import { projectId, publicAnonKey } from "../../../utils/supabase/info";
 
@@ -137,6 +138,15 @@ export interface Category {
   bannerMobileUrl?: string;
   bannerMobilePath?: string;
   order: number;
+}
+
+export interface ProductCardItem {
+  id: string;
+  name: string;
+  spuIds: string[];
+  coverImageUrl: string;
+  coverImagePath: string;
+  sellingPoint: string;
 }
 
 const POWER_SOURCE_OPTIONS = [
@@ -4032,17 +4042,309 @@ function FaqItemCard({
   );
 }
 
+/* ========== Product Card Panel ========== */
+
+function ProductCardPanel({
+  cards,
+  spus,
+  saving,
+  onAdd,
+  onSave,
+  showModal,
+  onCloseModal,
+  showToast,
+  selectedCategoryId,
+}: {
+  cards: ProductCardItem[];
+  spus: Spu[];
+  saving: boolean;
+  onAdd: () => void;
+  onSave: (card: Omit<ProductCardItem, "id">) => void;
+  showModal: boolean;
+  onCloseModal: () => void;
+  showToast: (msg: string, type?: "success" | "error") => void;
+  selectedCategoryId: string;
+}) {
+  const [cardName, setCardName] = useState("");
+  const [selectedSpuIds, setSelectedSpuIds] = useState<string[]>([]);
+  const [spuDropdownOpen, setSpuDropdownOpen] = useState(false);
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [coverPreview, setCoverPreview] = useState("");
+  const [sellingPoint, setSellingPoint] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!showModal) {
+      setCardName("");
+      setSelectedSpuIds([]);
+      setCoverFile(null);
+      setCoverPreview("");
+      setSellingPoint("");
+    }
+  }, [showModal]);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setSpuDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setCoverFile(file);
+    const reader = new FileReader();
+    reader.onload = () => setCoverPreview(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const toggleSpu = (id: string) => {
+    setSelectedSpuIds((prev) =>
+      prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]
+    );
+  };
+
+  const handleSubmit = async () => {
+    if (!cardName.trim()) { showToast("Please enter a Card name", "error"); return; }
+    if (selectedSpuIds.length === 0) { showToast("Please select at least one SPU", "error"); return; }
+    if (!coverFile) { showToast("Please upload a cover image", "error"); return; }
+    if (!sellingPoint.trim()) { showToast("Please enter a selling point", "error"); return; }
+
+    setUploading(true);
+    try {
+      const imgResult = await uploadImage(coverFile);
+      onSave({
+        name: cardName.trim(),
+        spuIds: selectedSpuIds,
+        coverImageUrl: imgResult.url,
+        coverImagePath: imgResult.path,
+        sellingPoint: sellingPoint.trim(),
+      });
+    } catch (err: any) {
+      showToast(err.message || "Image upload failed", "error");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const filteredCards = cards.filter((c) =>
+    c.spuIds.some((sid) => {
+      const spu = spus.find((s) => s.id === sid);
+      return spu && (spu.categoryId || "smoke-alarms") === selectedCategoryId;
+    })
+  );
+
+  return (
+    <>
+      {/* Header + Add Button */}
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-[20px] text-[#1a1a1a]">Product Cards</h2>
+        <button
+          onClick={onAdd}
+          className="flex items-center gap-2 h-[40px] px-5 rounded-xl text-[14px] bg-[#ba0020] text-white hover:bg-[#a0001b] transition-colors cursor-pointer"
+        >
+          <Plus className="size-4" />
+          Add Product Card
+        </button>
+      </div>
+
+      {/* Card list or empty state */}
+      {filteredCards.length === 0 ? (
+        <div className="bg-white rounded-2xl border border-[#eee] py-24 flex flex-col items-center text-[#ccc]">
+          <CreditCard className="size-12 mb-4" />
+          <p className="text-[15px] text-[#999]">No product cards in this category</p>
+          <p className="text-[13px] text-[#bbb] mt-1">Click &quot;Add Product Card&quot; to get started</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {filteredCards.map((card) => (
+            <div key={card.id} className="bg-white rounded-2xl border border-[#eee] overflow-hidden">
+              {card.coverImageUrl && (
+                <div className="h-[160px] bg-[#f5f5f5]">
+                  <img src={card.coverImageUrl} alt={card.name} className="w-full h-full object-cover" />
+                </div>
+              )}
+              <div className="p-4">
+                <h3 className="text-[15px] text-[#1a1a1a] font-medium mb-1">{card.name}</h3>
+                <p className="text-[13px] text-[#666] mb-2">{card.sellingPoint}</p>
+                <p className="text-[11px] text-[#aaa]">
+                  {card.spuIds.length} SPU{card.spuIds.length !== 1 ? "s" : ""} linked
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Modal */}
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40" onClick={onCloseModal} />
+          <div className="relative bg-white rounded-2xl w-full max-w-[520px] max-h-[90vh] overflow-y-auto shadow-xl">
+            {/* Modal header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-[#f0f0f0]">
+              <h3 className="text-[16px] text-[#1a1a1a] font-medium">Add Product Card</h3>
+              <button onClick={onCloseModal} className="size-8 rounded-lg flex items-center justify-center text-[#999] hover:bg-[#f5f5f5] transition-colors cursor-pointer">
+                <X className="size-4" />
+              </button>
+            </div>
+
+            {/* Modal body */}
+            <div className="px-6 py-5 flex flex-col gap-5">
+              {/* 1. Card Name */}
+              <div>
+                <label className="block text-[13px] text-[#555] mb-1.5">Card Name</label>
+                <input
+                  value={cardName}
+                  onChange={(e) => setCardName(e.target.value)}
+                  placeholder="Enter card name"
+                  className="w-full h-[40px] px-3 rounded-xl border border-[#e0e0e0] text-[14px] outline-none focus:border-[#ba0020] transition-colors"
+                />
+              </div>
+
+              {/* 2. SPU multi-select */}
+              <div ref={dropdownRef}>
+                <label className="block text-[13px] text-[#555] mb-1.5">Linked SPUs</label>
+                <div
+                  onClick={() => setSpuDropdownOpen(!spuDropdownOpen)}
+                  className="w-full min-h-[40px] px-3 py-2 rounded-xl border border-[#e0e0e0] text-[14px] cursor-pointer flex flex-wrap gap-1.5 items-center hover:border-[#ba0020] transition-colors"
+                >
+                  {selectedSpuIds.length === 0 ? (
+                    <span className="text-[#bbb]">Select SPUs...</span>
+                  ) : (
+                    selectedSpuIds.map((sid) => {
+                      const spu = spus.find((s) => s.id === sid);
+                      return (
+                        <span
+                          key={sid}
+                          className="inline-flex items-center gap-1 bg-[#fef2f2] text-[#ba0020] text-[12px] px-2 py-0.5 rounded-lg"
+                        >
+                          {spu?.name || sid}
+                          <button
+                            onClick={(e) => { e.stopPropagation(); toggleSpu(sid); }}
+                            className="hover:text-[#800] cursor-pointer"
+                          >
+                            <X className="size-3" />
+                          </button>
+                        </span>
+                      );
+                    })
+                  )}
+                </div>
+                {spuDropdownOpen && (() => {
+                  const categorySpus = spus.filter((s) => (s.categoryId || "smoke-alarms") === selectedCategoryId);
+                  return (
+                  <div className="mt-1 border border-[#e0e0e0] rounded-xl bg-white shadow-lg max-h-[200px] overflow-y-auto z-10 relative">
+                    {categorySpus.length === 0 ? (
+                      <div className="px-3 py-3 text-[13px] text-[#aaa] text-center">No SPUs in this category</div>
+                    ) : (
+                      categorySpus.map((spu) => {
+                        const checked = selectedSpuIds.includes(spu.id);
+                        return (
+                          <button
+                            key={spu.id}
+                            onClick={() => toggleSpu(spu.id)}
+                            className="flex items-center gap-2.5 w-full px-3 py-2.5 text-[13px] text-left hover:bg-[#f5f5f5] transition-colors cursor-pointer"
+                          >
+                            <div className={`size-4 rounded border flex items-center justify-center shrink-0 ${checked ? "bg-[#ba0020] border-[#ba0020]" : "border-[#ccc]"}`}>
+                              {checked && <Check className="size-3 text-white" />}
+                            </div>
+                            {spu.imageUrl && (
+                              <img src={spu.imageUrl} alt="" className="size-6 rounded object-cover shrink-0" />
+                            )}
+                            <span className="truncate">{spu.name}</span>
+                          </button>
+                        );
+                      })
+                    )}
+                  </div>
+                  );
+                })()}
+              </div>
+
+              {/* 3. Cover Image */}
+              <div>
+                <label className="block text-[13px] text-[#555] mb-1.5">Cover Image</label>
+                <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
+                {coverPreview ? (
+                  <div className="relative w-full h-[180px] rounded-xl overflow-hidden border border-[#e0e0e0] group">
+                    <img src={coverPreview} alt="Cover preview" className="w-full h-full object-cover" />
+                    <button
+                      onClick={() => { setCoverFile(null); setCoverPreview(""); }}
+                      className="absolute top-2 right-2 size-7 rounded-lg bg-black/50 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                    >
+                      <X className="size-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-full h-[120px] rounded-xl border-2 border-dashed border-[#ddd] flex flex-col items-center justify-center text-[#aaa] hover:border-[#ba0020] hover:text-[#ba0020] transition-colors cursor-pointer"
+                  >
+                    <ImagePlus className="size-6 mb-2" />
+                    <span className="text-[13px]">Click to upload cover</span>
+                  </button>
+                )}
+              </div>
+
+              {/* 4. Selling Point */}
+              <div>
+                <label className="block text-[13px] text-[#555] mb-1.5">Selling Point</label>
+                <textarea
+                  value={sellingPoint}
+                  onChange={(e) => setSellingPoint(e.target.value)}
+                  placeholder="Enter a selling point for this product card"
+                  rows={3}
+                  className="w-full px-3 py-2.5 rounded-xl border border-[#e0e0e0] text-[14px] outline-none focus:border-[#ba0020] transition-colors resize-none"
+                />
+              </div>
+            </div>
+
+            {/* Modal footer */}
+            <div className="px-6 py-4 border-t border-[#f0f0f0] flex items-center justify-end gap-3">
+              <button
+                onClick={onCloseModal}
+                className="h-[38px] px-4 rounded-xl text-[13px] text-[#666] bg-[#f5f5f5] hover:bg-[#eee] transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSubmit}
+                disabled={saving || uploading}
+                className="h-[38px] px-5 rounded-xl text-[13px] text-white bg-[#ba0020] hover:bg-[#a0001b] transition-colors cursor-pointer disabled:opacity-60 flex items-center gap-2"
+              >
+                {(saving || uploading) && <Loader2 className="size-3.5 animate-spin" />}
+                {uploading ? "Uploading..." : saving ? "Saving..." : "Save"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
 /* ========== 管理后台主体 ========== */
 
 function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   // Sidebar: which category selected & sub-tab
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>("smoke-alarms");
-  const [subTab, setSubTab] = useState<"products" | "spus">("products");
+  const [subTab, setSubTab] = useState<"products" | "spus" | "product-cards">("products");
+  const [spuExpanded, setSpuExpanded] = useState(false);
   const [productsExpanded, setProductsExpanded] = useState(true);
+  const [productCardExpanded, setProductCardExpanded] = useState(false);
   const [supportExpanded, setSupportExpanded] = useState(false);
   const isManageCategories = selectedCategoryId === "__manage__";
   const isSupportSection = selectedCategoryId.startsWith("__support_");
   const supportSubTab = isSupportSection ? selectedCategoryId.replace("__support_", "") as "app" | "faqs" : null;
+  const isSpuSection = subTab === "spus" && !isManageCategories && !isSupportSection;
+  const isProductCardSection = subTab === "product-cards" && !isManageCategories && !isSupportSection;
 
   const [products, setProducts] = useState<Product[]>([]);
   const [allSpus, setAllSpus] = useState<Spu[]>([]);
@@ -4056,6 +4358,10 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [deletingProduct, setDeletingProduct] = useState<Product | null>(null);
   const [search, setSearch] = useState("");
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+
+  // Product Card states
+  const [productCards, setProductCards] = useState<ProductCardItem[]>([]);
+  const [showProductCardModal, setShowProductCardModal] = useState(false);
 
   const showToast = (message: string, type: "success" | "error" = "success") => {
     setToast({ message, type });
@@ -4082,9 +4388,19 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     }
   }, []);
 
+  const loadProductCards = useCallback(async () => {
+    try {
+      const data = await apiGet<{ productCards: ProductCardItem[] }>("/product-cards");
+      setProductCards(data.productCards || []);
+    } catch {
+      // endpoint may not exist yet — silently ignore
+    }
+  }, []);
+
   useEffect(() => {
     loadProducts();
-  }, [loadProducts]);
+    loadProductCards();
+  }, [loadProducts, loadProductCards]);
 
   const filteredProducts = products
     .filter((p) => (p.categoryId || "smoke-alarms") === selectedCategoryId)
@@ -4145,6 +4461,21 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     }
   }, []);
 
+  const handleSaveProductCard = useCallback(async (card: Omit<ProductCardItem, "id">) => {
+    setSaving(true);
+    try {
+      const newCard: ProductCardItem = { ...card, id: Date.now().toString() };
+      await apiPost("/product-cards", newCard);
+      setProductCards((prev) => [newCard, ...prev]);
+      setShowProductCardModal(false);
+      showToast("Product Card saved successfully!");
+    } catch (err: any) {
+      showToast(err.message || "Failed to save Product Card", "error");
+    } finally {
+      setSaving(false);
+    }
+  }, []);
+
   const currentCategory = allCategories.find((c) => c.id === selectedCategoryId);
 
   return (
@@ -4167,33 +4498,31 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
         {/* 导航菜单 */}
         <nav className="flex-1 overflow-y-auto py-3 px-3 flex flex-col gap-0.5">
-          {/* ── Products 一级导航（可折叠） ── */}
+          {/* ── SPUs 一级导航（可折叠） ── */}
           <button
-            onClick={() => setProductsExpanded(!productsExpanded)}
+            onClick={() => setSpuExpanded(!spuExpanded)}
             className={`flex items-center gap-2.5 w-full px-3 py-2.5 rounded-xl text-[14px] transition-colors cursor-pointer ${
-              !isManageCategories && !isSupportSection
+              isSpuSection
                 ? "bg-[#fef2f2] text-[#ba0020]"
                 : "text-[#555] hover:bg-[#f5f5f5]"
             }`}
           >
-            <Package className="size-4 shrink-0" />
-            <span className="flex-1 text-left">Products</span>
-            <ChevronDown className={`size-3.5 shrink-0 transition-transform ${productsExpanded ? "" : "-rotate-90"}`} />
+            <Layers className="size-4 shrink-0" />
+            <span className="flex-1 text-left">SPUs</span>
+            <ChevronDown className={`size-3.5 shrink-0 transition-transform ${spuExpanded ? "" : "-rotate-90"}`} />
           </button>
 
-          {/* 二级分类列表 */}
-          {productsExpanded && (
+          {spuExpanded && (
             <div className="ml-3 border-l border-[#f0f0f0] flex flex-col gap-0.5 py-1">
               {allCategories.map((cat) => {
-                const active = selectedCategoryId === cat.id && !isManageCategories;
-                const prodCount = products.filter((p) => (p.categoryId || "smoke-alarms") === cat.id).length;
+                const active = isSpuSection && selectedCategoryId === cat.id;
                 const spuCount = allSpus.filter((s: any) => (s.categoryId || "smoke-alarms") === cat.id).length;
-                const total = prodCount + spuCount;
                 return (
                   <button
                     key={cat.id}
                     onClick={() => {
                       setSelectedCategoryId(cat.id);
+                      setSubTab("spus");
                       setShowForm(false);
                       setEditingProduct(null);
                       setSearch("");
@@ -4207,7 +4536,112 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                     <span className="flex-1 text-left truncate">{cat.name}</span>
                     {!loading && (
                       <span className={`text-[11px] shrink-0 tabular-nums ${active ? "text-white/60" : "text-[#ccc]"}`}>
-                        {total}
+                        {spuCount}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {/* 分隔线 */}
+          <div className="h-px bg-[#f0f0f0] my-2" />
+
+          {/* ── Products 一级导航（可折叠） ── */}
+          <button
+            onClick={() => setProductsExpanded(!productsExpanded)}
+            className={`flex items-center gap-2.5 w-full px-3 py-2.5 rounded-xl text-[14px] transition-colors cursor-pointer ${
+              !isManageCategories && !isSupportSection && !isSpuSection && !isProductCardSection
+                ? "bg-[#fef2f2] text-[#ba0020]"
+                : "text-[#555] hover:bg-[#f5f5f5]"
+            }`}
+          >
+            <Package className="size-4 shrink-0" />
+            <span className="flex-1 text-left">Products (SKU)</span>
+            <ChevronDown className={`size-3.5 shrink-0 transition-transform ${productsExpanded ? "" : "-rotate-90"}`} />
+          </button>
+
+          {/* 二级分类列表 */}
+          {productsExpanded && (
+            <div className="ml-3 border-l border-[#f0f0f0] flex flex-col gap-0.5 py-1">
+              {allCategories.map((cat) => {
+                const active = !isSpuSection && !isProductCardSection && selectedCategoryId === cat.id && !isManageCategories && !isSupportSection;
+                const prodCount = products.filter((p) => (p.categoryId || "smoke-alarms") === cat.id).length;
+                return (
+                  <button
+                    key={cat.id}
+                    onClick={() => {
+                      setSelectedCategoryId(cat.id);
+                      setSubTab("products");
+                      setShowForm(false);
+                      setEditingProduct(null);
+                      setSearch("");
+                    }}
+                    className={`flex items-center gap-2 w-full pl-4 pr-2 py-2 rounded-lg text-[13px] transition-colors cursor-pointer ${
+                      active
+                        ? "bg-[#ba0020] text-white"
+                        : "text-[#666] hover:bg-[#f5f5f5] hover:text-[#333]"
+                    }`}
+                  >
+                    <span className="flex-1 text-left truncate">{cat.name}</span>
+                    {!loading && (
+                      <span className={`text-[11px] shrink-0 tabular-nums ${active ? "text-white/60" : "text-[#ccc]"}`}>
+                        {prodCount}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {/* 分隔线 */}
+          <div className="h-px bg-[#f0f0f0] my-2" />
+
+          {/* ── Product Card 一级导航（可折叠） ── */}
+          <button
+            onClick={() => setProductCardExpanded(!productCardExpanded)}
+            className={`flex items-center gap-2.5 w-full px-3 py-2.5 rounded-xl text-[14px] transition-colors cursor-pointer ${
+              isProductCardSection
+                ? "bg-[#fef2f2] text-[#ba0020]"
+                : "text-[#555] hover:bg-[#f5f5f5]"
+            }`}
+          >
+            <CreditCard className="size-4 shrink-0" />
+            <span className="flex-1 text-left">Product Card</span>
+            <ChevronDown className={`size-3.5 shrink-0 transition-transform ${productCardExpanded ? "" : "-rotate-90"}`} />
+          </button>
+
+          {/* Product Card 二级分类列表 */}
+          {productCardExpanded && (
+            <div className="ml-3 border-l border-[#f0f0f0] flex flex-col gap-0.5 py-1">
+              {allCategories.map((cat) => {
+                const active = isProductCardSection && selectedCategoryId === cat.id;
+                const cardCount = productCards.filter((c) => c.spuIds.some((sid) => {
+                  const spu = allSpus.find((s) => s.id === sid);
+                  return spu && (spu.categoryId || "smoke-alarms") === cat.id;
+                })).length;
+                return (
+                  <button
+                    key={cat.id}
+                    onClick={() => {
+                      setSelectedCategoryId(cat.id);
+                      setSubTab("product-cards");
+                      setShowForm(false);
+                      setEditingProduct(null);
+                      setSearch("");
+                    }}
+                    className={`flex items-center gap-2 w-full pl-4 pr-2 py-2 rounded-lg text-[13px] transition-colors cursor-pointer ${
+                      active
+                        ? "bg-[#ba0020] text-white"
+                        : "text-[#666] hover:bg-[#f5f5f5] hover:text-[#333]"
+                    }`}
+                  >
+                    <span className="flex-1 text-left truncate">{cat.name}</span>
+                    {!loading && (
+                      <span className={`text-[11px] shrink-0 tabular-nums ${active ? "text-white/60" : "text-[#ccc]"}`}>
+                        {cardCount}
                       </span>
                     )}
                   </button>
@@ -4316,6 +4750,12 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 <Settings className="size-4 text-[#ba0020]" />
                 <span className="text-[#1a1a1a]">Manage Categories</span>
               </>
+            ) : isProductCardSection ? (
+              <>
+                <span className="text-[#aaa]">Product Card</span>
+                <ChevronRight className="size-3.5 text-[#ccc]" />
+                <span className="text-[#1a1a1a]">{currentCategory?.name ?? selectedCategoryId}</span>
+              </>
             ) : isSupportSection ? (
               <>
                 <span className="text-[#aaa]">Support</span>
@@ -4324,7 +4764,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
               </>
             ) : (
               <>
-                <span className="text-[#aaa]">Products</span>
+                <span className="text-[#aaa]">{isSpuSection ? "SPUs" : "Products"}</span>
                 <ChevronRight className="size-3.5 text-[#ccc]" />
                 <span className="text-[#1a1a1a]">{currentCategory?.name ?? selectedCategoryId}</span>
               </>
@@ -4336,51 +4776,25 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
         <div className="flex-1 p-8 min-w-0">
           {isManageCategories ? (
             <CategoryPanel categories={allCategories} onUpdate={loadProducts} showToast={showToast} />
+          ) : isProductCardSection ? (
+            <ProductCardPanel
+              cards={productCards}
+              spus={allSpus}
+              saving={saving}
+              onAdd={() => setShowProductCardModal(true)}
+              onSave={handleSaveProductCard}
+              showModal={showProductCardModal}
+              onCloseModal={() => setShowProductCardModal(false)}
+              showToast={showToast}
+              selectedCategoryId={selectedCategoryId}
+            />
           ) : isSupportSection ? (
             supportSubTab === "app" ? (
               <SupportAppPanel showToast={showToast} />
             ) : (
               <SupportFaqsPanel showToast={showToast} categories={allCategories} />
             )
-          ) : (
-          <>
-          {/* Products / SPUs 切换标签 */}
-          <div className="flex items-center gap-1 bg-[#f5f5f5] rounded-xl p-[3px] mb-6 w-fit">
-            <button
-              onClick={() => { setSubTab("products"); setShowForm(false); setEditingProduct(null); setSearch(""); }}
-              className={`flex items-center gap-1.5 px-4 py-[7px] rounded-lg text-[13px] transition-all cursor-pointer ${
-                subTab === "products"
-                  ? "bg-white text-[#1a1a1a] shadow-sm"
-                  : "text-[#888] hover:text-[#555]"
-              }`}
-            >
-              <Package className="size-3.5" />
-              Products
-              {!loading && (
-                <span className={`text-[11px] tabular-nums ${subTab === "products" ? "text-[#aaa]" : "text-[#ccc]"}`}>
-                  {products.filter((p) => (p.categoryId || "smoke-alarms") === selectedCategoryId).length}
-                </span>
-              )}
-            </button>
-            <button
-              onClick={() => { setSubTab("spus"); setShowForm(false); setEditingProduct(null); setSearch(""); }}
-              className={`flex items-center gap-1.5 px-4 py-[7px] rounded-lg text-[13px] transition-all cursor-pointer ${
-                subTab === "spus"
-                  ? "bg-white text-[#1a1a1a] shadow-sm"
-                  : "text-[#888] hover:text-[#555]"
-              }`}
-            >
-              <Layers className="size-3.5" />
-              SPUs
-              {!loading && (
-                <span className={`text-[11px] tabular-nums ${subTab === "spus" ? "text-[#aaa]" : "text-[#ccc]"}`}>
-                  {allSpus.filter((s: any) => (s.categoryId || "smoke-alarms") === selectedCategoryId).length}
-                </span>
-              )}
-            </button>
-          </div>
-
-          {subTab === "spus" ? (
+          ) : isSpuSection ? (
             <SpuPanel showToast={showToast} categories={allCategories} selectedCategoryId={selectedCategoryId} />
           ) : (
           <>
@@ -4548,8 +4962,6 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
               </div>
             )}
           </div>
-          </>
-          )}
           </>
           )}
         </div>
