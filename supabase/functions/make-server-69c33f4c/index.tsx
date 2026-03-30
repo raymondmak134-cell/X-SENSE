@@ -661,6 +661,35 @@ app.post("/make-server-69c33f4c/guides", async (c) => {
   }
 });
 
+app.put("/make-server-69c33f4c/guides/:id", async (c) => {
+  try {
+    const id = c.req.param("id");
+    const updates = await c.req.json();
+    const existing = await kv.get(`${GUIDE_PREFIX}${id}`);
+    if (!existing) {
+      return c.json({ error: "Guide not found" }, 404);
+    }
+    if (
+      updates.coverImagePath &&
+      existing.coverImagePath &&
+      updates.coverImagePath !== existing.coverImagePath
+    ) {
+      try {
+        const sb = supabase();
+        await sb.storage.from(BUCKET_NAME).remove([existing.coverImagePath]);
+      } catch (imgErr) {
+        console.log(`Warning: failed to delete old cover image for guide ${id}: ${imgErr}`);
+      }
+    }
+    const updated = { ...existing, ...updates, id };
+    await kv.set(`${GUIDE_PREFIX}${id}`, updated);
+    return c.json({ guide: updated });
+  } catch (err) {
+    console.log(`Error updating guide ${c.req.param("id")}: ${err}`);
+    return c.json({ error: `Error updating guide: ${err}` }, 500);
+  }
+});
+
 app.delete("/make-server-69c33f4c/guides/:id", async (c) => {
   try {
     const id = c.req.param("id");

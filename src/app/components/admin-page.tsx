@@ -80,6 +80,19 @@ async function apiPost<T = any>(path: string, body?: any): Promise<T> {
   return res.json();
 }
 
+async function apiPut<T = any>(path: string, body?: any): Promise<T> {
+  const res = await fetchWithRetry(`${API_BASE}${path}`, {
+    method: "PUT",
+    headers: { ...AUTH_HEADER, "Content-Type": "application/json" },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`PUT ${path} failed (${res.status}): ${text}`);
+  }
+  return res.json();
+}
+
 async function apiDelete(path: string): Promise<void> {
   const res = await fetchWithRetry(`${API_BASE}${path}`, {
     method: "DELETE",
@@ -4388,6 +4401,7 @@ function GuidesPanel({
   onAdd,
   onCloseModal,
   onSave,
+  onEdit,
   onDelete,
   showToast,
 }: {
@@ -4398,6 +4412,7 @@ function GuidesPanel({
   onAdd: () => void;
   onCloseModal: () => void;
   onSave: (guide: Omit<GuideItem, "id">) => void;
+  onEdit: (guide: GuideItem) => void;
   onDelete: (id: string) => void;
   showToast: (msg: string, type?: "success" | "error") => void;
 }) {
@@ -4409,7 +4424,18 @@ function GuidesPanel({
   const [uploading, setUploading] = useState(false);
   const [catDropdownOpen, setCatDropdownOpen] = useState(false);
   const [deletingGuideId, setDeletingGuideId] = useState<string | null>(null);
+  const [editingGuide, setEditingGuide] = useState<GuideItem | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const openEditModal = (guide: GuideItem) => {
+    setEditingGuide(guide);
+    setTag(guide.tag);
+    setTitle(guide.title);
+    setCoverImageUrl(guide.coverImageUrl);
+    setCoverImagePath(guide.coverImagePath);
+    setSelectedCategoryIds([...guide.categoryIds]);
+    onAdd();
+  };
 
   useEffect(() => {
     if (!showModal) {
@@ -4418,6 +4444,7 @@ function GuidesPanel({
       setCoverImageUrl("");
       setCoverImagePath("");
       setSelectedCategoryIds([]);
+      setEditingGuide(null);
     }
   }, [showModal]);
 
@@ -4455,14 +4482,25 @@ function GuidesPanel({
   const handleSubmit = () => {
     if (!tag.trim()) { showToast("Please enter a tag", "error"); return; }
     if (!title.trim()) { showToast("Please enter a title", "error"); return; }
-    onSave({
-      tag: tag.trim(),
-      title: title.trim(),
-      coverImageUrl,
-      coverImagePath,
-      categoryIds: selectedCategoryIds,
-      createdAt: Date.now(),
-    });
+    if (editingGuide) {
+      onEdit({
+        ...editingGuide,
+        tag: tag.trim(),
+        title: title.trim(),
+        coverImageUrl,
+        coverImagePath,
+        categoryIds: selectedCategoryIds,
+      });
+    } else {
+      onSave({
+        tag: tag.trim(),
+        title: title.trim(),
+        coverImageUrl,
+        coverImagePath,
+        categoryIds: selectedCategoryIds,
+        createdAt: Date.now(),
+      });
+    }
   };
 
   return (
@@ -4485,7 +4523,7 @@ function GuidesPanel({
           <div className="shrink-0 w-[100px]">Tag</div>
           <div className="flex-1">Title</div>
           <div className="shrink-0 w-[200px]">Categories</div>
-          <div className="shrink-0 w-[68px] text-right">Actions</div>
+          <div className="shrink-0 w-[80px] text-right">Actions</div>
         </div>
 
         {guides.length > 0 ? (
@@ -4516,7 +4554,13 @@ function GuidesPanel({
                   ) : null;
                 })}
               </div>
-              <div className="shrink-0 w-[68px] flex justify-end">
+              <div className="shrink-0 w-[80px] flex justify-end gap-1">
+                <button
+                  onClick={() => openEditModal(guide)}
+                  className="size-8 flex items-center justify-center rounded-lg text-[#bbb] hover:text-[#067ad9] hover:bg-[#eef6fd] transition-colors cursor-pointer"
+                >
+                  <Pencil className="size-4" />
+                </button>
                 <button
                   onClick={() => setDeletingGuideId(guide.id)}
                   className="size-8 flex items-center justify-center rounded-lg text-[#bbb] hover:text-[#ba0020] hover:bg-[#fef2f2] transition-colors cursor-pointer"
@@ -4563,7 +4607,7 @@ function GuidesPanel({
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center" onClick={onCloseModal}>
           <div className="bg-white rounded-2xl shadow-xl w-[520px] max-h-[90vh] flex flex-col overflow-hidden" onClick={(e) => e.stopPropagation()}>
             <div className="px-6 py-5 border-b border-[#f0f0f0]">
-              <h3 className="text-[18px] text-[#1a1a1a]">Add Shopping Guide</h3>
+              <h3 className="text-[18px] text-[#1a1a1a]">{editingGuide ? "Edit Shopping Guide" : "Add Shopping Guide"}</h3>
             </div>
 
             <div className="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-5">
@@ -4865,6 +4909,21 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       showToast("Guide saved successfully!");
     } catch (err: any) {
       showToast(err.message || "Failed to save guide", "error");
+    } finally {
+      setSaving(false);
+    }
+  }, []);
+
+  const handleEditGuide = useCallback(async (guide: GuideItem) => {
+    setSaving(true);
+    try {
+      const { id, ...updates } = guide;
+      await apiPut(`/guides/${id}`, updates);
+      setGuides((prev) => prev.map((g) => (g.id === id ? guide : g)));
+      setShowGuideModal(false);
+      showToast("Guide updated successfully!");
+    } catch (err: any) {
+      showToast(err.message || "Failed to update guide", "error");
     } finally {
       setSaving(false);
     }
@@ -5220,6 +5279,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
               onAdd={() => setShowGuideModal(true)}
               onCloseModal={() => setShowGuideModal(false)}
               onSave={handleSaveGuide}
+              onEdit={handleEditGuide}
               onDelete={handleDeleteGuide}
               showToast={showToast}
             />
