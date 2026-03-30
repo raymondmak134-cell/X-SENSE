@@ -30,27 +30,40 @@ const supabase = () =>
 
 const BUCKET_NAME = "make-69c33f4c-product-images";
 
-// Idempotently create bucket on startup
+function getPublicUrl(filePath: string): string {
+  return `${Deno.env.get("SUPABASE_URL")}/storage/v1/object/public/${BUCKET_NAME}/${filePath}`;
+}
+
+// Idempotently create/update bucket on startup (public so URLs never expire)
 (async () => {
   try {
     const sb = supabase();
     const { data: buckets } = await sb.storage.listBuckets();
-    const bucketExists = buckets?.some(
+    const existing = buckets?.find(
       (bucket: any) => bucket.name === BUCKET_NAME
     );
-    if (!bucketExists) {
+    if (!existing) {
       const { error } = await sb.storage.createBucket(BUCKET_NAME, {
-        public: false,
+        public: true,
       });
       if (error) {
         console.log(
           `Error creating storage bucket '${BUCKET_NAME}': ${error.message}`
         );
       } else {
-        console.log(`Storage bucket '${BUCKET_NAME}' created successfully.`);
+        console.log(`Storage bucket '${BUCKET_NAME}' created successfully (public).`);
+      }
+    } else if (!existing.public) {
+      const { error } = await sb.storage.updateBucket(BUCKET_NAME, {
+        public: true,
+      });
+      if (error) {
+        console.log(`Error updating bucket to public: ${error.message}`);
+      } else {
+        console.log(`Storage bucket '${BUCKET_NAME}' updated to public.`);
       }
     } else {
-      console.log(`Storage bucket '${BUCKET_NAME}' already exists.`);
+      console.log(`Storage bucket '${BUCKET_NAME}' already exists (public).`);
     }
   } catch (err) {
     console.log(`Failed to initialize storage bucket: ${err}`);
@@ -98,23 +111,8 @@ app.post("/make-server-69c33f4c/upload-image", async (c) => {
       );
     }
 
-    // Create signed URL (7 days)
-    const { data: signedData, error: signedError } = await sb.storage
-      .from(BUCKET_NAME)
-      .createSignedUrl(filePath, 60 * 60 * 24 * 7);
-
-    if (signedError) {
-      console.log(
-        `Error creating signed URL for '${filePath}': ${signedError.message}`
-      );
-      return c.json(
-        { error: `Failed to create signed URL: ${signedError.message}` },
-        500
-      );
-    }
-
     return c.json({
-      url: signedData.signedUrl,
+      url: getPublicUrl(filePath),
       path: filePath,
     });
   } catch (err) {
@@ -123,30 +121,14 @@ app.post("/make-server-69c33f4c/upload-image", async (c) => {
   }
 });
 
-// Refresh signed URL for a stored image path
+// Refresh URL for a stored image path (returns public URL)
 app.post("/make-server-69c33f4c/refresh-image-url", async (c) => {
   try {
     const { path: filePath } = await c.req.json();
     if (!filePath) {
       return c.json({ error: "No path provided" }, 400);
     }
-
-    const sb = supabase();
-    const { data, error } = await sb.storage
-      .from(BUCKET_NAME)
-      .createSignedUrl(filePath, 60 * 60 * 24 * 7);
-
-    if (error) {
-      console.log(
-        `Error refreshing signed URL for '${filePath}': ${error.message}`
-      );
-      return c.json(
-        { error: `Failed to refresh signed URL: ${error.message}` },
-        500
-      );
-    }
-
-    return c.json({ url: data.signedUrl });
+    return c.json({ url: getPublicUrl(filePath) });
   } catch (err) {
     console.log(`Unexpected error refreshing image URL: ${err}`);
     return c.json({ error: `Unexpected error: ${err}` }, 500);
@@ -181,133 +163,84 @@ app.post("/make-server-69c33f4c/delete-image", async (c) => {
   }
 });
 
-// ============ Batch Signed URL Refresh Helper ============
+// ============ Public URL Refresh Helper ============
 
 /**
- * Collect all storage paths from an array of items, batch-refresh signed URLs,
- * and return items with fresh URLs. Each field mapping is { urlField, pathField }.
+ * Replace URL fields with stable public URLs derived from stored paths.
+ * No API call needed — public URLs are deterministic and never expire.
  */
-async function refreshSignedUrls<T extends Record<string, any>>(
+function refreshPublicUrls<T extends Record<string, any>>(
   items: T[],
   fieldMappings: { urlField: string; pathField: string }[],
-  optionsField?: string // optional: field name for SkuOption[] arrays (each has imageUrl/imagePath)
-): Promise<T[]> {
+  optionsConfig?: {
+    field: string;
+    fieldMappings: { urlField: string; pathField: string }[];
+  }
+): T[] {
   if (!items || items.length === 0) return items;
 
-  const sb = supabase();
-  // Collect all paths that need refreshing
-  const entries: { itemIdx: number; urlField: string; optIdx?: number; path: string }[] = [];
+  return items.map((item) => {
+    const clone: any = { ...item };
 
-  items.forEach((item, i) => {
-    // Top-level fields
     for (const { urlField, pathField } of fieldMappings) {
-      if (item[pathField]) {
-        entries.push({ itemIdx: i, urlField, path: item[pathField] });
+      if (clone[pathField]) {
+        clone[urlField] = getPublicUrl(clone[pathField]);
       }
     }
-    // Nested options array (for products)
-    if (optionsField && Array.isArray(item[optionsField])) {
-      (item[optionsField] as any[]).forEach((opt: any, j: number) => {
-        if (opt.imagePath) {
-          entries.push({ itemIdx: i, urlField: "imageUrl", optIdx: j, path: opt.imagePath });
+
+    if (optionsConfig && Array.isArray(clone[optionsConfig.field])) {
+      clone[optionsConfig.field] = clone[optionsConfig.field].map((opt: any) => {
+        const optClone = { ...opt };
+        for (const { urlField, pathField } of optionsConfig.fieldMappings) {
+          if (optClone[pathField]) {
+            optClone[urlField] = getPublicUrl(optClone[pathField]);
+          }
         }
+        return optClone;
       });
     }
+
+    return clone as T;
   });
-
-  if (entries.length === 0) return items;
-
-  try {
-    const paths = entries.map((e) => e.path);
-    const { data, error } = await sb.storage
-      .from(BUCKET_NAME)
-      .createSignedUrls(paths, 60 * 60 * 24 * 7);
-
-    if (error || !data) {
-      console.log(`Error batch refreshing signed URLs: ${error?.message}`);
-      return items;
-    }
-
-    // Deep-clone items and apply fresh URLs
-    const result = items.map((item) => ({ ...item }));
-    data.forEach((signed: any, idx: number) => {
-      const entry = entries[idx];
-      if (!signed.signedUrl) return;
-      if (entry.optIdx !== undefined) {
-        // Nested option image
-        const item = result[entry.itemIdx];
-        if (!Array.isArray(item[optionsField!])) return;
-        item[optionsField!] = [...item[optionsField!]];
-        item[optionsField!][entry.optIdx] = {
-          ...item[optionsField!][entry.optIdx],
-          imageUrl: signed.signedUrl,
-        };
-      } else {
-        // Top-level field
-        result[entry.itemIdx][entry.urlField] = signed.signedUrl;
-      }
-    });
-
-    return result;
-  } catch (err) {
-    console.log(`Unexpected error in batch URL refresh: ${err}`);
-    return items;
-  }
 }
 
 /**
- * Refresh signed URLs for nested SPU fields:
+ * Refresh public URLs for nested SPU fields:
  *  - setupInstallation.installationVideoCoverImage
  *  - setupInstallation.quickStartGuideImages[]
  *  - manuals[].coverImage
  */
-async function refreshSpuNestedUrls(spus: any[]): Promise<any[]> {
+function refreshSpuNestedUrls(spus: any[]): any[] {
   if (!spus || spus.length === 0) return spus;
 
-  const sb = supabase();
-  const pathList: string[] = [];
-  const appliers: Array<(signedUrl: string) => void> = [];
+  return spus.map((spu) => {
+    const clone = { ...spu };
 
-  spus.forEach((spu) => {
-    const cover = spu.setupInstallation?.installationVideoCoverImage;
-    if (cover?.path) {
-      pathList.push(cover.path);
-      appliers.push((url) => { spu.setupInstallation.installationVideoCoverImage = { ...cover, url }; });
+    if (clone.setupInstallation) {
+      clone.setupInstallation = { ...clone.setupInstallation };
+
+      const cover = clone.setupInstallation.installationVideoCoverImage;
+      if (cover?.path) {
+        clone.setupInstallation.installationVideoCoverImage = { ...cover, url: getPublicUrl(cover.path) };
+      }
+
+      if (Array.isArray(clone.setupInstallation.quickStartGuideImages)) {
+        clone.setupInstallation.quickStartGuideImages = clone.setupInstallation.quickStartGuideImages.map(
+          (img: any) => img.path ? { ...img, url: getPublicUrl(img.path) } : img
+        );
+      }
     }
-    const guides = spu.setupInstallation?.quickStartGuideImages;
-    if (Array.isArray(guides)) {
-      guides.forEach((img: any, j: number) => {
-        if (img.path) {
-          pathList.push(img.path);
-          appliers.push((url) => { guides[j] = { ...img, url }; });
-        }
-      });
+
+    if (Array.isArray(clone.manuals)) {
+      clone.manuals = clone.manuals.map((m: any) =>
+        m.coverImage?.path
+          ? { ...m, coverImage: { ...m.coverImage, url: getPublicUrl(m.coverImage.path) } }
+          : m
+      );
     }
-    const manuals = spu.manuals;
-    if (Array.isArray(manuals)) {
-      manuals.forEach((m: any, j: number) => {
-        if (m.coverImage?.path) {
-          pathList.push(m.coverImage.path);
-          appliers.push((url) => { manuals[j] = { ...m, coverImage: { ...m.coverImage, url } }; });
-        }
-      });
-    }
+
+    return clone;
   });
-
-  if (pathList.length === 0) return spus;
-
-  try {
-    const { data, error } = await sb.storage
-      .from(BUCKET_NAME)
-      .createSignedUrls(pathList, 60 * 60 * 24 * 7);
-    if (error || !data) return spus;
-    data.forEach((signed: any, idx: number) => {
-      if (signed?.signedUrl) appliers[idx](signed.signedUrl);
-    });
-  } catch (err) {
-    console.log(`Error refreshing SPU nested URLs: ${err}`);
-  }
-  return spus;
 }
 
 // ============ Products CRUD ============
@@ -318,10 +251,20 @@ const PRODUCTS_PREFIX = "product:";
 app.get("/make-server-69c33f4c/products", async (c) => {
   try {
     const products = await kv.getByPrefix(PRODUCTS_PREFIX);
-    const refreshed = await refreshSignedUrls(
+    const refreshed = refreshPublicUrls(
       products || [],
-      [{ urlField: "imageUrl", pathField: "imagePath" }],
-      "options"
+      [
+        { urlField: "imageUrl", pathField: "imagePath" },
+        { urlField: "imageUrlV2", pathField: "imagePathV2" },
+      ],
+      {
+        field: "options",
+        fieldMappings: [
+          { urlField: "imageUrl", pathField: "imagePath" },
+          { urlField: "hoverImageUrl", pathField: "hoverImagePath" },
+          { urlField: "hoverImageUrlV2", pathField: "hoverImagePathV2" },
+        ],
+      }
     );
     return c.json({ products: refreshed });
   } catch (err) {
@@ -406,11 +349,11 @@ const SPU_PREFIX = "spu:";
 app.get("/make-server-69c33f4c/spus", async (c) => {
   try {
     const spus = await kv.getByPrefix(SPU_PREFIX);
-    const refreshed = await refreshSignedUrls(
+    const refreshed = refreshPublicUrls(
       spus || [],
       [{ urlField: "imageUrl", pathField: "imagePath" }]
     );
-    const final = await refreshSpuNestedUrls(refreshed);
+    const final = refreshSpuNestedUrls(refreshed);
     return c.json({ spus: final });
   } catch (err) {
     console.log(`Error fetching SPUs: ${err}`);
@@ -426,11 +369,11 @@ app.get("/make-server-69c33f4c/spus/:id", async (c) => {
     if (!spu) {
       return c.json({ error: `SPU not found: ${id}` }, 404);
     }
-    const refreshed = await refreshSignedUrls(
+    const refreshed = refreshPublicUrls(
       [spu],
       [{ urlField: "imageUrl", pathField: "imagePath" }]
     );
-    const final = await refreshSpuNestedUrls(refreshed);
+    const final = refreshSpuNestedUrls(refreshed);
     return c.json({ spu: final[0] });
   } catch (err) {
     console.log(`Error fetching SPU by id: ${err}`);
@@ -510,7 +453,7 @@ app.get("/make-server-69c33f4c/categories", async (c) => {
   try {
     const categories = await kv.getByPrefix(CATEGORY_PREFIX);
     const sorted = (categories || []).sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0));
-    const refreshed = await refreshSignedUrls(
+    const refreshed = refreshPublicUrls(
       sorted,
       [
         { urlField: "coverImageUrl", pathField: "coverImagePath" },
@@ -573,7 +516,7 @@ app.get("/make-server-69c33f4c/support/:key", async (c) => {
     const data = await kv.get(`${SUPPORT_PREFIX}${key}`);
     if (!data) return c.json({ data: null });
     if (data.iconPath) {
-      const refreshed = await refreshSignedUrls(
+      const refreshed = refreshPublicUrls(
         [data],
         [{ urlField: "iconUrl", pathField: "iconPath" }]
       );
@@ -609,26 +552,12 @@ app.get("/make-server-69c33f4c/faqs/:categoryId", async (c) => {
     if (!data || !data.items || data.items.length === 0) {
       return c.json({ data: { items: [] } });
     }
-    const sb = supabase();
-    const entries: { idx: number; path: string }[] = [];
-    data.items.forEach((item: any, i: number) => {
+    data.items = data.items.map((item: any) => {
       if (item.answerImagePath) {
-        entries.push({ idx: i, path: item.answerImagePath });
+        return { ...item, answerImageUrl: getPublicUrl(item.answerImagePath) };
       }
+      return item;
     });
-    if (entries.length > 0) {
-      const paths = entries.map((e) => e.path);
-      const { data: signed, error } = await sb.storage
-        .from(BUCKET_NAME)
-        .createSignedUrls(paths, 60 * 60 * 24 * 7);
-      if (!error && signed) {
-        signed.forEach((s: any, j: number) => {
-          if (s.signedUrl) {
-            data.items[entries[j].idx].answerImageUrl = s.signedUrl;
-          }
-        });
-      }
-    }
     return c.json({ data });
   } catch (err) {
     console.log(`Error fetching FAQs for ${c.req.param("categoryId")}: ${err}`);
