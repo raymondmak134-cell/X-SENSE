@@ -250,3 +250,94 @@ export function useCategories() {
 
   return { categories, loading };
 }
+
+/* ========== Product Cards ========== */
+
+export interface ProductCardItem {
+  id: string;
+  name: string;
+  spuIds: string[];
+  coverImageUrl: string;
+  coverImagePath: string;
+  sellingPoint: string;
+}
+
+export function useProductCards() {
+  const [cards, setCards] = useState<ProductCardItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        setLoading(true);
+        const res = await fetchWithRetry(`${API_BASE}/product-cards`, { headers: AUTH_HEADER });
+        if (!res.ok) throw new Error(`Failed to fetch product cards (${res.status})`);
+        const data = await res.json();
+        setCards(data.productCards || []);
+      } catch (err: any) {
+        console.error("Error fetching product cards:", err);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  return { cards, loading };
+}
+
+/* ========== Shopping Guides ========== */
+
+export interface GuideItem {
+  id: string;
+  tag: string;
+  title: string;
+  coverImageUrl: string;
+  coverImagePath: string;
+  categoryIds: string[];
+  createdAt?: number;
+}
+
+export function useGuides(categoryId?: string) {
+  const [guides, setGuides] = useState<GuideItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        setLoading(true);
+        const res = await fetchWithRetry(`${API_BASE}/guides`, { headers: AUTH_HEADER });
+        if (!res.ok) throw new Error(`Failed to fetch guides (${res.status})`);
+        const data = await res.json();
+        const all: GuideItem[] = data.guides || [];
+        setGuides(
+          categoryId
+            ? all.filter((g) => g.categoryIds?.includes(categoryId))
+            : all
+        );
+      } catch (err: any) {
+        console.error("Error fetching guides:", err);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [categoryId]);
+
+  return { guides, loading };
+}
+
+/** Calculate the minimum SKU price across all products linked to a product card's SPUs */
+export function getMinPriceForCard(card: ProductCardItem, products: Product[]): string {
+  const linked = products.filter((p) => p.spuId && card.spuIds.includes(p.spuId));
+  let min = Infinity;
+  for (const p of linked) {
+    for (const opt of p.options) {
+      const v = parseFloat(opt.price);
+      if (!isNaN(v) && v > 0 && v < min) min = v;
+    }
+    if (p.price) {
+      const v = parseFloat(p.price.replace("$", ""));
+      if (!isNaN(v) && v > 0 && v < min) min = v;
+    }
+  }
+  return min === Infinity ? "" : `$${min.toFixed(2)}`;
+}

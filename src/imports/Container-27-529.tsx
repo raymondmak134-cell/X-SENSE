@@ -1,12 +1,11 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState } from "react";
 import svgPaths from "./svg-fb1729jawi";
-
 
 import imgProductImage from "@/assets/placeholder-image-url";
 import { ImageWithFallback } from "../app/components/figma/ImageWithFallback";
 import { SkuDropdown } from "../app/components/SkuDropdown";
 import type { SkuOption } from "../app/components/use-products";
-import { ProductFeatures, ALL_FEATURES, FEATURE_COLORS } from "../app/components/feature-icons";
+import { ALL_FEATURES, FEATURE_COLORS } from "../app/components/feature-icons";
 
 interface ProductData {
   id: string;
@@ -116,17 +115,13 @@ export default function Container({ className, product, useNewCard }: { classNam
   const isHot = product?.isHot ?? true;
 
   const [selectedSkuIndex, setSelectedSkuIndex] = useState(0);
-  const [imageLoading, setImageLoading] = useState(false);
-  const prevImageRef = useRef<string>("");
   const [isHovered, setIsHovered] = useState(false);
   const [isImageHovered, setIsImageHovered] = useState(false);
 
   const selectedSku = options[selectedSkuIndex];
   const displayPrice = selectedSku?.price ? `$${selectedSku.price}` : defaultPrice;
-  const displayImage = (useNewCard && v2ImageUrl) ? v2ImageUrl : defaultImageUrl;
-  const hoverImage = useNewCard
-    ? (selectedSku?.hoverImageUrlV2 || selectedSku?.hoverImageUrl || "")
-    : (selectedSku?.hoverImageUrl || "");
+  const displayImage = v2ImageUrl || defaultImageUrl;
+  const hoverImage = selectedSku?.hoverImageUrlV2 || selectedSku?.hoverImageUrl || "";
 
   // Discount calculation
   const hasDiscount = selectedSku?.discountEnabled && selectedSku.discountPercent && selectedSku.price;
@@ -134,20 +129,7 @@ export default function Container({ className, product, useNewCard }: { classNam
     ? `$${(parseFloat(selectedSku.price) * (1 - parseInt(selectedSku.discountPercent, 10) / 100)).toFixed(2)}`
     : null;
 
-  // Track image URL changes to trigger loading skeleton
-  useEffect(() => {
-    if (prevImageRef.current && prevImageRef.current !== displayImage) {
-      setImageLoading(true);
-    }
-    prevImageRef.current = displayImage;
-  }, [displayImage]);
-
-  const handleImageLoaded = useCallback(() => {
-    setImageLoading(false);
-  }, []);
-
-  if (useNewCard) {
-    return (
+  return (
       <div
         className="bg-white content-stretch flex flex-col gap-[20px] items-start overflow-clip pb-[20px] relative rounded-[32px] w-full"
         data-name="Container-V2"
@@ -297,96 +279,4 @@ export default function Container({ className, product, useNewCard }: { classNam
         )}
       </div>
     );
-  }
-
-  return (
-    <div
-      className={className || "bg-white content-stretch flex flex-col gap-[20px] items-start overflow-clip p-[20px] relative rounded-[32px] w-[387px]"}
-      data-name="Container"
-      style={{ height: '100%' }}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      {/* Hover background image overlay — fills entire card, above product image but below other content */}
-      {hoverImage && (
-        <div
-          className="absolute inset-0 z-[11] pointer-events-none rounded-[inherit] overflow-hidden"
-        >
-          <img
-            src={hoverImage}
-            alt=""
-            className="absolute inset-0 size-full object-cover transition-all duration-500 ease-in-out"
-            style={{
-              opacity: isHovered ? 1 : 0,
-              transform: isHovered ? 'scale(1) translate3d(0,0,0)' : 'scale(1.08) translate3d(0,0,0)',
-              willChange: 'transform, opacity',
-              backfaceVisibility: 'hidden',
-            }}
-          />
-        </div>
-      )}
-      <div className="content-stretch flex flex-col gap-[16px] items-start relative shrink-0 w-full" data-name="Product Container">
-        <div className="aspect-[307/307] relative shrink-0 w-full" data-name="Product Image">
-          {/* Skeleton overlay while SKU image loads */}
-          {imageLoading && (
-            <div className="absolute inset-0 z-10 rounded-[16px] bg-[rgba(0,0,0,0.06)]" style={{ animation: 'skuImagePulse 1.5s ease-in-out infinite' }} />
-          )}
-          <ImageWithFallback
-            alt={name}
-            className={`absolute inset-0 max-w-none object-cover pointer-events-none size-full transition-opacity duration-300 ${imageLoading ? 'opacity-0' : 'opacity-100'}`}
-            src={displayImage}
-            onLoad={handleImageLoaded}
-          />
-          <style>{`
-            @keyframes skuImagePulse {
-              0%, 100% { opacity: 1; }
-              50% { opacity: 0.4; }
-            }
-          `}</style>
-        </div>
-        <div className="content-stretch flex flex-col gap-[12px] items-start relative z-[12] shrink-0 w-full" data-name="Product Info">
-          {isHot && (
-            <p className="absolute left-0 bottom-[100%] font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[20px] not-italic text-[14px] text-[#ba0020] whitespace-nowrap">Hot</p>
-          )}
-          <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[24px] not-italic relative shrink-0 text-[18px] text-black w-full h-[48px] overflow-hidden" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{name}</p>
-          <div className="relative shrink-0 w-full overflow-hidden" data-name="Product Features" style={{ height: '72px' }}>
-            <ProductFeatures features={features} />
-          </div>
-          <SkuDropdown options={options} iconSize="sm" onSelect={setSelectedSkuIndex} />
-        </div>
-      </div>
-      <div className="content-stretch flex items-center justify-between relative z-[12] shrink-0 w-full" data-name="Price Container">
-        {hasDiscount ? (
-          <div className="flex gap-[4px] h-[34px] items-end relative shrink-0">
-            <p className="font-['Inter:Bold',sans-serif] font-bold leading-[34px] not-italic text-[24px] text-[#ba0020] whitespace-nowrap">{discountedPrice}</p>
-            <p className="[text-decoration-skip-ink:none] decoration-solid font-['Inter:Regular',sans-serif] font-normal h-[20px] leading-[16px] line-through text-[12px] text-[rgba(0,0,0,0.4)] whitespace-nowrap">{displayPrice}</p>
-          </div>
-        ) : (
-          <p className="font-['Inter:Bold',sans-serif] font-bold leading-[34px] not-italic text-[24px] text-black whitespace-nowrap">{displayPrice}</p>
-        )}
-        <div className="bg-[#ba0020] content-stretch flex gap-[8px] items-center justify-center w-[96px] h-[40px] px-[16px] py-[10px] relative rounded-[50px] shrink-0" data-name="原子控件/Web/Button/填充Button">
-          <div className="overflow-clip relative shrink-0 size-[20px] flex items-center justify-center" data-name="icon/常规/购物车">
-            <svg className="block w-[20.24px] h-[20.3px]" fill="none" viewBox="0 0 20.2399 20.2998">
-              <g id="Union">
-                <path d={svgPaths.p38729380} fill="var(--fill-0, white)" />
-                <path d={svgPaths.p1829b100} fill="var(--fill-0, white)" />
-                <path d={svgPaths.p18281200} fill="var(--fill-0, white)" />
-                <path d={svgPaths.p3f7e2080} fill="var(--fill-0, white)" />
-              </g>
-            </svg>
-          </div>
-          
-        </div>
-      </div>
-      <ConnectivityBadge connectivity={product?.connectivity} />
-      {hasDiscount && (
-        <div className="absolute bg-[#ba0020] flex h-[24px] items-center justify-center px-[6px] rounded-[8px] right-[16px] top-[11px] z-[15] pointer-events-none">
-          <p className="font-['Inter:Medium',sans-serif] font-medium leading-[20px] not-italic text-[14px] text-white whitespace-nowrap">{selectedSku.discountPercent}% OFF</p>
-        </div>
-      )}
-      {selectedSku?.packEnabled && selectedSku.packQty && (
-        <PackBadge qty={selectedSku.packQty} />
-      )}
-    </div>
-  );
 }

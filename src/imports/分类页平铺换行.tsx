@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router";
 import svgPaths from "./svg-wbn2vrrkrc";
 import imgBanner from "@/assets/placeholder-image-url";
@@ -2030,18 +2030,6 @@ export default function Component({ products = [], productsLoading = false, cate
   // Compare dialog state
   const [compareOpen, setCompareOpen] = useState(false);
 
-  // Card style toggle (persisted in localStorage)
-  const [useNewCard, setUseNewCard] = useState(() => {
-    try { return localStorage.getItem('cardStyle') === 'new'; } catch { return false; }
-  });
-  const toggleCardStyle = useCallback(() => {
-    setUseNewCard(prev => {
-      const next = !prev;
-      try { localStorage.setItem('cardStyle', next ? 'new' : 'old'); } catch {}
-      return next;
-    });
-  }, []);
-
   return (
     <div className="bg-white relative size-full" data-name="分类页/平铺_换行">
       <GlobalNav />
@@ -2075,39 +2063,10 @@ export default function Component({ products = [], productsLoading = false, cate
           onCompare={() => setCompareOpen(true)}
           products={products}
           categoryId={categoryId}
-          useNewCard={useNewCard}
+          useNewCard={true}
         />
       </div>
       <CompareDialog open={compareOpen} onClose={() => setCompareOpen(false)} categoryId={categoryId} />
-
-      {/* Floating style toggle ball */}
-      <div
-        className="fixed right-[24px] bottom-[80px] z-[999] cursor-pointer select-none"
-        onClick={toggleCardStyle}
-        title={useNewCard ? 'Switch to classic style' : 'Switch to new style'}
-      >
-        <div className={`
-          w-[56px] h-[56px] rounded-full shadow-lg flex items-center justify-center
-          transition-all duration-300 ease-in-out
-          hover:shadow-xl hover:scale-110 active:scale-95
-          ${useNewCard
-            ? 'bg-[#ba0020] text-white'
-            : 'bg-white text-[#333] border border-[rgba(0,0,0,0.1)]'
-          }
-        `}>
-          <div className="flex flex-col items-center gap-[2px]">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="3" width="7" height="7" rx="1" />
-              <rect x="14" y="3" width="7" height="7" rx="1" />
-              <rect x="3" y="14" width="7" height="7" rx="1" />
-              <rect x="14" y="14" width="7" height="7" rx="1" />
-            </svg>
-            <span className="text-[10px] font-semibold leading-none font-['Inter:Semi_Bold',sans-serif]">
-              {useNewCard ? 'NEW' : 'OLD'}
-            </span>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
