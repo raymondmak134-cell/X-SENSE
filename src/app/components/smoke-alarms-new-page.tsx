@@ -708,9 +708,9 @@ function ModelCard({
 
 /* ========== Shopping Guide Card ========== */
 
-function GuideCard({ guide }: { guide: GuideItem }) {
+function GuideCard({ guide, onClick }: { guide: GuideItem; onClick?: () => void }) {
   return (
-    <div className="flex flex-[1_0_0] flex-row items-center self-stretch">
+    <div className="flex flex-[1_0_0] flex-row items-center self-stretch cursor-pointer" onClick={onClick}>
       <div className="bg-[#f6f6f6] content-stretch flex flex-[1_0_0] flex-col h-full items-start min-h-px min-w-px overflow-clip relative rounded-[24px]">
         <div className="content-stretch flex flex-col gap-[4px] items-start p-[24px] relative shrink-0 w-full">
           <p className="font-['Inter:Regular',sans-serif] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[rgba(0,0,0,0.54)] w-full">
@@ -730,6 +730,153 @@ function GuideCard({ guide }: { guide: GuideItem }) {
               src={guide.coverImageUrl}
             />
           )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ========== Guide Detail Dialog (PC) ========== */
+
+function GuideDetailDialog({
+  open,
+  guide,
+  onClose,
+}: {
+  open: boolean;
+  guide: GuideItem;
+  onClose: () => void;
+}) {
+  const [visible, setVisible] = useState(false);
+  const [animating, setAnimating] = useState(false);
+  const overlayRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (open) {
+      setVisible(true);
+      setAnimating(true);
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => setAnimating(false));
+      });
+    }
+  }, [open]);
+
+  const handleClose = useCallback(() => {
+    setAnimating(true);
+    setTimeout(() => {
+      setVisible(false);
+      setAnimating(false);
+      onClose();
+    }, 300);
+  }, [onClose]);
+
+  useEffect(() => {
+    if (!visible) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") handleClose();
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [visible, handleClose]);
+
+  useEffect(() => {
+    if (visible) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [visible]);
+
+  if (!visible) return null;
+
+  const isOpen = open && !animating;
+  const tocLines = guide.tableOfContents?.split("\n").filter((l) => l.trim()) ?? [];
+
+  return (
+    <div
+      ref={overlayRef}
+      className={`fixed inset-0 z-[200] flex items-center justify-center transition-all duration-300 ease-in-out ${
+        isOpen ? "bg-[rgba(0,0,0,0.2)] opacity-100" : "bg-[rgba(0,0,0,0)] opacity-0"
+      }`}
+      style={{ padding: "0 clamp(24px, 8vw, 120px)" }}
+      onClick={(e) => { if (e.target === overlayRef.current) handleClose(); }}
+    >
+      <div
+        className={`bg-white flex flex-col items-center w-[720px] max-h-[90vh] overflow-clip rounded-[32px] transition-all duration-300 ease-in-out ${
+          isOpen ? "scale-100 opacity-100" : "scale-95 opacity-0"
+        }`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Close button */}
+        <div className="flex items-start justify-end pt-[32px] px-[32px] shrink-0 w-full">
+          <button
+            className="shrink-0 size-[40px] opacity-40 hover:opacity-70 transition-opacity cursor-pointer bg-transparent border-none p-0"
+            onClick={handleClose}
+          >
+            <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+              <path
+                clipRule="evenodd"
+                d="M16.6667 0C25.8714 0 33.3333 7.46192 33.3333 16.6667C33.3333 25.8714 25.8714 33.3333 16.6667 33.3333C7.46192 33.3333 0 25.8714 0 16.6667C0 7.46192 7.46192 0 16.6667 0ZM16.6667 14.5707L11.8236 9.72765L9.72765 11.8218L14.5725 16.6667L9.72765 21.5133L11.8218 23.6075L16.6667 18.7609L21.5133 23.6075L23.6075 21.5115L18.7627 16.6667L23.6075 11.8236L22.5604 10.7747L21.5115 9.72765L16.6667 14.5707Z"
+                fill="black"
+                fillOpacity="0.54"
+                fillRule="evenodd"
+              />
+            </svg>
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 min-h-0 overflow-y-auto w-full">
+          <div className="flex flex-col gap-[24px] items-start px-[76px] pb-[32px] w-full">
+            {/* Body Title */}
+            {guide.bodyTitle && (
+              <p className="font-['Inter:Bold',sans-serif] font-bold leading-[44px] text-[32px] text-[#101820] w-full">
+                {guide.bodyTitle}
+              </p>
+            )}
+
+            {/* Body Content */}
+            {guide.bodyContent && (
+              <div className="font-['Inter:Regular',sans-serif] font-normal text-[14px] text-black leading-[20px] w-full whitespace-pre-line">
+                {guide.bodyContent}
+              </div>
+            )}
+
+            {/* Table of Contents */}
+            {tocLines.length > 0 && (
+              <div className="bg-[#f6f6f6] flex flex-col gap-[12px] items-start p-[12px] rounded-[12px] text-[14px] text-black w-full">
+                <p className="font-['Inter:Medium',sans-serif] font-medium leading-[20px] w-full">
+                  Table of Contents
+                </p>
+                <ul className="font-['Inter:Regular',sans-serif] font-normal leading-[20px] list-disc w-full m-0 pl-[21px]">
+                  {tocLines.map((line, i) => (
+                    <li key={i} className="mb-0">
+                      <span className="leading-[20px]">{line}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Link Text */}
+            {guide.linkText && (
+              guide.linkUrl ? (
+                <a
+                  href={guide.linkUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[22px] text-[16px] text-[#ba0020] whitespace-nowrap no-underline hover:underline"
+                >
+                  {guide.linkText}{" >"}
+                </a>
+              ) : (
+                <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[22px] text-[16px] text-[#ba0020] whitespace-nowrap">
+                  {guide.linkText}{" >"}
+                </p>
+              )
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -870,6 +1017,8 @@ export default function SmokeAlarmsNewPage() {
   const [activeTab, setActiveTab] = useState<TabId>("models");
   const [selectModalOpen, setSelectModalOpen] = useState(false);
   const [selectCard, setSelectCard] = useState<ProductCardItem | null>(null);
+  const [guideDialogOpen, setGuideDialogOpen] = useState(false);
+  const [selectedGuide, setSelectedGuide] = useState<GuideItem | null>(null);
 
   const modelsRef = useRef<HTMLDivElement>(null);
   const guidesRef = useRef<HTMLDivElement>(null);
@@ -989,7 +1138,14 @@ export default function SmokeAlarmsNewPage() {
                     </>
                   ) : guides.length > 0 ? (
                     guides.map((guide) => (
-                      <GuideCard key={guide.id} guide={guide} />
+                      <GuideCard
+                        key={guide.id}
+                        guide={guide}
+                        onClick={() => {
+                          setSelectedGuide(guide);
+                          setGuideDialogOpen(true);
+                        }}
+                      />
                     ))
                   ) : (
                     <p className="text-[rgba(0,0,0,0.4)] text-[16px] py-[40px]">
@@ -1019,6 +1175,15 @@ export default function SmokeAlarmsNewPage() {
           card={selectCard}
           products={smokeProducts}
           spus={spus}
+        />
+      )}
+
+      {/* Guide Detail Dialog */}
+      {selectedGuide && (
+        <GuideDetailDialog
+          open={guideDialogOpen}
+          guide={selectedGuide}
+          onClose={() => setGuideDialogOpen(false)}
         />
       )}
     </div>
