@@ -256,6 +256,8 @@ function MobileSelectModal({
     }
   }, [open, spus, card.spuIds]);
 
+  const scrollYRef = useRef(0);
+
   const handleClose = useCallback(() => {
     setAnimating(true);
     setTimeout(() => {
@@ -267,11 +269,22 @@ function MobileSelectModal({
 
   useEffect(() => {
     if (visible) {
+      scrollYRef.current = window.scrollY;
+      document.body.style.position = "fixed";
+      document.body.style.top = `-${scrollYRef.current}px`;
+      document.body.style.width = "100%";
       document.body.style.overflow = "hidden";
     } else {
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.width = "";
       document.body.style.overflow = "";
+      window.scrollTo(0, scrollYRef.current);
     }
     return () => {
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.width = "";
       document.body.style.overflow = "";
     };
   }, [visible]);
@@ -712,6 +725,7 @@ function MobileGuideDetailDialog({
 }) {
   const [visible, setVisible] = useState(false);
   const [animating, setAnimating] = useState(false);
+  const scrollYRef = useRef(0);
 
   useEffect(() => {
     if (open) {
@@ -743,11 +757,24 @@ function MobileGuideDetailDialog({
 
   useEffect(() => {
     if (visible) {
+      scrollYRef.current = window.scrollY;
+      document.body.style.position = "fixed";
+      document.body.style.top = `-${scrollYRef.current}px`;
+      document.body.style.width = "100%";
       document.body.style.overflow = "hidden";
     } else {
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.width = "";
       document.body.style.overflow = "";
+      window.scrollTo(0, scrollYRef.current);
     }
-    return () => { document.body.style.overflow = ""; };
+    return () => {
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.width = "";
+      document.body.style.overflow = "";
+    };
   }, [visible]);
 
   if (!visible) return null;
