@@ -282,7 +282,7 @@ function MobileSelectModal({
 
   return (
     <div
-      className={`fixed inset-0 z-[200] flex items-center justify-center px-[16px] transition-all duration-300 ease-in-out ${
+      className={`fixed inset-0 z-[200] flex items-center justify-center px-[16px] pt-[64px] pb-[16px] transition-all duration-300 ease-in-out ${
         isOpen
           ? "bg-[rgba(0,0,0,0.2)] opacity-100"
           : "bg-[rgba(0,0,0,0)] opacity-0"
@@ -290,13 +290,13 @@ function MobileSelectModal({
       onClick={handleClose}
     >
       <div
-        className={`bg-white flex flex-col items-center max-w-[1312px] w-full overflow-clip rounded-[32px] max-h-[640px] transition-all duration-300 ease-in-out ${
+        className={`bg-white flex flex-col items-center max-w-[1312px] w-full overflow-clip rounded-[32px] max-h-full transition-all duration-300 ease-in-out ${
           isOpen ? "scale-100 opacity-100" : "scale-95 opacity-0"
         }`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Title */}
-        <div className="content-stretch flex gap-[24px] items-start justify-center px-[24px] py-[16px] relative shrink-0 w-full">
+        <div className="content-stretch flex gap-[24px] items-start justify-center px-[16px] py-[16px] relative shrink-0 w-full">
           <div className="content-stretch flex flex-[1_0_0] flex-col gap-[4px] items-start justify-center min-h-px min-w-px relative self-stretch">
             <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[24px] not-italic relative shrink-0 text-[18px] text-[#101820]">
               {matchedSpu ? `Selected ${matchedSpu.name}` : `Select ${card.name}`}
