@@ -675,7 +675,7 @@ function MobileModelCard({
 
 function MobileGuideCard({ guide, onClick }: { guide: GuideItem; onClick?: () => void }) {
   return (
-    <div className="bg-[#f6f6f6] content-stretch flex flex-col h-[374px] items-start overflow-clip relative rounded-[24px] shrink-0 w-[305px] cursor-pointer" onClick={onClick}>
+    <div className="group/guide bg-[#f6f6f6] content-stretch flex flex-col h-[374px] items-start overflow-clip relative rounded-[24px] shrink-0 w-[305px] cursor-pointer" onClick={onClick}>
       <div className="content-stretch flex flex-col gap-[4px] items-start p-[24px] relative shrink-0 w-full">
         <p className="font-['Inter:Regular',sans-serif] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[rgba(0,0,0,0.54)] w-full">
           {guide.tag}
@@ -686,11 +686,11 @@ function MobileGuideCard({ guide, onClick }: { guide: GuideItem; onClick?: () =>
           </p>
         </div>
       </div>
-      <div className="flex-[1_0_0] min-h-px min-w-px relative w-full">
+      <div className="flex-[1_0_0] min-h-px min-w-px relative w-full overflow-hidden">
         {guide.coverImageUrl && (
           <img
             alt=""
-            className="absolute inset-0 max-w-none object-cover pointer-events-none size-full"
+            className="absolute inset-0 max-w-none object-cover pointer-events-none size-full transition-transform duration-300 ease-in-out group-hover/guide:scale-105"
             src={guide.coverImageUrl}
           />
         )}

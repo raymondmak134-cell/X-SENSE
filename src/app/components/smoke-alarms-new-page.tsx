@@ -710,7 +710,7 @@ function ModelCard({
 
 function GuideCard({ guide, onClick }: { guide: GuideItem; onClick?: () => void }) {
   return (
-    <div className="flex flex-[1_0_0] flex-row items-center self-stretch cursor-pointer" onClick={onClick}>
+    <div className="group/guide flex flex-[1_0_0] flex-row items-center self-stretch cursor-pointer" onClick={onClick}>
       <div className="bg-[#f6f6f6] content-stretch flex flex-[1_0_0] flex-col h-full items-start min-h-px min-w-px overflow-clip relative rounded-[24px]">
         <div className="content-stretch flex flex-col gap-[4px] items-start p-[24px] relative shrink-0 w-full">
           <p className="font-['Inter:Regular',sans-serif] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[rgba(0,0,0,0.54)] w-full">
@@ -722,11 +722,11 @@ function GuideCard({ guide, onClick }: { guide: GuideItem; onClick?: () => void 
             </p>
           </div>
         </div>
-        <div className="flex-[1_0_0] min-h-px min-w-px relative w-full">
+        <div className="flex-[1_0_0] min-h-px min-w-px relative w-full overflow-hidden">
           {guide.coverImageUrl && (
             <img
               alt=""
-              className="absolute inset-0 max-w-none object-cover pointer-events-none size-full"
+              className="absolute inset-0 max-w-none object-cover pointer-events-none size-full transition-transform duration-300 ease-in-out group-hover/guide:scale-105"
               src={guide.coverImageUrl}
             />
           )}
