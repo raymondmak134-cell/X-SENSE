@@ -1,12 +1,14 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import {
   useProducts,
   useProductCards,
   useGuides,
+  useSpus,
   getMinPriceForCard,
   type ProductCardItem,
   type GuideItem,
   type Product,
+  type Spu,
 } from "./use-products";
 import GlobalNav from "./global-nav";
 import Footer from "../../imports/Footer";
@@ -41,18 +43,609 @@ function GuideCardSkeleton() {
   );
 }
 
+/* ========== Select Modal ========== */
+
+type SmartChoice = "app" | "no-app";
+type ConnectivityChoice = "interconnected" | "standalone";
+
+const SELECTION_TO_CONNECTIVITY: Record<string, string> = {
+  "app-interconnected": "Base Station Interconnected (App)",
+  "app-standalone": "Wi-Fi (App)",
+  "no-app-interconnected": "Wireless Interconnected",
+  "no-app-standalone": "Standalone",
+};
+
+const CONNECTIVITY_TO_SELECTION: Record<
+  string,
+  { smart: SmartChoice; connectivity: ConnectivityChoice }
+> = {
+  "Base Station Interconnected (App)": { smart: "app", connectivity: "interconnected" },
+  "Wi-Fi (App)": { smart: "app", connectivity: "standalone" },
+  "Wireless Interconnected": { smart: "no-app", connectivity: "interconnected" },
+  Standalone: { smart: "no-app", connectivity: "standalone" },
+};
+
+function SelectModal({
+  open,
+  onClose,
+  card,
+  products,
+  spus,
+}: {
+  open: boolean;
+  onClose: () => void;
+  card: ProductCardItem;
+  products: Product[];
+  spus: Spu[];
+}) {
+  const [visible, setVisible] = useState(false);
+  const [animating, setAnimating] = useState(false);
+  const [smartChoice, setSmartChoice] = useState<SmartChoice | null>(null);
+  const [connectivityChoice, setConnectivityChoice] = useState<ConnectivityChoice | null>(null);
+  const [selectedSkuIdx, setSelectedSkuIdx] = useState(0);
+
+  const cardSpus = useMemo(
+    () => spus.filter((s) => card.spuIds.includes(s.id)),
+    [spus, card.spuIds]
+  );
+
+  const availableCombinations = useMemo(() => {
+    const combos = new Set<string>();
+    for (const spu of cardSpus) {
+      const sel = CONNECTIVITY_TO_SELECTION[spu.connectivity];
+      if (sel) combos.add(`${sel.smart}-${sel.connectivity}`);
+    }
+    return combos;
+  }, [cardSpus]);
+
+  const availableSmartChoices = useMemo(() => {
+    const choices: SmartChoice[] = [];
+    if (connectivityChoice) {
+      if (availableCombinations.has(`app-${connectivityChoice}`))
+        choices.push("app");
+      if (availableCombinations.has(`no-app-${connectivityChoice}`))
+        choices.push("no-app");
+    } else {
+      for (const combo of availableCombinations) {
+        if (combo.startsWith("app-") && !choices.includes("app"))
+          choices.push("app");
+        if (combo.startsWith("no-app-") && !choices.includes("no-app"))
+          choices.push("no-app");
+      }
+    }
+    return choices;
+  }, [availableCombinations, connectivityChoice]);
+
+  const availableConnectivityChoices = useMemo(() => {
+    const choices: ConnectivityChoice[] = [];
+    if (smartChoice) {
+      if (availableCombinations.has(`${smartChoice}-interconnected`))
+        choices.push("interconnected");
+      if (availableCombinations.has(`${smartChoice}-standalone`))
+        choices.push("standalone");
+    } else {
+      if ([...availableCombinations].some((c) => c.endsWith("-interconnected")))
+        choices.push("interconnected");
+      if ([...availableCombinations].some((c) => c.endsWith("-standalone")))
+        choices.push("standalone");
+    }
+    return choices;
+  }, [availableCombinations, smartChoice]);
+
+  const handleSmartClick = useCallback(
+    (choice: SmartChoice) => {
+      setSmartChoice(choice);
+      const validConn: ConnectivityChoice[] = [];
+      if (availableCombinations.has(`${choice}-interconnected`))
+        validConn.push("interconnected");
+      if (availableCombinations.has(`${choice}-standalone`))
+        validConn.push("standalone");
+      if (connectivityChoice && !validConn.includes(connectivityChoice)) {
+        setConnectivityChoice(
+          validConn.length === 1 ? validConn[0] : null
+        );
+      } else if (!connectivityChoice && validConn.length === 1) {
+        setConnectivityChoice(validConn[0]);
+      }
+    },
+    [connectivityChoice, availableCombinations]
+  );
+
+  const handleConnectivityClick = useCallback(
+    (choice: ConnectivityChoice) => {
+      setConnectivityChoice(choice);
+      const validSmart: SmartChoice[] = [];
+      if (availableCombinations.has(`app-${choice}`))
+        validSmart.push("app");
+      if (availableCombinations.has(`no-app-${choice}`))
+        validSmart.push("no-app");
+      if (smartChoice && !validSmart.includes(smartChoice)) {
+        setSmartChoice(
+          validSmart.length === 1 ? validSmart[0] : null
+        );
+      } else if (!smartChoice && validSmart.length === 1) {
+        setSmartChoice(validSmart[0]);
+      }
+    },
+    [smartChoice, availableCombinations]
+  );
+
+  const targetConnectivity =
+    smartChoice && connectivityChoice
+      ? SELECTION_TO_CONNECTIVITY[`${smartChoice}-${connectivityChoice}`] || null
+      : null;
+
+  const matchedSpu = useMemo(
+    () =>
+      targetConnectivity
+        ? spus.find(
+            (s) =>
+              card.spuIds.includes(s.id) &&
+              s.connectivity === targetConnectivity
+          ) || null
+        : null,
+    [targetConnectivity, spus, card.spuIds]
+  );
+
+  const matchedProducts = useMemo(
+    () =>
+      matchedSpu
+        ? products.filter((p) => p.spuId === matchedSpu.id)
+        : [],
+    [matchedSpu, products]
+  );
+
+  const allSkuOptions = useMemo(
+    () => matchedProducts.flatMap((p) => p.options),
+    [matchedProducts]
+  );
+
+  const showSkuSection = allSkuOptions.length > 0;
+
+  const selectedSku = showSkuSection
+    ? allSkuOptions[selectedSkuIdx] || allSkuOptions[0]
+    : null;
+
+  const skuPrice = selectedSku
+    ? parseFloat(selectedSku.price?.replace("$", "") || "0")
+    : 0;
+  const hasDiscount =
+    selectedSku?.discountEnabled && !!selectedSku?.discountPercent;
+  const discountPct = hasDiscount
+    ? parseFloat(selectedSku.discountPercent)
+    : 0;
+  const discountedPrice = hasDiscount
+    ? skuPrice * (1 - discountPct / 100)
+    : skuPrice;
+
+  useEffect(() => {
+    setSelectedSkuIdx(0);
+  }, [matchedSpu?.id]);
+
+  useEffect(() => {
+    if (open) {
+      const cSpus = spus.filter((s) => card.spuIds.includes(s.id));
+      const combos = new Set<string>();
+      for (const spu of cSpus) {
+        const sel = CONNECTIVITY_TO_SELECTION[spu.connectivity];
+        if (sel) combos.add(`${sel.smart}-${sel.connectivity}`);
+      }
+
+      const smartOpts: SmartChoice[] = [];
+      if ([...combos].some((c) => c.startsWith("app-")))
+        smartOpts.push("app");
+      if ([...combos].some((c) => c.startsWith("no-app-")))
+        smartOpts.push("no-app");
+
+      const autoSmart =
+        smartOpts.length === 1 ? smartOpts[0] : null;
+      setSmartChoice(autoSmart);
+
+      if (autoSmart) {
+        const connOpts: ConnectivityChoice[] = [];
+        if (combos.has(`${autoSmart}-interconnected`))
+          connOpts.push("interconnected");
+        if (combos.has(`${autoSmart}-standalone`))
+          connOpts.push("standalone");
+        setConnectivityChoice(
+          connOpts.length === 1 ? connOpts[0] : null
+        );
+      } else {
+        setConnectivityChoice(null);
+      }
+
+      setSelectedSkuIdx(0);
+      setVisible(true);
+      setAnimating(true);
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setAnimating(false);
+        });
+      });
+    }
+  }, [open, spus, card.spuIds]);
+
+  const handleClose = useCallback(() => {
+    setAnimating(true);
+    setTimeout(() => {
+      setVisible(false);
+      setAnimating(false);
+      onClose();
+    }, 300);
+  }, [onClose]);
+
+  useEffect(() => {
+    if (visible) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [visible]);
+
+  if (!visible) return null;
+
+  const isOpen = open && !animating;
+
+  return (
+    <div
+      className={`fixed inset-0 z-[200] flex items-center justify-center px-[120px] transition-all duration-300 ease-in-out ${
+        isOpen
+          ? "bg-[rgba(0,0,0,0.2)] opacity-100"
+          : "bg-[rgba(0,0,0,0)] opacity-0"
+      }`}
+      onClick={handleClose}
+    >
+      <div
+        className={`bg-white flex flex-col items-center max-w-[720px] w-full overflow-clip rounded-[32px] max-h-[85vh] transition-all duration-300 ease-in-out ${
+          isOpen ? "scale-100 opacity-100" : "scale-95 opacity-0"
+        }`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Title */}
+        <div className="content-stretch flex gap-[24px] items-start justify-center pb-[24px] pt-[32px] px-[32px] relative shrink-0 w-full">
+          <div className="content-stretch flex flex-[1_0_0] flex-col gap-[4px] items-start justify-center min-h-px min-w-px relative">
+            <p className="font-['Inter:Bold',sans-serif] font-bold leading-[44px] not-italic relative shrink-0 text-[32px] text-[#101820] w-full">
+              {matchedSpu ? `Selected ${matchedSpu.name}` : `Select ${card.name}`}
+            </p>
+          </div>
+          <button
+            className="shrink-0 size-[40px] opacity-40 hover:opacity-70 transition-opacity cursor-pointer bg-transparent border-none p-0"
+            onClick={handleClose}
+          >
+            <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+              <path
+                clipRule="evenodd"
+                d="M16.6667 0C25.8714 0 33.3333 7.46192 33.3333 16.6667C33.3333 25.8714 25.8714 33.3333 16.6667 33.3333C7.46192 33.3333 0 25.8714 0 16.6667C0 7.46192 7.46192 0 16.6667 0ZM16.6667 14.5707L11.8236 9.72765L9.72765 11.8218L14.5725 16.6667L9.72765 21.5133L11.8218 23.6075L16.6667 18.7609L21.5133 23.6075L23.6075 21.5115L18.7627 16.6667L23.6075 11.8236L22.5604 10.7747L21.5115 9.72765L16.6667 14.5707Z"
+                fill="black"
+                fillOpacity="0.54"
+                fillRule="evenodd"
+              />
+            </svg>
+          </button>
+        </div>
+
+        {/* Scrollable Body */}
+        <div className="flex-1 flex flex-col gap-[24px] items-start pb-[32px] px-[32px] relative w-full overflow-y-auto min-h-0">
+          {/* Product image + selling point + power source */}
+          <div className="content-stretch flex gap-[8px] items-end relative shrink-0 w-full">
+            <div className="relative rounded-[12px] shrink-0 size-[120px] bg-[#f6f6f6]">
+              <img
+                alt=""
+                className="absolute inset-0 max-w-none object-cover pointer-events-none rounded-[12px] size-full"
+                src={card.coverImageUrl}
+              />
+            </div>
+            <div className="content-stretch flex flex-[1_0_0] flex-col items-start justify-end min-h-px min-w-px relative gap-[4px]">
+              {card.sellingPoint && (
+                <div className="content-stretch flex gap-[4px] items-center relative shrink-0 w-full">
+                  <div className="bg-[#ba0020] rounded-[27px] shrink-0 size-[8px]" />
+                  <p className="flex-[1_0_0] font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[16px] min-h-px min-w-px not-italic relative text-[12px] text-[rgba(0,0,0,0.9)]">
+                    {card.sellingPoint}
+                  </p>
+                </div>
+              )}
+              <div
+                className="w-full"
+                style={{
+                  display: "grid",
+                  gridTemplateRows: matchedSpu?.powerSource ? "1fr" : "0fr",
+                  transition:
+                    "grid-template-rows 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                }}
+              >
+                <div className="overflow-hidden">
+                  <div
+                    className="content-stretch flex gap-[4px] items-center relative shrink-0 w-full"
+                    style={{
+                      opacity: matchedSpu?.powerSource ? 1 : 0,
+                      transition: "opacity 0.25s ease 0.1s",
+                    }}
+                  >
+                    <div className="bg-[#067AD9] rounded-[27px] shrink-0 size-[8px]" />
+                    <p className="flex-[1_0_0] font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[16px] min-h-px min-w-px not-italic relative text-[12px] text-[rgba(0,0,0,0.9)]">
+                      {matchedSpu?.powerSource}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Smart */}
+          <div className="border-b border-solid border-[rgba(0,0,0,0.1)] content-stretch flex flex-col gap-[12px] items-start pb-[24px] relative shrink-0 w-full">
+            <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[0] not-italic relative shrink-0 text-[18px] text-[#101820] w-full">
+              <span className="leading-[24px]">{"Smart. "}</span>
+              <span className="leading-[24px] text-[rgba(0,0,0,0.4)]">
+                Want to control it from your phone?
+              </span>
+            </p>
+            <div className="content-start flex flex-wrap gap-[8px] items-start relative shrink-0 w-full">
+              {availableSmartChoices.includes("app") && (
+                <div
+                  className={`content-stretch flex items-center justify-center overflow-clip px-[12px] py-[16px] relative rounded-[12px] shrink-0 cursor-pointer transition-all duration-200 ${
+                    smartChoice === "app"
+                      ? "border-2 border-solid border-[#ba0020]"
+                      : "border-2 border-solid border-[rgba(0,0,0,0.2)]"
+                  }`}
+                  onClick={() => handleSmartClick("app")}
+                >
+                  <p className="font-['Inter:Medium',sans-serif] font-medium leading-[20px] not-italic relative shrink-0 text-[14px] text-[rgba(0,0,0,0.9)] whitespace-nowrap">
+                    Need App Control
+                  </p>
+                </div>
+              )}
+              {availableSmartChoices.includes("no-app") && (
+                <div
+                  className={`content-stretch flex items-center justify-center overflow-clip px-[12px] py-[16px] relative rounded-[12px] shrink-0 cursor-pointer transition-all duration-200 ${
+                    smartChoice === "no-app"
+                      ? "border-2 border-solid border-[#ba0020]"
+                      : "border-2 border-solid border-[rgba(0,0,0,0.2)]"
+                  }`}
+                  onClick={() => handleSmartClick("no-app")}
+                >
+                  <p className="font-['Inter:Medium',sans-serif] font-medium leading-[20px] not-italic relative shrink-0 text-[14px] text-[rgba(0,0,0,0.9)] whitespace-nowrap">
+                    No Need App Control
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Connectivity */}
+          <div className="border-b border-solid border-[rgba(0,0,0,0.1)] content-stretch flex flex-col gap-[12px] items-start pb-[24px] relative shrink-0 w-full">
+            <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[0] not-italic relative shrink-0 text-[18px] text-[#101820] w-full">
+              <span className="leading-[24px]">{"Connectivity. "}</span>
+              <span className="leading-[24px] text-[rgba(0,0,0,0.4)]">
+                Which is best for you?
+              </span>
+            </p>
+            <div className="content-start flex flex-wrap gap-[8px] items-start relative shrink-0 w-full">
+              {availableConnectivityChoices.includes("interconnected") && (
+                <div
+                  className={`content-stretch flex items-center justify-center overflow-clip px-[12px] py-[16px] relative rounded-[12px] shrink-0 cursor-pointer transition-all duration-200 ${
+                    connectivityChoice === "interconnected"
+                      ? "border-2 border-solid border-[#ba0020]"
+                      : "border-2 border-solid border-[rgba(0,0,0,0.2)]"
+                  }`}
+                  onClick={() => handleConnectivityClick("interconnected")}
+                >
+                  <p className="font-['Inter:Medium',sans-serif] font-medium leading-[20px] not-italic relative shrink-0 text-[14px] text-[rgba(0,0,0,0.9)] whitespace-nowrap">
+                    Need Interconnected
+                  </p>
+                </div>
+              )}
+              {availableConnectivityChoices.includes("standalone") && (
+                <div
+                  className={`content-stretch flex items-center justify-center overflow-clip px-[12px] py-[16px] relative rounded-[12px] shrink-0 cursor-pointer transition-all duration-200 ${
+                    connectivityChoice === "standalone"
+                      ? "border-2 border-solid border-[#ba0020]"
+                      : "border-2 border-solid border-[rgba(0,0,0,0.2)]"
+                  }`}
+                  onClick={() => handleConnectivityClick("standalone")}
+                >
+                  <p className="font-['Inter:Medium',sans-serif] font-medium leading-[20px] not-italic relative shrink-0 text-[14px] text-[rgba(0,0,0,0.9)] whitespace-nowrap">
+                    Just Standalone
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Animated SKU Section */}
+          <div
+            className="w-full"
+            style={{
+              display: "grid",
+              gridTemplateRows: showSkuSection ? "1fr" : "0fr",
+              transition:
+                "grid-template-rows 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+            }}
+          >
+            <div className="overflow-hidden">
+              <div
+                className="flex flex-col gap-[24px] w-full"
+                style={{
+                  opacity: showSkuSection ? 1 : 0,
+                  transform: showSkuSection
+                    ? "translateY(0)"
+                    : "translateY(8px)",
+                  transition:
+                    "opacity 0.3s ease 0.15s, transform 0.3s ease 0.15s",
+                }}
+              >
+                {/* Package */}
+                <div className="border-b border-solid border-[rgba(0,0,0,0.1)] content-stretch flex flex-col gap-[12px] items-start pb-[24px] relative shrink-0 w-full">
+                  <div className="content-stretch flex items-start relative shrink-0 w-full">
+                    <p className="flex-[1_0_0] font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[0] min-h-px min-w-px not-italic relative text-[18px] text-[#101820]">
+                      <span className="leading-[24px]">
+                        {"Package. "}
+                      </span>
+                      <span className="leading-[24px] text-[rgba(0,0,0,0.4)]">
+                        How much space do you need?
+                      </span>
+                    </p>
+                  </div>
+                  <div className="content-start flex flex-wrap gap-[8px] items-start relative shrink-0 w-full">
+                    {allSkuOptions.map((opt, i) => {
+                      const isSelected = selectedSkuIdx === i;
+                      const showDiscount =
+                        opt.discountEnabled && !!opt.discountPercent;
+                      return (
+                        <div
+                          key={i}
+                          className={`content-stretch flex gap-[4px] items-center justify-center overflow-clip px-[12px] py-[16px] relative rounded-[12px] shrink-0 cursor-pointer transition-all duration-200 ${
+                            isSelected
+                              ? "border-2 border-solid border-[#ba0020]"
+                              : "border-2 border-solid border-[rgba(0,0,0,0.2)]"
+                          }`}
+                          onClick={() => setSelectedSkuIdx(i)}
+                          style={{
+                            opacity: showSkuSection ? 1 : 0,
+                            transform: showSkuSection
+                              ? "translateY(0)"
+                              : "translateY(6px)",
+                            transition: `opacity 0.25s ease ${0.2 + i * 0.04}s, transform 0.25s ease ${0.2 + i * 0.04}s`,
+                          }}
+                        >
+                          <p className="font-['Inter:Medium',sans-serif] font-medium leading-[20px] not-italic relative shrink-0 text-[14px] text-[rgba(0,0,0,0.9)] whitespace-nowrap">
+                            {opt.name}
+                          </p>
+                          {showDiscount && (
+                            <div className="bg-[rgba(183,17,37,0.1)] content-stretch flex items-center justify-center overflow-clip px-[4px] py-[2px] relative rounded-[4px] shrink-0">
+                              <p className="font-['Inter:Regular',sans-serif] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[#ba0020] whitespace-nowrap">
+                                {opt.discountPercent}% OFF
+                              </p>
+                            </div>
+                          )}
+                          {!opt.includeBaseStation &&
+                            targetConnectivity ===
+                              "Base Station Interconnected (App)" && (
+                              <svg
+                                className="shrink-0"
+                                width="20"
+                                height="20"
+                                viewBox="0 0 20 20"
+                                fill="none"
+                              >
+                                <circle
+                                  cx="10"
+                                  cy="10"
+                                  r="7.5"
+                                  stroke="rgba(0,0,0,0.4)"
+                                  strokeWidth="1.2"
+                                />
+                                <path
+                                  d="M10 9v4"
+                                  stroke="rgba(0,0,0,0.4)"
+                                  strokeWidth="1.2"
+                                  strokeLinecap="round"
+                                />
+                                <circle
+                                  cx="10"
+                                  cy="7"
+                                  r="0.75"
+                                  fill="rgba(0,0,0,0.4)"
+                                />
+                              </svg>
+                            )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Price & Actions */}
+                <div className="content-stretch flex h-[58px] items-center justify-between relative shrink-0 w-full">
+                  <div className="content-stretch flex items-center relative shrink-0">
+                    <div className="content-stretch flex gap-[4px] items-center justify-center relative shrink-0">
+                      {hasDiscount ? (
+                        <>
+                          <p className="font-['Inter:Bold',sans-serif] font-bold leading-[36px] not-italic relative shrink-0 text-[26px] text-[#ba0020] whitespace-nowrap">
+                            ${discountedPrice.toFixed(2)}
+                          </p>
+                          <div className="bg-[rgba(183,17,37,0.1)] content-stretch flex items-center justify-center overflow-clip px-[4px] py-[2px] relative rounded-[4px] shrink-0">
+                            <p className="font-['Inter:Regular',sans-serif] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[#ba0020] whitespace-nowrap">
+                              {discountPct}% OFF
+                            </p>
+                          </div>
+                          <p className="font-['Inter:Regular',sans-serif] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[rgba(0,0,0,0.3)] line-through whitespace-nowrap">
+                            ${skuPrice.toFixed(2)}
+                          </p>
+                        </>
+                      ) : (
+                        <p className="font-['Inter:Bold',sans-serif] font-bold leading-[36px] not-italic relative shrink-0 text-[26px] text-[#101820] whitespace-nowrap">
+                          {skuPrice > 0 ? `$${skuPrice.toFixed(2)}` : ""}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="content-stretch flex gap-[16px] items-center relative shrink-0">
+                    <button className="shadow-[inset_0_0_0_2px_#101820] content-stretch flex gap-[8px] items-center justify-center max-w-[240px] min-h-[56px] min-w-[180px] px-[24px] py-[16px] relative rounded-[50px] shrink-0 cursor-pointer bg-transparent border-none hover:bg-[rgba(0,0,0,0.04)] transition-colors">
+                      <svg
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="#101820"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <circle cx="9" cy="21" r="1" />
+                        <circle cx="20" cy="21" r="1" />
+                        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+                      </svg>
+                      <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[22px] not-italic relative shrink-0 text-[16px] text-[#101820] text-center whitespace-nowrap">
+                        Learn More
+                      </p>
+                    </button>
+                    <button className="bg-[#ba0020] content-stretch flex gap-[8px] items-center justify-center max-w-[240px] min-h-[56px] min-w-[180px] px-[24px] py-[16px] relative rounded-[50px] shrink-0 cursor-pointer border-none hover:bg-[#a0001a] transition-colors">
+                      <svg
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="white"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <circle cx="9" cy="21" r="1" />
+                        <circle cx="20" cy="21" r="1" />
+                        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+                      </svg>
+                      <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[22px] not-italic relative shrink-0 text-[16px] text-white text-center whitespace-nowrap">
+                        Add to Cart
+                      </p>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ========== Product Card ========== */
 
 function ModelCard({
   card,
   minPrice,
+  onSelectClick,
 }: {
   card: ProductCardItem;
   minPrice: string;
+  onSelectClick: () => void;
 }) {
   return (
-    <div className="flex flex-[1_0_0] flex-row items-center self-stretch">
-      <div className="content-stretch flex flex-[1_0_0] flex-col h-[480px] items-center justify-between min-h-px min-w-px overflow-clip p-[24px] relative rounded-[24px]">
+    <div className="flex flex-[1_0_0] flex-row items-center self-stretch cursor-pointer" onClick={onSelectClick}>
+      <div className="group content-stretch flex flex-[1_0_0] flex-col h-[480px] items-center justify-between min-h-px min-w-px overflow-clip p-[24px] relative rounded-[24px]">
         <img
           alt=""
           className="absolute inset-0 max-w-none object-cover pointer-events-none rounded-[24px] size-full"
@@ -83,10 +676,28 @@ function ModelCard({
             <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[24px] not-italic relative shrink-0 text-[18px] text-black whitespace-nowrap">
               {minPrice ? `From ${minPrice}` : "\u00A0"}
             </p>
-            <div className="bg-[#ba0020] content-stretch flex gap-[4px] h-[40px] items-center justify-center px-[16px] py-[8px] relative rounded-[50px] shrink-0 cursor-pointer hover:bg-[#a0001a] transition-colors">
+            <div
+              className="bg-[#ba0020] content-stretch flex gap-0 h-[40px] items-center justify-center px-[16px] py-[8px] relative rounded-[50px] shrink-0 hover:bg-[#a0001a] transition-all duration-300 ease-in-out group-hover:gap-[4px]"
+            >
               <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[20px] not-italic relative shrink-0 text-[14px] text-white text-center whitespace-nowrap">
                 Select
               </p>
+              <svg
+                className="shrink-0 overflow-hidden max-w-0 opacity-0 group-hover:max-w-[20px] group-hover:opacity-100 transition-all duration-300 ease-in-out"
+                width="20"
+                height="20"
+                viewBox="0 0 20 20"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M4.167 10h11.666M10.833 5l5 5-5 5"
+                  stroke="white"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
             </div>
           </div>
         </div>
@@ -250,12 +861,15 @@ export default function SmokeAlarmsNewPage() {
   const { products, loading: productsLoading } = useProducts();
   const { cards, loading: cardsLoading } = useProductCards();
   const { guides, loading: guidesLoading } = useGuides("smoke-alarms");
+  const { spus } = useSpus();
 
   const smokeProducts = products.filter(
     (p) => !p.categoryId || p.categoryId === "smoke-alarms"
   );
 
   const [activeTab, setActiveTab] = useState<TabId>("models");
+  const [selectModalOpen, setSelectModalOpen] = useState(false);
+  const [selectCard, setSelectCard] = useState<ProductCardItem | null>(null);
 
   const modelsRef = useRef<HTMLDivElement>(null);
   const guidesRef = useRef<HTMLDivElement>(null);
@@ -338,6 +952,10 @@ export default function SmokeAlarmsNewPage() {
                         key={card.id}
                         card={card}
                         minPrice={getMinPriceForCard(card, smokeProducts)}
+                        onSelectClick={() => {
+                          setSelectCard(card);
+                          setSelectModalOpen(true);
+                        }}
                       />
                     ))
                   ) : (
@@ -392,6 +1010,17 @@ export default function SmokeAlarmsNewPage() {
         {/* Footer */}
         <Footer />
       </div>
+
+      {/* Select Modal */}
+      {selectCard && (
+        <SelectModal
+          open={selectModalOpen}
+          onClose={() => setSelectModalOpen(false)}
+          card={selectCard}
+          products={smokeProducts}
+          spus={spus}
+        />
+      )}
     </div>
   );
 }

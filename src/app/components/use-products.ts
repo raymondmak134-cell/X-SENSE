@@ -325,6 +325,40 @@ export function useGuides(categoryId?: string) {
   return { guides, loading };
 }
 
+/* ========== SPUs ========== */
+
+export interface Spu {
+  id: string;
+  name: string;
+  imageUrl: string;
+  imagePath: string;
+  connectivity: string;
+  powerSource: string;
+}
+
+export function useSpus() {
+  const [spus, setSpus] = useState<Spu[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        setLoading(true);
+        const res = await fetchWithRetry(`${API_BASE}/spus`, { headers: AUTH_HEADER });
+        if (!res.ok) throw new Error(`Failed to fetch SPUs (${res.status})`);
+        const data = await res.json();
+        setSpus(data.spus || []);
+      } catch (err: any) {
+        console.error("Error fetching SPUs:", err);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  return { spus, loading };
+}
+
 /** Calculate the minimum SKU price across all products linked to a product card's SPUs */
 export function getMinPriceForCard(card: ProductCardItem, products: Product[]): string {
   const linked = products.filter((p) => p.spuId && card.spuIds.includes(p.spuId));
