@@ -407,11 +407,7 @@ function MobileSelectModal({
 
           {/* Connectivity */}
           <div
-            className={`content-stretch flex flex-col gap-[12px] items-start pb-[24px] relative shrink-0 w-full ${
-              showSkuSection
-                ? "border-b border-solid border-[rgba(0,0,0,0.1)]"
-                : ""
-            }`}
+            className={`${matchedSpu ? "border-b border-solid border-[rgba(0,0,0,0.1)] pb-[24px]" : ""} content-stretch flex flex-col gap-[12px] items-start relative shrink-0 w-full`}
           >
             <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[0] not-italic relative shrink-0 text-[18px] text-[#101820] w-full">
               <span className="leading-[24px]">{"Connectivity. "}</span>
