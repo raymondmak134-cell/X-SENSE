@@ -787,8 +787,9 @@ function MobileGuideDetailDialog({
         </div>
 
         {/* Content */}
-        <div className="flex-1 min-h-0 overflow-clip w-full">
-          <div className="flex flex-col gap-[16px] items-start px-[16px] pb-[32px] w-full">
+        <div className="flex-1 min-h-0 overflow-y-auto w-full" style={{ scrollbarWidth: "none", msOverflowStyle: "none", WebkitOverflowScrolling: "touch" } as React.CSSProperties}>
+          <style>{`.mobile-guide-scroll::-webkit-scrollbar { display: none; }`}</style>
+          <div className="mobile-guide-scroll flex flex-col gap-[16px] items-start px-[16px] pb-[32px] w-full">
             {/* Body Title */}
             {guide.bodyTitle && (
               <p className="font-['Inter:Bold',sans-serif] font-bold leading-[30px] text-[24px] text-[#101820] w-full">
