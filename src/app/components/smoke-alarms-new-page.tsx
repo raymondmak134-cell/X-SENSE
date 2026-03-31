@@ -385,28 +385,28 @@ function SelectModal({
             <div className="content-start flex flex-wrap gap-[8px] items-start relative shrink-0 w-full">
               {availableSmartChoices.includes("app") && (
                 <div
-                  className={`content-stretch flex items-center justify-center overflow-clip px-[12px] py-[16px] relative rounded-[12px] shrink-0 cursor-pointer transition-all duration-200 ${
+                  className={`content-stretch flex items-center justify-center overflow-clip px-[16px] h-[56px] relative rounded-[12px] shrink-0 cursor-pointer transition-all duration-200 ${
                     smartChoice === "app"
                       ? "border-2 border-solid border-[#ba0020]"
                       : "border-2 border-solid border-[rgba(0,0,0,0.2)]"
                   }`}
                   onClick={() => handleSmartClick("app")}
                 >
-                  <p className="font-['Inter:Medium',sans-serif] font-medium leading-[20px] not-italic relative shrink-0 text-[14px] text-[rgba(0,0,0,0.9)] whitespace-nowrap">
+                  <p className="font-['Inter:Medium',sans-serif] font-medium leading-[20px] not-italic relative shrink-0 text-[16px] text-[rgba(0,0,0,0.9)] whitespace-nowrap">
                     Need App Control
                   </p>
                 </div>
               )}
               {availableSmartChoices.includes("no-app") && (
                 <div
-                  className={`content-stretch flex items-center justify-center overflow-clip px-[12px] py-[16px] relative rounded-[12px] shrink-0 cursor-pointer transition-all duration-200 ${
+                  className={`content-stretch flex items-center justify-center overflow-clip px-[16px] h-[56px] relative rounded-[12px] shrink-0 cursor-pointer transition-all duration-200 ${
                     smartChoice === "no-app"
                       ? "border-2 border-solid border-[#ba0020]"
                       : "border-2 border-solid border-[rgba(0,0,0,0.2)]"
                   }`}
                   onClick={() => handleSmartClick("no-app")}
                 >
-                  <p className="font-['Inter:Medium',sans-serif] font-medium leading-[20px] not-italic relative shrink-0 text-[14px] text-[rgba(0,0,0,0.9)] whitespace-nowrap">
+                  <p className="font-['Inter:Medium',sans-serif] font-medium leading-[20px] not-italic relative shrink-0 text-[16px] text-[rgba(0,0,0,0.9)] whitespace-nowrap">
                     No Need App Control
                   </p>
                 </div>
@@ -425,28 +425,28 @@ function SelectModal({
             <div className="content-start flex flex-wrap gap-[8px] items-start relative shrink-0 w-full">
               {availableConnectivityChoices.includes("interconnected") && (
                 <div
-                  className={`content-stretch flex items-center justify-center overflow-clip px-[12px] py-[16px] relative rounded-[12px] shrink-0 cursor-pointer transition-all duration-200 ${
+                  className={`content-stretch flex items-center justify-center overflow-clip px-[16px] h-[56px] relative rounded-[12px] shrink-0 cursor-pointer transition-all duration-200 ${
                     connectivityChoice === "interconnected"
                       ? "border-2 border-solid border-[#ba0020]"
                       : "border-2 border-solid border-[rgba(0,0,0,0.2)]"
                   }`}
                   onClick={() => handleConnectivityClick("interconnected")}
                 >
-                  <p className="font-['Inter:Medium',sans-serif] font-medium leading-[20px] not-italic relative shrink-0 text-[14px] text-[rgba(0,0,0,0.9)] whitespace-nowrap">
+                  <p className="font-['Inter:Medium',sans-serif] font-medium leading-[20px] not-italic relative shrink-0 text-[16px] text-[rgba(0,0,0,0.9)] whitespace-nowrap">
                     Need Interconnected
                   </p>
                 </div>
               )}
               {availableConnectivityChoices.includes("standalone") && (
                 <div
-                  className={`content-stretch flex items-center justify-center overflow-clip px-[12px] py-[16px] relative rounded-[12px] shrink-0 cursor-pointer transition-all duration-200 ${
+                  className={`content-stretch flex items-center justify-center overflow-clip px-[16px] h-[56px] relative rounded-[12px] shrink-0 cursor-pointer transition-all duration-200 ${
                     connectivityChoice === "standalone"
                       ? "border-2 border-solid border-[#ba0020]"
                       : "border-2 border-solid border-[rgba(0,0,0,0.2)]"
                   }`}
                   onClick={() => handleConnectivityClick("standalone")}
                 >
-                  <p className="font-['Inter:Medium',sans-serif] font-medium leading-[20px] not-italic relative shrink-0 text-[14px] text-[rgba(0,0,0,0.9)] whitespace-nowrap">
+                  <p className="font-['Inter:Medium',sans-serif] font-medium leading-[20px] not-italic relative shrink-0 text-[16px] text-[rgba(0,0,0,0.9)] whitespace-nowrap">
                     Just Standalone
                   </p>
                 </div>
@@ -496,7 +496,7 @@ function SelectModal({
                       return (
                         <div
                           key={i}
-                          className={`content-stretch flex gap-[4px] items-center justify-center overflow-clip px-[12px] py-[16px] relative rounded-[12px] shrink-0 cursor-pointer transition-all duration-200 ${
+                          className={`content-stretch flex gap-[4px] items-center justify-center overflow-clip px-[16px] h-[56px] relative rounded-[12px] shrink-0 cursor-pointer transition-all duration-200 ${
                             isSelected
                               ? "border-2 border-solid border-[#ba0020]"
                               : "border-2 border-solid border-[rgba(0,0,0,0.2)]"
@@ -510,7 +510,7 @@ function SelectModal({
                             transition: `opacity 0.25s ease ${0.2 + i * 0.04}s, transform 0.25s ease ${0.2 + i * 0.04}s`,
                           }}
                         >
-                          <p className="font-['Inter:Medium',sans-serif] font-medium leading-[20px] not-italic relative shrink-0 text-[14px] text-[rgba(0,0,0,0.9)] whitespace-nowrap">
+                          <p className="font-['Inter:Medium',sans-serif] font-medium leading-[20px] not-italic relative shrink-0 text-[16px] text-[rgba(0,0,0,0.9)] whitespace-nowrap">
                             {opt.name}
                           </p>
                           {showDiscount && (

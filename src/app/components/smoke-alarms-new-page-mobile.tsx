@@ -389,7 +389,7 @@ function MobileSelectModal({
             <div className="content-start flex flex-wrap gap-[8px] items-start relative shrink-0 w-full">
               {availableSmartChoices.includes("app") && (
                 <div
-                  className={`content-stretch flex items-center justify-center overflow-clip px-[12px] py-[16px] relative rounded-[12px] shrink-0 cursor-pointer transition-all duration-200 ${
+                  className={`content-stretch flex items-center justify-center overflow-clip px-[12px] h-[50px] relative rounded-[12px] shrink-0 cursor-pointer transition-all duration-200 ${
                     smartChoice === "app"
                       ? "border-2 border-solid border-[#ba0020]"
                       : "border-2 border-solid border-[rgba(0,0,0,0.2)]"
@@ -403,7 +403,7 @@ function MobileSelectModal({
               )}
               {availableSmartChoices.includes("no-app") && (
                 <div
-                  className={`content-stretch flex items-center justify-center overflow-clip px-[12px] py-[16px] relative rounded-[12px] shrink-0 cursor-pointer transition-all duration-200 ${
+                  className={`content-stretch flex items-center justify-center overflow-clip px-[12px] h-[50px] relative rounded-[12px] shrink-0 cursor-pointer transition-all duration-200 ${
                     smartChoice === "no-app"
                       ? "border-2 border-solid border-[#ba0020]"
                       : "border-2 border-solid border-[rgba(0,0,0,0.2)]"
@@ -431,7 +431,7 @@ function MobileSelectModal({
             <div className="content-start flex flex-wrap gap-[8px] items-start relative shrink-0 w-full">
               {availableConnectivityChoices.includes("interconnected") && (
                 <div
-                  className={`content-stretch flex items-center justify-center overflow-clip px-[12px] py-[16px] relative rounded-[12px] shrink-0 cursor-pointer transition-all duration-200 ${
+                  className={`content-stretch flex items-center justify-center overflow-clip px-[12px] h-[50px] relative rounded-[12px] shrink-0 cursor-pointer transition-all duration-200 ${
                     connectivityChoice === "interconnected"
                       ? "border-2 border-solid border-[#ba0020]"
                       : "border-2 border-solid border-[rgba(0,0,0,0.2)]"
@@ -445,7 +445,7 @@ function MobileSelectModal({
               )}
               {availableConnectivityChoices.includes("standalone") && (
                 <div
-                  className={`content-stretch flex items-center justify-center overflow-clip px-[12px] py-[16px] relative rounded-[12px] shrink-0 cursor-pointer transition-all duration-200 ${
+                  className={`content-stretch flex items-center justify-center overflow-clip px-[12px] h-[50px] relative rounded-[12px] shrink-0 cursor-pointer transition-all duration-200 ${
                     connectivityChoice === "standalone"
                       ? "border-2 border-solid border-[#ba0020]"
                       : "border-2 border-solid border-[rgba(0,0,0,0.2)]"
@@ -500,7 +500,7 @@ function MobileSelectModal({
                       return (
                         <div
                           key={i}
-                          className={`content-stretch flex gap-[4px] items-center justify-center overflow-clip px-[12px] py-[16px] relative rounded-[12px] shrink-0 cursor-pointer transition-all duration-200 ${
+                          className={`content-stretch flex gap-[4px] items-center justify-center overflow-clip px-[12px] h-[50px] relative rounded-[12px] shrink-0 cursor-pointer transition-all duration-200 ${
                             isSelected
                               ? "border-2 border-solid border-[#ba0020]"
                               : "border-2 border-solid border-[rgba(0,0,0,0.2)]"
