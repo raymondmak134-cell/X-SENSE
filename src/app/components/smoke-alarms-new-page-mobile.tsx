@@ -282,7 +282,7 @@ function MobileSelectModal({
 
   return (
     <div
-      className={`fixed inset-0 z-[200] flex items-center justify-center px-[16px] pt-[64px] pb-[16px] transition-all duration-300 ease-in-out ${
+      className={`fixed inset-0 z-[300] flex items-center justify-center px-[16px] pt-[64px] pb-[16px] transition-all duration-300 ease-in-out ${
         isOpen
           ? "bg-[rgba(0,0,0,0.2)] opacity-100"
           : "bg-[rgba(0,0,0,0)] opacity-0"
