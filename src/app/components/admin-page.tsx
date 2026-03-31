@@ -169,6 +169,11 @@ export interface GuideItem {
   coverImageUrl: string;
   coverImagePath: string;
   categoryIds: string[];
+  bodyTitle?: string;
+  bodyContent?: string;
+  tableOfContents?: string;
+  linkText?: string;
+  linkUrl?: string;
   createdAt?: number;
 }
 
@@ -4421,6 +4426,11 @@ function GuidesPanel({
   const [coverImageUrl, setCoverImageUrl] = useState("");
   const [coverImagePath, setCoverImagePath] = useState("");
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
+  const [bodyTitle, setBodyTitle] = useState("");
+  const [bodyContent, setBodyContent] = useState("");
+  const [tableOfContents, setTableOfContents] = useState("");
+  const [linkText, setLinkText] = useState("");
+  const [linkUrl, setLinkUrl] = useState("");
   const [uploading, setUploading] = useState(false);
   const [catDropdownOpen, setCatDropdownOpen] = useState(false);
   const [deletingGuideId, setDeletingGuideId] = useState<string | null>(null);
@@ -4434,6 +4444,11 @@ function GuidesPanel({
     setCoverImageUrl(guide.coverImageUrl);
     setCoverImagePath(guide.coverImagePath);
     setSelectedCategoryIds([...guide.categoryIds]);
+    setBodyTitle(guide.bodyTitle ?? "");
+    setBodyContent(guide.bodyContent ?? "");
+    setTableOfContents(guide.tableOfContents ?? "");
+    setLinkText(guide.linkText ?? "");
+    setLinkUrl(guide.linkUrl ?? "");
     onAdd();
   };
 
@@ -4444,6 +4459,11 @@ function GuidesPanel({
       setCoverImageUrl("");
       setCoverImagePath("");
       setSelectedCategoryIds([]);
+      setBodyTitle("");
+      setBodyContent("");
+      setTableOfContents("");
+      setLinkText("");
+      setLinkUrl("");
       setEditingGuide(null);
     }
   }, [showModal]);
@@ -4482,24 +4502,22 @@ function GuidesPanel({
   const handleSubmit = () => {
     if (!tag.trim()) { showToast("Please enter a tag", "error"); return; }
     if (!title.trim()) { showToast("Please enter a title", "error"); return; }
+    const commonFields = {
+      tag: tag.trim(),
+      title: title.trim(),
+      coverImageUrl,
+      coverImagePath,
+      categoryIds: selectedCategoryIds,
+      bodyTitle: bodyTitle.trim(),
+      bodyContent: bodyContent.trim(),
+      tableOfContents: tableOfContents.trim(),
+      linkText: linkText.trim(),
+      linkUrl: linkUrl.trim(),
+    };
     if (editingGuide) {
-      onEdit({
-        ...editingGuide,
-        tag: tag.trim(),
-        title: title.trim(),
-        coverImageUrl,
-        coverImagePath,
-        categoryIds: selectedCategoryIds,
-      });
+      onEdit({ ...editingGuide, ...commonFields });
     } else {
-      onSave({
-        tag: tag.trim(),
-        title: title.trim(),
-        coverImageUrl,
-        coverImagePath,
-        categoryIds: selectedCategoryIds,
-        createdAt: Date.now(),
-      });
+      onSave({ ...commonFields, createdAt: Date.now() });
     }
   };
 
@@ -4711,6 +4729,63 @@ function GuidesPanel({
                     </div>
                   )}
                 </div>
+              </div>
+
+              {/* Body Title */}
+              <div>
+                <label className="block text-[13px] text-[#555] mb-1.5">Body Title</label>
+                <input
+                  value={bodyTitle}
+                  onChange={(e) => setBodyTitle(e.target.value)}
+                  placeholder="输入正文标题"
+                  className="w-full h-[40px] px-3 rounded-xl border border-[#e0e0e0] text-[14px] outline-none focus:border-[#ba0020] transition-colors"
+                />
+              </div>
+
+              {/* Body Content */}
+              <div>
+                <label className="block text-[13px] text-[#555] mb-1.5">Body Content</label>
+                <textarea
+                  value={bodyContent}
+                  onChange={(e) => setBodyContent(e.target.value)}
+                  placeholder="输入正文"
+                  rows={4}
+                  className="w-full px-3 py-2 rounded-xl border border-[#e0e0e0] text-[14px] outline-none focus:border-[#ba0020] transition-colors resize-y"
+                />
+              </div>
+
+              {/* Table of Contents */}
+              <div>
+                <label className="block text-[13px] text-[#555] mb-1.5">Table of Contents</label>
+                <textarea
+                  value={tableOfContents}
+                  onChange={(e) => setTableOfContents(e.target.value)}
+                  placeholder="Table of Contents 信息"
+                  rows={3}
+                  className="w-full px-3 py-2 rounded-xl border border-[#e0e0e0] text-[14px] outline-none focus:border-[#ba0020] transition-colors resize-y"
+                />
+              </div>
+
+              {/* Link Text */}
+              <div>
+                <label className="block text-[13px] text-[#555] mb-1.5">Link Text</label>
+                <input
+                  value={linkText}
+                  onChange={(e) => setLinkText(e.target.value)}
+                  placeholder="Link Text 文案"
+                  className="w-full h-[40px] px-3 rounded-xl border border-[#e0e0e0] text-[14px] outline-none focus:border-[#ba0020] transition-colors"
+                />
+              </div>
+
+              {/* Link URL */}
+              <div>
+                <label className="block text-[13px] text-[#555] mb-1.5">Link URL</label>
+                <input
+                  value={linkUrl}
+                  onChange={(e) => setLinkUrl(e.target.value)}
+                  placeholder="输入跳转链接，如 https://example.com"
+                  className="w-full h-[40px] px-3 rounded-xl border border-[#e0e0e0] text-[14px] outline-none focus:border-[#ba0020] transition-colors"
+                />
               </div>
             </div>
 
