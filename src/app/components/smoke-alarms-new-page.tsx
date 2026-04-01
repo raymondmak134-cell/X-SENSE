@@ -12,6 +12,7 @@ import {
 } from "./use-products";
 import GlobalNav from "./global-nav";
 import Footer from "../../imports/Footer";
+import CompareDialog from "./compare-dialog";
 
 /* ========== Skeleton Loaders ========== */
 
@@ -339,11 +340,19 @@ function SelectModal({
               />
             </div>
             <div className="content-stretch flex flex-[1_0_0] flex-col items-start justify-end min-h-px min-w-px relative gap-[4px]">
-              {card.sellingPoint && (
+              {card.sellingPoint1 && (
                 <div className="content-stretch flex gap-[4px] items-center relative shrink-0 w-full">
                   <div className="bg-[#ba0020] rounded-[27px] shrink-0 size-[8px]" />
                   <p className="flex-[1_0_0] font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[16px] min-h-px min-w-px not-italic relative text-[12px] text-[rgba(0,0,0,0.9)]">
-                    {card.sellingPoint}
+                    {card.sellingPoint1}
+                  </p>
+                </div>
+              )}
+              {card.sellingPoint2 && (
+                <div className="content-stretch flex gap-[4px] items-center relative shrink-0 w-full">
+                  <div className="bg-[#067AD9] rounded-[27px] shrink-0 size-[8px]" />
+                  <p className="flex-[1_0_0] font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[16px] min-h-px min-w-px not-italic relative text-[12px] text-[rgba(0,0,0,0.9)]">
+                    {card.sellingPoint2}
                   </p>
                 </div>
               )}
@@ -364,7 +373,7 @@ function SelectModal({
                       transition: "opacity 0.25s ease 0.1s",
                     }}
                   >
-                    <div className="bg-[#067AD9] rounded-[27px] shrink-0 size-[8px]" />
+                    <div className="bg-[#022542] rounded-[27px] shrink-0 size-[8px]" />
                     <p className="flex-[1_0_0] font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[16px] min-h-px min-w-px not-italic relative text-[12px] text-[rgba(0,0,0,0.9)]">
                       {matchedSpu?.powerSource}
                     </p>
@@ -660,14 +669,24 @@ function ModelCard({
               series
             </p>
           </div>
-          {card.sellingPoint && (
-            <div className="content-stretch flex flex-col items-start justify-end relative shrink-0 w-[279px]">
-              <div className="content-stretch flex gap-[4px] items-center relative shrink-0 w-full">
-                <div className="bg-[#ba0020] rounded-[27px] shrink-0 size-[8px]" />
-                <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[16px] not-italic relative shrink-0 text-[12px] text-[rgba(0,0,0,0.9)] whitespace-nowrap">
-                  {card.sellingPoint}
-                </p>
-              </div>
+          {(card.sellingPoint1 || card.sellingPoint2) && (
+            <div className="content-stretch flex flex-col items-start justify-end relative shrink-0 w-[279px] gap-[4px]">
+              {card.sellingPoint1 && (
+                <div className="content-stretch flex gap-[4px] items-center relative shrink-0 w-full">
+                  <div className="bg-[#ba0020] rounded-[27px] shrink-0 size-[8px]" />
+                  <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[16px] not-italic relative shrink-0 text-[12px] text-[rgba(0,0,0,0.9)] whitespace-nowrap">
+                    {card.sellingPoint1}
+                  </p>
+                </div>
+              )}
+              {card.sellingPoint2 && (
+                <div className="content-stretch flex gap-[4px] items-center relative shrink-0 w-full">
+                  <div className="bg-[#067AD9] rounded-[27px] shrink-0 size-[8px]" />
+                  <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[16px] not-italic relative shrink-0 text-[12px] text-[rgba(0,0,0,0.9)] whitespace-nowrap">
+                    {card.sellingPoint2}
+                  </p>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -1019,6 +1038,7 @@ export default function SmokeAlarmsNewPage() {
   const [selectCard, setSelectCard] = useState<ProductCardItem | null>(null);
   const [guideDialogOpen, setGuideDialogOpen] = useState(false);
   const [selectedGuide, setSelectedGuide] = useState<GuideItem | null>(null);
+  const [compareOpen, setCompareOpen] = useState(false);
 
   const modelsRef = useRef<HTMLDivElement>(null);
   const guidesRef = useRef<HTMLDivElement>(null);
@@ -1142,8 +1162,12 @@ export default function SmokeAlarmsNewPage() {
                         key={guide.id}
                         guide={guide}
                         onClick={() => {
-                          setSelectedGuide(guide);
-                          setGuideDialogOpen(true);
+                          if (guide.tag?.toUpperCase().includes("COMPARE")) {
+                            setCompareOpen(true);
+                          } else {
+                            setSelectedGuide(guide);
+                            setGuideDialogOpen(true);
+                          }
                         }}
                       />
                     ))
@@ -1186,6 +1210,13 @@ export default function SmokeAlarmsNewPage() {
           onClose={() => setGuideDialogOpen(false)}
         />
       )}
+
+      {/* Compare Dialog */}
+      <CompareDialog
+        open={compareOpen}
+        onClose={() => setCompareOpen(false)}
+        categoryId="smoke-alarms"
+      />
     </div>
   );
 }

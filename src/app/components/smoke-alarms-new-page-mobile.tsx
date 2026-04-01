@@ -12,6 +12,7 @@ import {
 } from "./use-products";
 import MobileNav from "./mobile-nav";
 import Footer from "../../imports/Footer";
+import MobileCompareDialog from "./mobile-compare-dialog";
 
 /* ========== Select Modal Types & Constants ========== */
 
@@ -343,11 +344,19 @@ function MobileSelectModal({
               />
             </div>
             <div className="content-stretch flex flex-col items-start justify-end relative shrink-0 gap-[4px]">
-              {card.sellingPoint && (
+              {card.sellingPoint1 && (
                 <div className="content-stretch flex gap-[4px] items-center relative shrink-0 w-full">
                   <div className="bg-[#ba0020] rounded-[27px] shrink-0 size-[8px]" />
                   <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[16px] not-italic relative shrink-0 text-[12px] text-[rgba(0,0,0,0.9)]">
-                    {card.sellingPoint}
+                    {card.sellingPoint1}
+                  </p>
+                </div>
+              )}
+              {card.sellingPoint2 && (
+                <div className="content-stretch flex gap-[4px] items-center relative shrink-0 w-full">
+                  <div className="bg-[#067AD9] rounded-[27px] shrink-0 size-[8px]" />
+                  <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[16px] not-italic relative shrink-0 text-[12px] text-[rgba(0,0,0,0.9)]">
+                    {card.sellingPoint2}
                   </p>
                 </div>
               )}
@@ -368,7 +377,7 @@ function MobileSelectModal({
                       transition: "opacity 0.25s ease 0.1s",
                     }}
                   >
-                    <div className="bg-[#067AD9] rounded-[27px] shrink-0 size-[8px]" />
+                    <div className="bg-[#022542] rounded-[27px] shrink-0 size-[8px]" />
                     <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[16px] not-italic relative shrink-0 text-[12px] text-[rgba(0,0,0,0.9)]">
                       {matchedSpu?.powerSource}
                     </p>
@@ -657,14 +666,24 @@ function MobileModelCard({
             series
           </p>
         </div>
-        {card.sellingPoint && (
-          <div className="content-stretch flex flex-col items-start justify-end relative shrink-0 w-[279px]">
-            <div className="content-stretch flex gap-[4px] items-center relative shrink-0 w-full">
-              <div className="bg-[#ba0020] rounded-[27px] shrink-0 size-[8px]" />
-              <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[16px] not-italic relative shrink-0 text-[12px] text-[rgba(0,0,0,0.9)] whitespace-nowrap">
-                {card.sellingPoint}
-              </p>
-            </div>
+        {(card.sellingPoint1 || card.sellingPoint2) && (
+          <div className="content-stretch flex flex-col items-start justify-end relative shrink-0 w-[279px] gap-[4px]">
+            {card.sellingPoint1 && (
+              <div className="content-stretch flex gap-[4px] items-center relative shrink-0 w-full">
+                <div className="bg-[#ba0020] rounded-[27px] shrink-0 size-[8px]" />
+                <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[16px] not-italic relative shrink-0 text-[12px] text-[rgba(0,0,0,0.9)] whitespace-nowrap">
+                  {card.sellingPoint1}
+                </p>
+              </div>
+            )}
+            {card.sellingPoint2 && (
+              <div className="content-stretch flex gap-[4px] items-center relative shrink-0 w-full">
+                <div className="bg-[#067AD9] rounded-[27px] shrink-0 size-[8px]" />
+                <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[16px] not-italic relative shrink-0 text-[12px] text-[rgba(0,0,0,0.9)] whitespace-nowrap">
+                  {card.sellingPoint2}
+                </p>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -1030,6 +1049,7 @@ export default function SmokeAlarmsNewPageMobile() {
   const [selectCard, setSelectCard] = useState<ProductCardItem | null>(null);
   const [guideDialogOpen, setGuideDialogOpen] = useState(false);
   const [selectedGuide, setSelectedGuide] = useState<GuideItem | null>(null);
+  const [compareOpen, setCompareOpen] = useState(false);
 
   const [activeTab, setActiveTab] = useState<TabId>("models");
   const [activeGuideIndex, setActiveGuideIndex] = useState(0);
@@ -1173,8 +1193,12 @@ export default function SmokeAlarmsNewPageMobile() {
                     <MobileGuideCard
                       guide={guide}
                       onClick={() => {
-                        setSelectedGuide(guide);
-                        setGuideDialogOpen(true);
+                        if (guide.tag?.toUpperCase().includes("COMPARE")) {
+                          setCompareOpen(true);
+                        } else {
+                          setSelectedGuide(guide);
+                          setGuideDialogOpen(true);
+                        }
                       }}
                     />
                   </div>
@@ -1217,6 +1241,13 @@ export default function SmokeAlarmsNewPageMobile() {
           onClose={() => setGuideDialogOpen(false)}
         />
       )}
+
+      {/* Compare Dialog */}
+      <MobileCompareDialog
+        open={compareOpen}
+        onClose={() => setCompareOpen(false)}
+        categoryId="smoke-alarms"
+      />
     </div>
   );
 }

@@ -159,7 +159,8 @@ export interface ProductCardItem {
   spuIds: string[];
   coverImageUrl: string;
   coverImagePath: string;
-  sellingPoint: string;
+  sellingPoint1: string;
+  sellingPoint2: string;
 }
 
 export interface GuideItem {
@@ -174,7 +175,9 @@ export interface GuideItem {
   tableOfContents?: string;
   linkText?: string;
   linkUrl?: string;
+  sortOrder?: number;
   createdAt?: number;
+  updatedAt?: number;
 }
 
 const POWER_SOURCE_OPTIONS = [
@@ -4116,6 +4119,8 @@ function ProductCardPanel({
   saving,
   onAdd,
   onSave,
+  onEdit,
+  onDelete,
   showModal,
   onCloseModal,
   showToast,
@@ -4126,6 +4131,8 @@ function ProductCardPanel({
   saving: boolean;
   onAdd: () => void;
   onSave: (card: Omit<ProductCardItem, "id">) => void;
+  onEdit: (card: ProductCardItem) => void;
+  onDelete: (id: string) => void;
   showModal: boolean;
   onCloseModal: () => void;
   showToast: (msg: string, type?: "success" | "error") => void;
@@ -4136,10 +4143,24 @@ function ProductCardPanel({
   const [spuDropdownOpen, setSpuDropdownOpen] = useState(false);
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState("");
-  const [sellingPoint, setSellingPoint] = useState("");
+  const [sellingPoint1, setSellingPoint1] = useState("");
+  const [sellingPoint2, setSellingPoint2] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [editingCard, setEditingCard] = useState<ProductCardItem | null>(null);
+  const [deletingCardId, setDeletingCardId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const openEditModal = (card: ProductCardItem) => {
+    setEditingCard(card);
+    setCardName(card.name);
+    setSelectedSpuIds([...card.spuIds]);
+    setCoverFile(null);
+    setCoverPreview(card.coverImageUrl || "");
+    setSellingPoint1(card.sellingPoint1 || "");
+    setSellingPoint2(card.sellingPoint2 || "");
+    onAdd();
+  };
 
   useEffect(() => {
     if (!showModal) {
@@ -4147,7 +4168,9 @@ function ProductCardPanel({
       setSelectedSpuIds([]);
       setCoverFile(null);
       setCoverPreview("");
-      setSellingPoint("");
+      setSellingPoint1("");
+      setSellingPoint2("");
+      setEditingCard(null);
     }
   }, [showModal]);
 
@@ -4179,19 +4202,32 @@ function ProductCardPanel({
   const handleSubmit = async () => {
     if (!cardName.trim()) { showToast("Please enter a Card name", "error"); return; }
     if (selectedSpuIds.length === 0) { showToast("Please select at least one SPU", "error"); return; }
-    if (!coverFile) { showToast("Please upload a cover image", "error"); return; }
-    if (!sellingPoint.trim()) { showToast("Please enter a selling point", "error"); return; }
+    if (!editingCard && !coverFile) { showToast("Please upload a cover image", "error"); return; }
+    if (!sellingPoint1.trim()) { showToast("Please enter Selling Point 1", "error"); return; }
+    if (!sellingPoint2.trim()) { showToast("Please enter Selling Point 2", "error"); return; }
 
     setUploading(true);
     try {
-      const imgResult = await uploadImage(coverFile);
-      onSave({
+      let coverImageUrl = editingCard?.coverImageUrl || "";
+      let coverImagePath = editingCard?.coverImagePath || "";
+      if (coverFile) {
+        const imgResult = await uploadImage(coverFile);
+        coverImageUrl = imgResult.url;
+        coverImagePath = imgResult.path;
+      }
+      const fields = {
         name: cardName.trim(),
         spuIds: selectedSpuIds,
-        coverImageUrl: imgResult.url,
-        coverImagePath: imgResult.path,
-        sellingPoint: sellingPoint.trim(),
-      });
+        coverImageUrl,
+        coverImagePath,
+        sellingPoint1: sellingPoint1.trim(),
+        sellingPoint2: sellingPoint2.trim(),
+      };
+      if (editingCard) {
+        onEdit({ ...editingCard, ...fields });
+      } else {
+        onSave(fields);
+      }
     } catch (err: any) {
       showToast(err.message || "Image upload failed", "error");
     } finally {
@@ -4230,32 +4266,72 @@ function ProductCardPanel({
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {filteredCards.map((card) => (
-            <div key={card.id} className="bg-white rounded-2xl border border-[#eee] overflow-hidden">
+            <div key={card.id} className="group bg-white rounded-2xl border border-[#eee] overflow-hidden relative">
               {card.coverImageUrl && (
-                <div className="h-[160px] bg-[#f5f5f5]">
+                <div className="h-[160px] bg-[#f5f5f5] relative">
                   <img src={card.coverImageUrl} alt={card.name} className="w-full h-full object-cover" />
                 </div>
               )}
               <div className="p-4">
                 <h3 className="text-[15px] text-[#1a1a1a] font-medium mb-1">{card.name}</h3>
-                <p className="text-[13px] text-[#666] mb-2">{card.sellingPoint}</p>
-                <p className="text-[11px] text-[#aaa]">
-                  {card.spuIds.length} SPU{card.spuIds.length !== 1 ? "s" : ""} linked
-                </p>
+                <p className="text-[13px] text-[#666] mb-0.5">{card.sellingPoint1}</p>
+                <p className="text-[13px] text-[#666] mb-2">{card.sellingPoint2}</p>
+                <div className="flex items-center justify-between">
+                  <p className="text-[11px] text-[#aaa]">
+                    {card.spuIds.length} SPU{card.spuIds.length !== 1 ? "s" : ""} linked
+                  </p>
+                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={() => openEditModal(card)}
+                      className="size-7 flex items-center justify-center rounded-lg text-[#bbb] hover:text-[#067ad9] hover:bg-[#eef6fd] transition-colors cursor-pointer"
+                    >
+                      <Pencil className="size-3.5" />
+                    </button>
+                    <button
+                      onClick={() => setDeletingCardId(card.id)}
+                      className="size-7 flex items-center justify-center rounded-lg text-[#bbb] hover:text-[#ba0020] hover:bg-[#fef2f2] transition-colors cursor-pointer"
+                    >
+                      <Trash2 className="size-3.5" />
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           ))}
         </div>
       )}
 
-      {/* Modal */}
+      {/* Delete confirm */}
+      {deletingCardId && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center" onClick={() => setDeletingCardId(null)}>
+          <div className="bg-white rounded-2xl shadow-xl w-[400px] overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <div className="px-6 py-5">
+              <h3 className="text-[16px] text-[#1a1a1a] mb-2">Delete Product Card</h3>
+              <p className="text-[14px] text-[#666]">Are you sure you want to delete this product card? This action cannot be undone.</p>
+            </div>
+            <div className="px-6 py-4 border-t border-[#f0f0f0] flex justify-end gap-3">
+              <button onClick={() => setDeletingCardId(null)} className="h-[38px] px-4 rounded-xl text-[13px] text-[#666] bg-[#f5f5f5] hover:bg-[#eee] transition-colors cursor-pointer">
+                Cancel
+              </button>
+              <button
+                onClick={() => { onDelete(deletingCardId); setDeletingCardId(null); }}
+                className="h-[38px] px-5 rounded-xl text-[13px] text-white bg-[#ba0020] hover:bg-[#a0001b] transition-colors cursor-pointer"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add / Edit Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black/40" onClick={onCloseModal} />
           <div className="relative bg-white rounded-2xl w-full max-w-[520px] max-h-[90vh] overflow-y-auto shadow-xl">
             {/* Modal header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-[#f0f0f0]">
-              <h3 className="text-[16px] text-[#1a1a1a] font-medium">Add Product Card</h3>
+              <h3 className="text-[16px] text-[#1a1a1a] font-medium">{editingCard ? "Edit Product Card" : "Add Product Card"}</h3>
               <button onClick={onCloseModal} className="size-8 rounded-lg flex items-center justify-center text-[#999] hover:bg-[#f5f5f5] transition-colors cursor-pointer">
                 <X className="size-4" />
               </button>
@@ -4341,12 +4417,24 @@ function ProductCardPanel({
                 {coverPreview ? (
                   <div className="relative w-full h-[180px] rounded-xl overflow-hidden border border-[#e0e0e0] group">
                     <img src={coverPreview} alt="Cover preview" className="w-full h-full object-cover" />
-                    <button
-                      onClick={() => { setCoverFile(null); setCoverPreview(""); }}
-                      className="absolute top-2 right-2 size-7 rounded-lg bg-black/50 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-                    >
-                      <X className="size-4" />
-                    </button>
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                      <label className="flex items-center gap-1.5 h-[32px] px-3 rounded-lg text-[12px] text-white bg-white/20 hover:bg-white/30 transition-colors cursor-pointer">
+                        <RefreshCw className="size-3.5" />
+                        Replace
+                        <input type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
+                      </label>
+                      {coverFile && (
+                        <button
+                          onClick={() => {
+                            setCoverFile(null);
+                            setCoverPreview(editingCard?.coverImageUrl || "");
+                          }}
+                          className="flex items-center gap-1.5 h-[32px] px-3 rounded-lg text-[12px] text-white bg-white/20 hover:bg-white/30 transition-colors cursor-pointer"
+                        >
+                          Undo
+                        </button>
+                      )}
+                    </div>
                   </div>
                 ) : (
                   <button
@@ -4359,16 +4447,25 @@ function ProductCardPanel({
                 )}
               </div>
 
-              {/* 4. Selling Point */}
+              {/* 4. Selling Points */}
               <div>
                 <label className="block text-[13px] text-[#555] mb-1.5">Selling Point</label>
-                <textarea
-                  value={sellingPoint}
-                  onChange={(e) => setSellingPoint(e.target.value)}
-                  placeholder="Enter a selling point for this product card"
-                  rows={3}
-                  className="w-full px-3 py-2.5 rounded-xl border border-[#e0e0e0] text-[14px] outline-none focus:border-[#ba0020] transition-colors resize-none"
-                />
+                <div className="flex flex-col gap-2">
+                  <input
+                    type="text"
+                    value={sellingPoint1}
+                    onChange={(e) => setSellingPoint1(e.target.value)}
+                    placeholder="Enter selling point 1"
+                    className="w-full h-[38px] px-3 rounded-xl border border-[#e0e0e0] text-[14px] outline-none focus:border-[#ba0020] transition-colors"
+                  />
+                  <input
+                    type="text"
+                    value={sellingPoint2}
+                    onChange={(e) => setSellingPoint2(e.target.value)}
+                    placeholder="Enter selling point 2"
+                    className="w-full h-[38px] px-3 rounded-xl border border-[#e0e0e0] text-[14px] outline-none focus:border-[#ba0020] transition-colors"
+                  />
+                </div>
               </div>
             </div>
 
@@ -4386,7 +4483,7 @@ function ProductCardPanel({
                 className="h-[38px] px-5 rounded-xl text-[13px] text-white bg-[#ba0020] hover:bg-[#a0001b] transition-colors cursor-pointer disabled:opacity-60 flex items-center gap-2"
               >
                 {(saving || uploading) && <Loader2 className="size-3.5 animate-spin" />}
-                {uploading ? "Uploading..." : saving ? "Saving..." : "Save"}
+                {uploading ? "Uploading..." : saving ? "Saving..." : editingCard ? "Update" : "Save"}
               </button>
             </div>
           </div>
@@ -4431,6 +4528,7 @@ function GuidesPanel({
   const [tableOfContents, setTableOfContents] = useState("");
   const [linkText, setLinkText] = useState("");
   const [linkUrl, setLinkUrl] = useState("");
+  const [sortOrder, setSortOrder] = useState<number | "">(0);
   const [uploading, setUploading] = useState(false);
   const [catDropdownOpen, setCatDropdownOpen] = useState(false);
   const [deletingGuideId, setDeletingGuideId] = useState<string | null>(null);
@@ -4449,6 +4547,7 @@ function GuidesPanel({
     setTableOfContents(guide.tableOfContents ?? "");
     setLinkText(guide.linkText ?? "");
     setLinkUrl(guide.linkUrl ?? "");
+    setSortOrder(guide.sortOrder ?? 0);
     onAdd();
   };
 
@@ -4464,6 +4563,7 @@ function GuidesPanel({
       setTableOfContents("");
       setLinkText("");
       setLinkUrl("");
+      setSortOrder(0);
       setEditingGuide(null);
     }
   }, [showModal]);
@@ -4513,6 +4613,8 @@ function GuidesPanel({
       tableOfContents: tableOfContents.trim(),
       linkText: linkText.trim(),
       linkUrl: linkUrl.trim(),
+      sortOrder: sortOrder === "" ? 0 : sortOrder,
+      updatedAt: Date.now(),
     };
     if (editingGuide) {
       onEdit({ ...editingGuide, ...commonFields });
@@ -4537,6 +4639,7 @@ function GuidesPanel({
       {/* Guides list */}
       <div className="bg-white rounded-2xl border border-[#eee] overflow-hidden">
         <div className="flex items-center gap-4 px-6 py-3 border-b border-[#f0f0f0] bg-[#fafafa] text-[12px] text-[#aaa]">
+          <div className="shrink-0 w-[52px] text-center">Sort</div>
           <div className="shrink-0 w-[64px]">Cover</div>
           <div className="shrink-0 w-[100px]">Tag</div>
           <div className="flex-1">Title</div>
@@ -4547,6 +4650,17 @@ function GuidesPanel({
         {guides.length > 0 ? (
           guides.map((guide) => (
             <div key={guide.id} className="flex items-center gap-4 px-6 py-3 border-b border-[#f0f0f0] hover:bg-[#fafafa] transition-colors">
+              <div className="shrink-0 w-[52px] flex items-center justify-center">
+                {guide.sortOrder != null && guide.sortOrder >= 1 && guide.sortOrder <= 4 ? (
+                  <span className="inline-flex items-center justify-center size-7 rounded-lg bg-[#ba0020] text-white text-[13px] font-semibold">
+                    {guide.sortOrder}
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center justify-center size-7 rounded-lg bg-[#f0f0f0] text-[#bbb] text-[13px]">
+                    {guide.sortOrder ?? 0}
+                  </span>
+                )}
+              </div>
               <div className="shrink-0 w-[64px] h-[48px] rounded-lg overflow-hidden bg-[#f5f5f5]">
                 {guide.coverImageUrl ? (
                   <img src={guide.coverImageUrl} alt="" className="w-full h-full object-cover" />
@@ -4629,15 +4743,32 @@ function GuidesPanel({
             </div>
 
             <div className="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-5">
-              {/* Tag */}
-              <div>
-                <label className="block text-[13px] text-[#555] mb-1.5">Tag</label>
-                <input
-                  value={tag}
-                  onChange={(e) => setTag(e.target.value)}
-                  placeholder="e.g. Buying Guide, Installation, Tips"
-                  className="w-full h-[40px] px-3 rounded-xl border border-[#e0e0e0] text-[14px] outline-none focus:border-[#ba0020] transition-colors"
-                />
+              {/* Tag + Sort Order */}
+              <div className="flex gap-4">
+                <div className="flex-1">
+                  <label className="block text-[13px] text-[#555] mb-1.5">Tag</label>
+                  <input
+                    value={tag}
+                    onChange={(e) => setTag(e.target.value)}
+                    placeholder="e.g. Buying Guide, Installation, Tips"
+                    className="w-full h-[40px] px-3 rounded-xl border border-[#e0e0e0] text-[14px] outline-none focus:border-[#ba0020] transition-colors"
+                  />
+                </div>
+                <div className="shrink-0 w-[100px]">
+                  <label className="block text-[13px] text-[#555] mb-1.5">Sort Order</label>
+                  <input
+                    type="number"
+                    min={0}
+                    value={sortOrder}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setSortOrder(v === "" ? "" : Math.max(0, parseInt(v) || 0));
+                    }}
+                    placeholder="0"
+                    className="w-full h-[40px] px-3 rounded-xl border border-[#e0e0e0] text-[14px] outline-none focus:border-[#ba0020] transition-colors text-center"
+                  />
+                  <p className="text-[11px] text-[#aaa] mt-1">1–4 显示，≥5 隐藏</p>
+                </div>
               </div>
 
               {/* Title */}
@@ -4971,6 +5102,30 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       showToast(err.message || "Failed to save Product Card", "error");
     } finally {
       setSaving(false);
+    }
+  }, []);
+
+  const handleEditProductCard = useCallback(async (card: ProductCardItem) => {
+    setSaving(true);
+    try {
+      await apiPost("/product-cards", card);
+      setProductCards((prev) => prev.map((c) => (c.id === card.id ? card : c)));
+      setShowProductCardModal(false);
+      showToast("Product Card updated successfully!");
+    } catch (err: any) {
+      showToast(err.message || "Failed to update Product Card", "error");
+    } finally {
+      setSaving(false);
+    }
+  }, []);
+
+  const handleDeleteProductCard = useCallback(async (id: string) => {
+    try {
+      await apiDelete(`/product-cards/${id}`);
+      setProductCards((prev) => prev.filter((c) => c.id !== id));
+      showToast("Product Card deleted successfully!");
+    } catch (err: any) {
+      showToast(err.message || "Failed to delete Product Card", "error");
     }
   }, []);
 
@@ -5364,6 +5519,8 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
               saving={saving}
               onAdd={() => setShowProductCardModal(true)}
               onSave={handleSaveProductCard}
+              onEdit={handleEditProductCard}
+              onDelete={handleDeleteProductCard}
               showModal={showProductCardModal}
               onCloseModal={() => setShowProductCardModal(false)}
               showToast={showToast}

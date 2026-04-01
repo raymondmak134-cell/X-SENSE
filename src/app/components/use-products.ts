@@ -259,7 +259,8 @@ export interface ProductCardItem {
   spuIds: string[];
   coverImageUrl: string;
   coverImagePath: string;
-  sellingPoint: string;
+  sellingPoint1: string;
+  sellingPoint2: string;
 }
 
 export function useProductCards() {
@@ -294,7 +295,14 @@ export interface GuideItem {
   coverImageUrl: string;
   coverImagePath: string;
   categoryIds: string[];
+  bodyTitle?: string;
+  bodyContent?: string;
+  tableOfContents?: string;
+  linkText?: string;
+  linkUrl?: string;
+  sortOrder?: number;
   createdAt?: number;
+  updatedAt?: number;
 }
 
 export function useGuides(categoryId?: string) {
@@ -309,11 +317,21 @@ export function useGuides(categoryId?: string) {
         if (!res.ok) throw new Error(`Failed to fetch guides (${res.status})`);
         const data = await res.json();
         const all: GuideItem[] = data.guides || [];
-        setGuides(
-          categoryId
-            ? all.filter((g) => g.categoryIds?.includes(categoryId))
-            : all
-        );
+        let filtered = categoryId
+          ? all.filter((g) => g.categoryIds?.includes(categoryId))
+          : all;
+        filtered = filtered
+          .filter((g) => {
+            const order = g.sortOrder ?? 0;
+            return order >= 1 && order <= 4;
+          })
+          .sort((a, b) => {
+            const oa = a.sortOrder ?? 0;
+            const ob = b.sortOrder ?? 0;
+            if (oa !== ob) return oa - ob;
+            return (a.updatedAt ?? a.createdAt ?? 0) - (b.updatedAt ?? b.createdAt ?? 0);
+          });
+        setGuides(filtered);
       } catch (err: any) {
         console.error("Error fetching guides:", err);
       } finally {
