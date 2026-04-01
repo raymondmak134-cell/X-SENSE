@@ -219,6 +219,7 @@ function SelectModal({
   const discountedPrice = hasDiscount
     ? skuPrice * (1 - discountPct / 100)
     : skuPrice;
+  const isOutOfStock = !!selectedSku?.outOfStock;
 
   useEffect(() => {
     setSelectedSkuIdx(0);
@@ -502,14 +503,16 @@ function SelectModal({
                     {allSkuOptions.map((opt, i) => {
                       const isSelected = selectedSkuIdx === i;
                       const showDiscount =
-                        opt.discountEnabled && !!opt.discountPercent;
+                        !opt.outOfStock && opt.discountEnabled && !!opt.discountPercent;
                       return (
                         <div
                           key={i}
                           className={`content-stretch flex gap-[4px] items-center justify-center overflow-clip px-[16px] h-[56px] relative rounded-[12px] shrink-0 cursor-pointer transition-all duration-200 ${
                             isSelected
                               ? "border-2 border-solid border-[#ba0020]"
-                              : "border-2 border-solid border-[rgba(0,0,0,0.2)]"
+                              : opt.outOfStock
+                                ? "border-2 border-solid border-[rgba(0,0,0,0.2)]"
+                                : "border-2 border-solid border-[rgba(0,0,0,0.2)]"
                           }`}
                           onClick={() => setSelectedSkuIdx(i)}
                           style={{
@@ -523,6 +526,13 @@ function SelectModal({
                           <p className="font-['Inter:Medium',sans-serif] font-medium leading-[20px] not-italic relative shrink-0 text-[16px] text-[rgba(0,0,0,0.9)] whitespace-nowrap">
                             {opt.name}
                           </p>
+                          {opt.outOfStock && (
+                            <div className="bg-[rgba(0,0,0,0.05)] content-stretch flex items-center justify-center overflow-clip px-[4px] py-[2px] relative rounded-[4px] shrink-0">
+                              <p className="font-['Inter:Regular',sans-serif] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[rgba(0,0,0,0.3)] whitespace-nowrap">
+                                Out of Stock
+                              </p>
+                            </div>
+                          )}
                           {showDiscount && (
                             <div className="bg-[rgba(183,17,37,0.1)] content-stretch flex items-center justify-center overflow-clip px-[4px] py-[2px] relative rounded-[4px] shrink-0">
                               <p className="font-['Inter:Regular',sans-serif] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[#ba0020] whitespace-nowrap">
@@ -570,55 +580,61 @@ function SelectModal({
                 {/* Price & Actions */}
                 <div className="content-stretch flex h-[58px] items-center justify-between relative shrink-0 w-full">
                   <div className="content-stretch flex items-center relative shrink-0">
-                    <div className="content-stretch flex gap-[4px] items-center justify-center relative shrink-0">
-                      {hasDiscount ? (
-                        <>
-                          <p className="font-['Inter:Bold',sans-serif] font-bold leading-[36px] not-italic relative shrink-0 text-[26px] text-[#ba0020] whitespace-nowrap">
-                            ${discountedPrice.toFixed(2)}
-                          </p>
-                          <div className="bg-[rgba(183,17,37,0.1)] content-stretch flex items-center justify-center overflow-clip px-[4px] py-[2px] relative rounded-[4px] shrink-0">
-                            <p className="font-['Inter:Regular',sans-serif] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[#ba0020] whitespace-nowrap">
-                              {discountPct}% OFF
+                    <div className="content-stretch flex flex-col items-end justify-center relative shrink-0">
+                      <div className="content-stretch flex gap-[4px] items-center justify-center relative shrink-0">
+                        {isOutOfStock ? (
+                          <>
+                            <p className="font-['Inter:Bold',sans-serif] font-bold leading-[36px] not-italic relative shrink-0 text-[26px] text-[rgba(0,0,0,0.3)] whitespace-nowrap">
+                              ${skuPrice.toFixed(2)}
                             </p>
-                          </div>
-                          <p className="font-['Inter:Regular',sans-serif] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[rgba(0,0,0,0.3)] line-through whitespace-nowrap">
-                            ${skuPrice.toFixed(2)}
+                            <div className="bg-[rgba(0,0,0,0.05)] content-stretch flex items-center justify-center overflow-clip px-[4px] py-[2px] relative rounded-[4px] shrink-0">
+                              <p className="font-['Inter:Regular',sans-serif] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[rgba(0,0,0,0.3)] whitespace-nowrap">
+                                Out of Stock
+                              </p>
+                            </div>
+                          </>
+                        ) : hasDiscount ? (
+                          <>
+                            <p className="font-['Inter:Bold',sans-serif] font-bold leading-[36px] not-italic relative shrink-0 text-[26px] text-[#ba0020] whitespace-nowrap">
+                              ${discountedPrice.toFixed(2)}
+                            </p>
+                            <div className="bg-[rgba(183,17,37,0.1)] content-stretch flex items-center justify-center overflow-clip px-[4px] py-[2px] relative rounded-[4px] shrink-0">
+                              <p className="font-['Inter:Regular',sans-serif] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[#ba0020] whitespace-nowrap">
+                                {discountPct}% OFF
+                              </p>
+                            </div>
+                            <p className="font-['Inter:Regular',sans-serif] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[rgba(0,0,0,0.3)] line-through whitespace-nowrap">
+                              ${skuPrice.toFixed(2)}
+                            </p>
+                          </>
+                        ) : (
+                          <p className="font-['Inter:Bold',sans-serif] font-bold leading-[36px] not-italic relative shrink-0 text-[26px] text-[#101820] whitespace-nowrap">
+                            {skuPrice > 0 ? `$${skuPrice.toFixed(2)}` : ""}
                           </p>
-                        </>
-                      ) : (
-                        <p className="font-['Inter:Bold',sans-serif] font-bold leading-[36px] not-italic relative shrink-0 text-[26px] text-[#101820] whitespace-nowrap">
-                          {skuPrice > 0 ? `$${skuPrice.toFixed(2)}` : ""}
-                        </p>
-                      )}
+                        )}
+                      </div>
                     </div>
                   </div>
                   <div className="content-stretch flex gap-[16px] items-center relative shrink-0">
                     <button className="shadow-[inset_0_0_0_2px_#101820] content-stretch flex gap-[8px] items-center justify-center max-w-[240px] min-h-[56px] min-w-[180px] px-[24px] py-[16px] relative rounded-[50px] shrink-0 cursor-pointer bg-transparent border-none hover:bg-[rgba(0,0,0,0.04)] transition-colors">
-                      <svg
-                        width="24"
-                        height="24"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="#101820"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <circle cx="9" cy="21" r="1" />
-                        <circle cx="20" cy="21" r="1" />
-                        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
-                      </svg>
                       <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[22px] not-italic relative shrink-0 text-[16px] text-[#101820] text-center whitespace-nowrap">
                         Learn More
                       </p>
                     </button>
-                    <button className="bg-[#ba0020] content-stretch flex gap-[8px] items-center justify-center max-w-[240px] min-h-[56px] min-w-[180px] px-[24px] py-[16px] relative rounded-[50px] shrink-0 cursor-pointer border-none hover:bg-[#a0001a] transition-colors">
+                    <button
+                      disabled={isOutOfStock}
+                      className={`content-stretch flex gap-[8px] items-center justify-center max-w-[240px] min-h-[56px] min-w-[180px] px-[24px] py-[16px] relative rounded-[50px] shrink-0 border-none transition-colors ${
+                        isOutOfStock
+                          ? "bg-[rgba(0,0,0,0.05)] cursor-not-allowed"
+                          : "bg-[#ba0020] cursor-pointer hover:bg-[#a0001a]"
+                      }`}
+                    >
                       <svg
                         width="24"
                         height="24"
                         viewBox="0 0 24 24"
                         fill="none"
-                        stroke="white"
+                        stroke={isOutOfStock ? "rgba(0,0,0,0.3)" : "white"}
                         strokeWidth="1.5"
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -627,7 +643,9 @@ function SelectModal({
                         <circle cx="20" cy="21" r="1" />
                         <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
                       </svg>
-                      <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[22px] not-italic relative shrink-0 text-[16px] text-white text-center whitespace-nowrap">
+                      <p className={`font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[22px] not-italic relative shrink-0 text-[16px] text-center whitespace-nowrap ${
+                        isOutOfStock ? "text-[rgba(0,0,0,0.3)]" : "text-white"
+                      }`}>
                         Add to Cart
                       </p>
                     </button>

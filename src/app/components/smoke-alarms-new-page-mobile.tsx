@@ -214,6 +214,7 @@ function MobileSelectModal({
   const discountedPrice = hasDiscount
     ? skuPrice * (1 - discountPct / 100)
     : skuPrice;
+  const isOutOfStock = !!selectedSku?.outOfStock;
 
   useEffect(() => {
     setSelectedSkuIdx(0);
@@ -398,7 +399,7 @@ function MobileSelectModal({
             <div className="content-start flex flex-wrap gap-[8px] items-start relative shrink-0 w-full">
               {availableSmartChoices.includes("app") && (
                 <div
-                  className={`content-stretch flex items-center justify-center overflow-clip px-[12px] h-[50px] relative rounded-[12px] shrink-0 cursor-pointer transition-all duration-200 ${
+                  className={`content-stretch flex items-center justify-center overflow-clip px-[12px] h-[48px] relative rounded-[12px] shrink-0 cursor-pointer transition-all duration-200 ${
                     smartChoice === "app"
                       ? "border-2 border-solid border-[#ba0020]"
                       : "border-2 border-solid border-[rgba(0,0,0,0.2)]"
@@ -412,7 +413,7 @@ function MobileSelectModal({
               )}
               {availableSmartChoices.includes("no-app") && (
                 <div
-                  className={`content-stretch flex items-center justify-center overflow-clip px-[12px] h-[50px] relative rounded-[12px] shrink-0 cursor-pointer transition-all duration-200 ${
+                  className={`content-stretch flex items-center justify-center overflow-clip px-[12px] h-[48px] relative rounded-[12px] shrink-0 cursor-pointer transition-all duration-200 ${
                     smartChoice === "no-app"
                       ? "border-2 border-solid border-[#ba0020]"
                       : "border-2 border-solid border-[rgba(0,0,0,0.2)]"
@@ -440,7 +441,7 @@ function MobileSelectModal({
             <div className="content-start flex flex-wrap gap-[8px] items-start relative shrink-0 w-full">
               {availableConnectivityChoices.includes("interconnected") && (
                 <div
-                  className={`content-stretch flex items-center justify-center overflow-clip px-[12px] h-[50px] relative rounded-[12px] shrink-0 cursor-pointer transition-all duration-200 ${
+                  className={`content-stretch flex items-center justify-center overflow-clip px-[12px] h-[48px] relative rounded-[12px] shrink-0 cursor-pointer transition-all duration-200 ${
                     connectivityChoice === "interconnected"
                       ? "border-2 border-solid border-[#ba0020]"
                       : "border-2 border-solid border-[rgba(0,0,0,0.2)]"
@@ -454,7 +455,7 @@ function MobileSelectModal({
               )}
               {availableConnectivityChoices.includes("standalone") && (
                 <div
-                  className={`content-stretch flex items-center justify-center overflow-clip px-[12px] h-[50px] relative rounded-[12px] shrink-0 cursor-pointer transition-all duration-200 ${
+                  className={`content-stretch flex items-center justify-center overflow-clip px-[12px] h-[48px] relative rounded-[12px] shrink-0 cursor-pointer transition-all duration-200 ${
                     connectivityChoice === "standalone"
                       ? "border-2 border-solid border-[#ba0020]"
                       : "border-2 border-solid border-[rgba(0,0,0,0.2)]"
@@ -505,11 +506,11 @@ function MobileSelectModal({
                     {allSkuOptions.map((opt, i) => {
                       const isSelected = selectedSkuIdx === i;
                       const showDiscount =
-                        opt.discountEnabled && !!opt.discountPercent;
+                        !opt.outOfStock && opt.discountEnabled && !!opt.discountPercent;
                       return (
                         <div
                           key={i}
-                          className={`content-stretch flex gap-[4px] items-center justify-center overflow-clip px-[12px] h-[50px] relative rounded-[12px] shrink-0 cursor-pointer transition-all duration-200 ${
+                          className={`content-stretch flex gap-[4px] items-center justify-center overflow-clip px-[12px] h-[48px] relative rounded-[12px] shrink-0 cursor-pointer transition-all duration-200 ${
                             isSelected
                               ? "border-2 border-solid border-[#ba0020]"
                               : "border-2 border-solid border-[rgba(0,0,0,0.2)]"
@@ -526,6 +527,13 @@ function MobileSelectModal({
                           <p className="font-['Inter:Medium',sans-serif] font-medium leading-[20px] not-italic relative shrink-0 text-[14px] text-[rgba(0,0,0,0.9)] whitespace-nowrap">
                             {opt.name}
                           </p>
+                          {opt.outOfStock && (
+                            <div className="bg-[rgba(0,0,0,0.05)] content-stretch flex items-center justify-center overflow-clip px-[4px] py-[2px] relative rounded-[4px] shrink-0">
+                              <p className="font-['Inter:Regular',sans-serif] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[rgba(0,0,0,0.3)] whitespace-nowrap">
+                                Out of Stock
+                              </p>
+                            </div>
+                          )}
                           {showDiscount && (
                             <div className="bg-[rgba(183,17,37,0.1)] content-stretch flex items-center justify-center overflow-clip px-[4px] py-[2px] relative rounded-[4px] shrink-0">
                               <p className="font-['Inter:Regular',sans-serif] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[#ba0020] whitespace-nowrap">
@@ -594,7 +602,18 @@ function MobileSelectModal({
             >
               {/* Price */}
               <div className="content-stretch flex gap-[4px] items-center relative shrink-0">
-                {hasDiscount ? (
+                {isOutOfStock ? (
+                  <>
+                    <p className="font-['Inter:Bold',sans-serif] font-bold leading-[34px] not-italic relative shrink-0 text-[24px] text-[rgba(0,0,0,0.3)] whitespace-nowrap">
+                      ${skuPrice.toFixed(2)}
+                    </p>
+                    <div className="bg-[rgba(0,0,0,0.05)] content-stretch flex items-center justify-center overflow-clip px-[4px] py-[2px] relative rounded-[4px] shrink-0">
+                      <p className="font-['Inter:Regular',sans-serif] font-normal leading-[16px] not-italic relative shrink-0 text-[12px] text-[rgba(0,0,0,0.3)] whitespace-nowrap">
+                        Out of Stock
+                      </p>
+                    </div>
+                  </>
+                ) : hasDiscount ? (
                   <>
                     <p className="font-['Inter:Bold',sans-serif] font-bold leading-[34px] not-italic relative shrink-0 text-[24px] text-[#ba0020] whitespace-nowrap">
                       ${discountedPrice.toFixed(2)}
@@ -617,13 +636,22 @@ function MobileSelectModal({
 
               {/* Buttons */}
               <div className="content-stretch flex gap-[16px] items-center relative shrink-0 w-full">
-                <button className="shadow-[inset_0_0_0_2px_#101820] content-stretch flex flex-[1_0_0] h-[50px] items-center justify-center min-h-px min-w-px overflow-clip px-[16px] py-[9px] relative rounded-[100px] shrink-0 cursor-pointer bg-transparent border-none hover:bg-[rgba(0,0,0,0.04)] transition-colors">
+                <button className="shadow-[inset_0_0_0_2px_#101820] content-stretch flex flex-[1_0_0] h-[48px] items-center justify-center min-h-px min-w-px overflow-clip px-[16px] py-[9px] relative rounded-[100px] shrink-0 cursor-pointer bg-transparent border-none hover:bg-[rgba(0,0,0,0.04)] transition-colors">
                   <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[22px] not-italic relative shrink-0 text-[16px] text-[#101820] text-center whitespace-nowrap">
                     Learn More
                   </p>
                 </button>
-                <button className="bg-[#ba0020] content-stretch flex flex-[1_0_0] h-[50px] items-center justify-center min-h-px min-w-px overflow-clip px-[16px] py-[9px] relative rounded-[100px] shrink-0 cursor-pointer border-none hover:bg-[#a0001a] transition-colors">
-                  <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[22px] not-italic relative shrink-0 text-[16px] text-white text-center whitespace-nowrap">
+                <button
+                  disabled={isOutOfStock}
+                  className={`content-stretch flex flex-[1_0_0] h-[48px] items-center justify-center min-h-px min-w-px overflow-clip px-[16px] py-[9px] relative rounded-[100px] shrink-0 border-none transition-colors ${
+                    isOutOfStock
+                      ? "bg-[rgba(0,0,0,0.05)] cursor-not-allowed"
+                      : "bg-[#ba0020] cursor-pointer hover:bg-[#a0001a]"
+                  }`}
+                >
+                  <p className={`font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[22px] not-italic relative shrink-0 text-[16px] text-center whitespace-nowrap ${
+                    isOutOfStock ? "text-[rgba(0,0,0,0.3)]" : "text-white"
+                  }`}>
                     Add to Cart
                   </p>
                 </button>

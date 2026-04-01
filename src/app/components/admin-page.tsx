@@ -616,7 +616,7 @@ function SkuOptionsEditor({
   const addSku = () => {
     const name = newName.trim();
     if (!name) return;
-    onChange([...options, { name, price: "", imageUrl: "", imagePath: "", hoverImageUrl: "", hoverImagePath: "", hoverImageUrlV2: "", hoverImagePathV2: "", packEnabled: false, packQty: "", discountEnabled: false, discountPercent: "", includeBaseStation: false }]);
+    onChange([...options, { name, price: "", imageUrl: "", imagePath: "", hoverImageUrl: "", hoverImagePath: "", hoverImageUrlV2: "", hoverImagePathV2: "", packEnabled: false, packQty: "", discountEnabled: false, discountPercent: "", includeBaseStation: false, outOfStock: false }]);
     setNewName("");
   };
 
@@ -800,6 +800,18 @@ function SkuOptionsEditor({
                       className="accent-[#ba0020] size-3.5 cursor-pointer"
                     />
                     <span className="text-[12px] text-[#999]">Include Base Station</span>
+                  </label>
+                </div>
+                {/* Out of Stock toggle */}
+                <div className="flex items-center gap-2">
+                  <label className="flex items-center gap-1.5 cursor-pointer select-none shrink-0">
+                    <input
+                      type="checkbox"
+                      checked={!!sku.outOfStock}
+                      onChange={(e) => updateSku(i, { outOfStock: e.target.checked })}
+                      className="accent-[#ba0020] size-3.5 cursor-pointer"
+                    />
+                    <span className={`text-[12px] ${sku.outOfStock ? "text-[#ba0020] font-medium" : "text-[#999]"}`}>Out of Stock</span>
                   </label>
                 </div>
               </div>

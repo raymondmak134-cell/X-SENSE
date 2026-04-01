@@ -18,6 +18,7 @@ export interface SkuOption {
   discountEnabled: boolean;
   discountPercent: string;
   includeBaseStation: boolean;
+  outOfStock: boolean;
 }
 
 export interface Product {
@@ -56,6 +57,7 @@ export function normalizeProduct(raw: any): Product {
       discountEnabled: false,
       discountPercent: "",
       includeBaseStation: false,
+      outOfStock: false,
     }));
   } else if (Array.isArray(p.options)) {
     // Ensure existing object SKUs have hover fields
@@ -69,6 +71,7 @@ export function normalizeProduct(raw: any): Product {
       discountEnabled: false,
       discountPercent: "",
       includeBaseStation: false,
+      outOfStock: false,
       ...o,
     }));
   }
