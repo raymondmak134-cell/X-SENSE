@@ -5,7 +5,7 @@ import ProductSelectDialog from "./product-select-dialog";
 import MobileNav from "./mobile-nav";
 import Footer from "../../imports/Footer";
 import svgPaths from "../../imports/svg-gq5o18jer6";
-const imgBanner = "/images/support-banner.png";
+const imgBanner = "/images/support-banner.jpg";
 import imgSmokeAlarms from "@/assets/placeholder-image-url";
 import imgCoAlarms from "@/assets/placeholder-image-url";
 import imgCombinationAlarms from "@/assets/placeholder-image-url";
@@ -90,9 +90,15 @@ function MobileBanner() {
         WebkitBackfaceVisibility: "hidden",
         perspective: 1000,
         WebkitPerspective: 1000,
+        transform: "translate3d(0,0,0)",
+        opacity: 1,
       } as React.CSSProperties}
     >
-      <img alt="" className="absolute inset-0 max-w-none object-cover pointer-events-none size-full" src={imgBanner} />
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 pointer-events-none"
+        style={{ backgroundImage: `url(${imgBanner})`, backgroundSize: "cover", backgroundPosition: "center" }}
+      />
       <div className="content-stretch flex flex-col gap-[4px] items-start not-italic relative shrink-0 text-center w-[353px] max-w-full">
         <p className="font-['Inter:Bold',sans-serif] font-bold leading-[44px] relative shrink-0 text-[32px] text-black w-full">Support</p>
         <p className="font-['Inter:Regular',sans-serif] font-normal leading-[22px] relative shrink-0 text-[16px] text-[rgba(0,0,0,0.9)] w-full">Need help? Start here.</p>
