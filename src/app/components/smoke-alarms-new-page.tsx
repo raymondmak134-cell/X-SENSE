@@ -13,6 +13,7 @@ import {
 import GlobalNav from "./global-nav";
 import Footer from "../../imports/Footer";
 import CompareDialog from "./compare-dialog";
+import SplitText from "@/components/SplitText";
 
 /* ========== Skeleton Loaders ========== */
 
@@ -1024,6 +1025,9 @@ function TabBar({
 /* ========== Main Page Component ========== */
 
 export default function SmokeAlarmsNewPage() {
+  const handleShopTitleAnimationComplete = useCallback(() => {
+    console.log("All letters have animated!");
+  }, []);
   const { products, loading: productsLoading } = useProducts();
   const { cards, loading: cardsLoading } = useProductCards();
   const { guides, loading: guidesLoading } = useGuides("smoke-alarms");
@@ -1085,9 +1089,20 @@ export default function SmokeAlarmsNewPage() {
           <div className="content-stretch flex flex-col gap-[32px] items-center max-w-[1312px] relative shrink-0 w-full">
             {/* Title */}
             <div className="content-stretch flex gap-[8px] items-start relative shrink-0 w-full">
-              <p className="font-['Inter:Bold',sans-serif] font-bold leading-[72px] not-italic relative shrink-0 text-[56px] text-black whitespace-nowrap">
-                Shop Smoke Alarm
-              </p>
+              <SplitText
+                text="Shop Smoke Alarm"
+                className="font-['Inter:Bold',sans-serif] font-bold leading-[72px] not-italic relative shrink-0 text-[56px] text-black whitespace-nowrap"
+                delay={50}
+                duration={0.8}
+                ease="power3.out"
+                splitType="chars"
+                from={{ opacity: 0, y: 40 }}
+                to={{ opacity: 1, y: 0 }}
+                threshold={0.1}
+                rootMargin="-100px"
+                textAlign="center"
+                onLetterAnimationComplete={handleShopTitleAnimationComplete}
+              />
             </div>
 
             {/* Tab Bar */}
