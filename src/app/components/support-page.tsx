@@ -19,7 +19,7 @@ import imgCombinationAlarms from "@/assets/placeholder-image-url";
 import imgHomeAlarms from "@/assets/placeholder-image-url";
 import imgHubBaseStation from "@/assets/placeholder-image-url";
 import imgAccessories from "@/assets/placeholder-image-url";
-const imgBanner = "/images/support-banner.png";
+const imgBanner = "/images/support-banner.jpg";
 const imgConnectApp = "/images/support-connect-app.png";
 const imgBatteryLife = "/images/support-battery-life.png";
 const imgOrderTracking = "/images/support-order-tracking.png";
@@ -71,10 +71,13 @@ function BannerSection() {
     <div
       ref={bannerRef}
       className="content-stretch flex flex-col h-[588px] items-center justify-center w-full overflow-clip relative"
-      style={{ padding: "0 clamp(24px, 8vw, 120px)", willChange: "opacity, transform" }}
+      style={{ padding: "0 clamp(24px, 8vw, 120px)", willChange: "opacity, transform", opacity: 1, transform: "translateY(0px)" }}
     >
-      <div aria-hidden="true" className="absolute inset-0 pointer-events-none">
-        <img alt="" className="absolute max-w-none object-cover size-full" src={imgBanner} />
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 pointer-events-none"
+        style={{ backgroundImage: `url(${imgBanner})`, backgroundSize: "cover", backgroundPosition: "center" }}
+      >
         <div className="absolute bg-gradient-to-l from-[32.437%] from-[rgba(255,255,255,0)] inset-0 to-[75.58%] to-[rgba(255,255,255,0)] via-[50.112%] via-[rgba(255,255,255,0.41)]" />
       </div>
       <div className="content-stretch flex flex-col gap-[16px] items-center max-w-[1312px] relative shrink-0 w-full">
