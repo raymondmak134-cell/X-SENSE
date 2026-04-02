@@ -13,6 +13,7 @@ import {
 import MobileNav from "./mobile-nav";
 import Footer from "../../imports/Footer";
 import MobileCompareDialog from "./mobile-compare-dialog";
+import SplitText from "@/components/SplitText";
 
 /* ========== Select Modal Types & Constants ========== */
 
@@ -1142,9 +1143,19 @@ export default function SmokeAlarmsNewPageMobile() {
       <div className="content-stretch flex flex-col gap-[24px] items-center overflow-clip pb-[20px] pt-[49px] px-[20px] relative shrink-0 w-full mt-[48px]">
         {/* Title */}
         <div className="content-stretch flex flex-col items-start relative shrink-0 w-full">
-          <p className="font-['Inter:Bold',sans-serif] font-bold leading-[44px] not-italic relative shrink-0 text-[32px] text-black w-full">
-            Shop Smoke Alarm
-          </p>
+          <SplitText
+            text="Shop Smoke Alarm"
+            className="font-['Inter:Bold',sans-serif] font-bold leading-[44px] not-italic relative shrink-0 text-[32px] text-black w-full"
+            delay={50}
+            duration={0.8}
+            ease="power3.out"
+            splitType="chars"
+            from={{ opacity: 0, y: 30 }}
+            to={{ opacity: 1, y: 0 }}
+            threshold={0.1}
+            rootMargin="-50px"
+            textAlign="left"
+          />
         </div>
 
         {/* Tab Bar */}

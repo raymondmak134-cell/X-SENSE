@@ -4,6 +4,7 @@ import { useCategories } from "./use-products";
 import ProductSelectDialog from "./product-select-dialog";
 import MobileNav from "./mobile-nav";
 import Footer from "../../imports/Footer";
+import SplitText from "@/components/SplitText";
 import svgPaths from "../../imports/svg-gq5o18jer6";
 const imgBanner = "/images/support-banner.jpg";
 import imgSmokeAlarms from "@/assets/placeholder-image-url";
@@ -100,7 +101,19 @@ function MobileBanner() {
         style={{ backgroundImage: `url(${imgBanner})`, backgroundSize: "cover", backgroundPosition: "center" }}
       />
       <div className="content-stretch flex flex-col gap-[4px] items-start not-italic relative shrink-0 text-center w-[353px] max-w-full">
-        <p className="font-['Inter:Bold',sans-serif] font-bold leading-[44px] relative shrink-0 text-[32px] text-black w-full">Support</p>
+        <SplitText
+          text="Support"
+          className="font-['Inter:Bold',sans-serif] font-bold leading-[44px] relative shrink-0 text-[32px] text-black w-full"
+          delay={50}
+          duration={0.8}
+          ease="power3.out"
+          splitType="chars"
+          from={{ opacity: 0, y: 30 }}
+          to={{ opacity: 1, y: 0 }}
+          threshold={0.1}
+          rootMargin="-50px"
+          textAlign="center"
+        />
         <p className="font-['Inter:Regular',sans-serif] font-normal leading-[22px] relative shrink-0 text-[16px] text-[rgba(0,0,0,0.9)] w-full">Need help? Start here.</p>
       </div>
       <div className="bg-white h-[56px] relative rounded-[8px] shrink-0 w-full mt-[24px]">

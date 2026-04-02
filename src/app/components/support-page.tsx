@@ -4,6 +4,7 @@ import GlobalNav from "./global-nav";
 import ProductSelectDialog from "./product-select-dialog";
 import MobileSupportPage from "./mobile-support-page";
 import Footer from "../../imports/Footer";
+import SplitText from "@/components/SplitText";
 import svgPaths from "../../imports/svg-zx55evvu35";
 import svgArrow from "../../imports/svg-umdpbk5rtp";
 import imgFrame2117132003 from "@/assets/placeholder-image-url";
@@ -81,7 +82,19 @@ function BannerSection() {
         <div className="absolute bg-gradient-to-l from-[32.437%] from-[rgba(255,255,255,0)] inset-0 to-[75.58%] to-[rgba(255,255,255,0)] via-[50.112%] via-[rgba(255,255,255,0.41)]" />
       </div>
       <div className="content-stretch flex flex-col gap-[16px] items-center max-w-[1312px] relative shrink-0 w-full">
-        <p className="font-['Inter:Bold',sans-serif] font-bold leading-[72px] min-w-full not-italic relative shrink-0 text-[56px] text-black text-center w-[min-content]">Support</p>
+        <SplitText
+          text="Support"
+          className="font-['Inter:Bold',sans-serif] font-bold leading-[72px] min-w-full not-italic relative shrink-0 text-[56px] text-black text-center w-[min-content]"
+          delay={50}
+          duration={0.8}
+          ease="power3.out"
+          splitType="chars"
+          from={{ opacity: 0, y: 40 }}
+          to={{ opacity: 1, y: 0 }}
+          threshold={0.1}
+          rootMargin="-100px"
+          textAlign="center"
+        />
         <p className="font-['Inter:Regular',sans-serif] font-normal leading-[22px] min-w-full not-italic relative shrink-0 text-[16px] text-[rgba(0,0,0,0.9)] text-center w-[min-content]">Need help? Start here.</p>
         <div className="content-stretch flex h-[56px] items-start relative shrink-0 w-[720px] max-w-full">
           <div className="bg-white flex-[1_0_0] h-full min-h-px min-w-px relative rounded-[8px]">
