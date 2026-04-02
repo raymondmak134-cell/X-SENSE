@@ -154,12 +154,12 @@ export default function ProductSelectDialog({
   const overlayRef = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
   const [animating, setAnimating] = useState(false);
-  const [isMobile, setIsMobile] = useState(() => typeof window !== "undefined" && window.innerWidth < 768);
+  const [isMobile, setIsMobile] = useState(() => typeof window !== "undefined" && window.innerWidth < 1024);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
 
   // Track viewport width
   useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    const handleResize = () => setIsMobile(window.innerWidth < 1024);
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);

@@ -578,7 +578,7 @@ export default function SpuDetailPage() {
   }, []);
 
   useEffect(() => {
-    const checkDevice = () => setIsMobile(window.innerWidth < 768);
+    const checkDevice = () => setIsMobile(window.innerWidth < 1024);
     checkDevice();
     window.addEventListener("resize", checkDevice);
     return () => window.removeEventListener("resize", checkDevice);

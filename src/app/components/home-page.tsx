@@ -15,7 +15,7 @@ export default function HomePage() {
 
   useEffect(() => {
     const checkDevice = () => {
-      setIsMobile(window.innerWidth < 768);
+      setIsMobile(window.innerWidth < 1024);
     };
     checkDevice();
     window.addEventListener("resize", checkDevice);

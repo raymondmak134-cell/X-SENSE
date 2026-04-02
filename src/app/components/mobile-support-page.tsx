@@ -202,7 +202,7 @@ function MobileProductOverview({ onProductClick }: { onProductClick: (categoryId
 
 /* ==================== Quick Links ==================== */
 
-function QuickLinkCard({ bgClass, bgStyle, image, overlayImage, imageStyle, icon, title, linkText }: {
+function QuickLinkCard({ bgClass, bgStyle, image, overlayImage, imageStyle, icon, title, linkText, onClick }: {
   bgClass?: string;
   bgStyle?: React.CSSProperties;
   image: string;
@@ -211,9 +211,10 @@ function QuickLinkCard({ bgClass, bgStyle, image, overlayImage, imageStyle, icon
   icon: React.ReactNode;
   title: string;
   linkText: string;
+  onClick?: () => void;
 }) {
   return (
-    <div className={`content-stretch flex flex-[1_0_0] gap-[16px] items-center min-h-px min-w-[318px] overflow-clip relative rounded-[16px] cursor-pointer ${bgClass || ""}`} style={bgStyle}>
+    <div className={`content-stretch flex flex-[1_0_0] gap-[16px] items-center min-h-px min-w-[318px] overflow-clip relative rounded-[16px] cursor-pointer ${bgClass || ""}`} style={bgStyle} onClick={onClick}>
       <div className="relative shrink-0 size-[168.5px]">
         <div aria-hidden="true" className="absolute inset-0 pointer-events-none">
           {imageStyle ? (
@@ -287,6 +288,7 @@ function OrderTrackingIcon() {
 }
 
 function MobileQuickLinks() {
+  const navigate = useNavigate();
   return (
     <div className="bg-white max-w-[1312px] relative shrink-0 w-full">
       <div className="flex flex-row items-center justify-center max-w-[inherit] size-full">
@@ -298,6 +300,7 @@ function MobileQuickLinks() {
             icon={<ConnectToAppIcon />}
             title="Connect to the App"
             linkText="Learn More >"
+            onClick={() => navigate("/support/download-center?section=alarm-triggered-unexpectedly")}
           />
           <QuickLinkCard
             bgClass="bg-[rgba(94,127,156,0.1)]"

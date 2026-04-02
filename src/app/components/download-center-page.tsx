@@ -631,21 +631,20 @@ function AnimatedCollapse({ expanded, children }: { expanded: boolean; children:
   const [height, setHeight] = useState(0);
 
   useEffect(() => {
-    if (expanded && contentRef.current) {
-      setHeight(contentRef.current.scrollHeight);
-    } else {
+    if (!expanded) {
       setHeight(0);
+      return;
     }
-  }, [expanded]);
+    const el = contentRef.current;
+    if (!el) return;
+    setHeight(el.scrollHeight);
 
-  useEffect(() => {
-    if (expanded && contentRef.current) {
-      const raf = requestAnimationFrame(() => {
-        if (contentRef.current) setHeight(contentRef.current.scrollHeight);
-      });
-      return () => cancelAnimationFrame(raf);
-    }
-  }, [expanded, children]);
+    const ro = new ResizeObserver(() => {
+      setHeight(el.scrollHeight);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [expanded]);
 
   return (
     <div style={{ height, overflow: "hidden", transition: "height 300ms ease-in-out" }}>
@@ -1145,29 +1144,45 @@ function AnimatedSpuList({
   const contentRef = useRef<HTMLDivElement>(null);
   const [height, setHeight] = useState(0);
   const [showItems, setShowItems] = useState(false);
-  const prevExpanded = useRef(expanded);
+  const collapseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
+    if (collapseTimer.current) {
+      clearTimeout(collapseTimer.current);
+      collapseTimer.current = null;
+    }
+
     if (expanded) {
+      setShowItems(true);
       requestAnimationFrame(() => {
         if (contentRef.current) setHeight(contentRef.current.scrollHeight);
       });
-      setShowItems(true);
     } else {
       setShowItems(false);
-      const fadeOutDuration = prevExpanded.current ? Math.min(spus.length * 30 + 100, 200) : 0;
-      setTimeout(() => setHeight(0), fadeOutDuration);
+      const fadeOutDuration = Math.min(spus.length * 30 + 100, 200);
+      collapseTimer.current = setTimeout(() => {
+        setHeight(0);
+        collapseTimer.current = null;
+      }, fadeOutDuration);
     }
-    prevExpanded.current = expanded;
+
+    return () => {
+      if (collapseTimer.current) {
+        clearTimeout(collapseTimer.current);
+        collapseTimer.current = null;
+      }
+    };
   }, [expanded, spus.length]);
 
   useEffect(() => {
-    if (expanded && contentRef.current) {
-      const raf = requestAnimationFrame(() => {
-        if (contentRef.current) setHeight(contentRef.current.scrollHeight);
-      });
-      return () => cancelAnimationFrame(raf);
-    }
+    if (!expanded) return;
+    const el = contentRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => {
+      setHeight(el.scrollHeight);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
   }, [expanded, spus]);
 
   return (
@@ -1200,6 +1215,37 @@ function AnimatedSpuList({
   );
 }
 
+/* ==================== Static Help Sections ==================== */
+
+interface StaticSubItem {
+  id: string;
+  label: string;
+}
+
+interface StaticSection {
+  id: string;
+  label: string;
+  subItems: StaticSubItem[];
+}
+
+const STATIC_SECTIONS: StaticSection[] = [
+  {
+    id: "alarm-triggered",
+    label: "Alarm Triggered",
+    subItems: [
+      { id: "alarm-sound-meaning", label: "Alarm Sound Meaning" },
+      { id: "alarm-triggered-unexpectedly", label: "Alarm triggered unexpectedly" },
+    ],
+  },
+  {
+    id: "battery",
+    label: "Battery",
+    subItems: [
+      { id: "drains-too-quickly", label: "Drains too Quickly" },
+    ],
+  },
+];
+
 /* ==================== Sidebar ==================== */
 
 function Sidebar({
@@ -1208,47 +1254,128 @@ function Sidebar({
   toggleCategory,
   selectedSpuId,
   setSelectedSpuId,
+  expandedTopLevel,
+  toggleTopLevel,
+  selectedStaticItem,
+  setSelectedStaticItem,
 }: {
   categoriesWithSpus: CategoryWithSpus[];
   expandedCategories: Set<string>;
   toggleCategory: (id: string) => void;
   selectedSpuId: string;
   setSelectedSpuId: (id: string) => void;
+  expandedTopLevel: Set<string>;
+  toggleTopLevel: (id: string) => void;
+  selectedStaticItem: string | null;
+  setSelectedStaticItem: (id: string | null) => void;
 }) {
+  const isProductsExpanded = expandedTopLevel.has("products");
+  const hasSelectedProduct = selectedSpuId !== "" && selectedStaticItem === null;
+
   return (
-    <div className="content-stretch flex flex-col items-start relative shrink-0 w-[340px]">
-      {categoriesWithSpus.map((cat) => {
-        const isExpanded = expandedCategories.has(cat.id);
-        const hasSelectedSpu = cat.spus.some((spu) => spu.id === selectedSpuId);
+    <div className="content-stretch flex flex-col items-start relative shrink-0 w-[340px] h-full overflow-y-auto scrollbar-hide">
+      {/* Products top-level */}
+      <div className="w-full">
+        <div
+          className="content-stretch flex items-center justify-between py-[24px] relative shrink-0 w-full cursor-pointer"
+          onClick={() => toggleTopLevel("products")}
+        >
+          <div className="content-stretch flex flex-col items-start relative shrink-0">
+            <p
+              className={`font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[22px] text-[16px] whitespace-nowrap ${
+                hasSelectedProduct ? "text-[#ba0020]" : "text-[#333]"
+              }`}
+            >
+              Products
+            </p>
+          </div>
+          <ChevronIcon expanded={isProductsExpanded} />
+        </div>
+        <AnimatedCollapse expanded={isProductsExpanded}>
+          <div className="pl-[16px]">
+            {categoriesWithSpus.map((cat) => {
+              const isExpanded = expandedCategories.has(cat.id);
+              const hasSelectedSpu = cat.spus.some((spu) => spu.id === selectedSpuId) && selectedStaticItem === null;
+              return (
+                <div key={cat.id} className="w-full">
+                  <div
+                    className="content-stretch flex items-center justify-between py-[20px] relative shrink-0 w-full cursor-pointer"
+                    onClick={() => toggleCategory(cat.id)}
+                  >
+                    <div className="content-stretch flex flex-col items-start relative shrink-0">
+                      <p
+                        className={`font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[22px] text-[16px] whitespace-nowrap ${
+                          hasSelectedSpu ? "text-[#ba0020]" : "text-[#333]"
+                        }`}
+                      >
+                        {cat.name}
+                      </p>
+                    </div>
+                    <ChevronIcon expanded={isExpanded} />
+                  </div>
+                  <AnimatedSpuList
+                    expanded={isExpanded}
+                    spus={cat.spus}
+                    selectedSpuId={selectedStaticItem === null ? selectedSpuId : ""}
+                    setSelectedSpuId={(id) => {
+                      setSelectedStaticItem(null);
+                      setSelectedSpuId(id);
+                    }}
+                    itemClassName={(isSelected) =>
+                      `content-stretch flex items-center justify-between pl-[24px] py-[20px] relative shrink-0 w-full cursor-pointer transition-colors duration-150 ${
+                        isSelected ? "bg-[rgba(0,0,0,0.05)]" : "hover:bg-[rgba(0,0,0,0.03)]"
+                      }`
+                    }
+                    textClassName="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[22px] text-[#333] text-[16px] whitespace-nowrap"
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </AnimatedCollapse>
+      </div>
+
+      {/* Static sections: Alarm Triggered, Battery */}
+      {STATIC_SECTIONS.map((section) => {
+        const isSectionExpanded = expandedTopLevel.has(section.id);
+        const hasSectionSelection = section.subItems.some((sub) => sub.id === selectedStaticItem);
         return (
-          <div key={cat.id} className="w-full">
+          <div key={section.id} className="w-full">
             <div
               className="content-stretch flex items-center justify-between py-[24px] relative shrink-0 w-full cursor-pointer"
-              onClick={() => toggleCategory(cat.id)}
+              onClick={() => toggleTopLevel(section.id)}
             >
               <div className="content-stretch flex flex-col items-start relative shrink-0">
                 <p
                   className={`font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[22px] text-[16px] whitespace-nowrap ${
-                    hasSelectedSpu ? "text-[#ba0020]" : "text-[#333]"
+                    hasSectionSelection ? "text-[#ba0020]" : "text-[#333]"
                   }`}
                 >
-                  {cat.name}
+                  {section.label}
                 </p>
               </div>
-              <ChevronIcon expanded={isExpanded} />
+              <ChevronIcon expanded={isSectionExpanded} />
             </div>
-            <AnimatedSpuList
-              expanded={isExpanded}
-              spus={cat.spus}
-              selectedSpuId={selectedSpuId}
-              setSelectedSpuId={setSelectedSpuId}
-              itemClassName={(isSelected) =>
-                `content-stretch flex items-center justify-between pl-[24px] py-[20px] relative shrink-0 w-full cursor-pointer transition-colors duration-150 ${
-                  isSelected ? "bg-[rgba(0,0,0,0.05)]" : "hover:bg-[rgba(0,0,0,0.03)]"
-                }`
-              }
-              textClassName="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[22px] text-[#333] text-[16px] whitespace-nowrap"
-            />
+            <AnimatedCollapse expanded={isSectionExpanded}>
+              <div className="pl-[16px]">
+                {section.subItems.map((sub) => {
+                  const isSelected = selectedStaticItem === sub.id;
+                  return (
+                    <div
+                      key={sub.id}
+                      className={`content-stretch flex items-center pl-[24px] py-[20px] relative shrink-0 w-full cursor-pointer transition-colors duration-150 ${
+                        isSelected ? "bg-[rgba(0,0,0,0.05)]" : "hover:bg-[rgba(0,0,0,0.03)]"
+                      }`}
+                      onClick={() => setSelectedStaticItem(sub.id)}
+                    >
+                      <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[22px] text-[#333] text-[16px] whitespace-nowrap">
+                        {sub.label}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            </AnimatedCollapse>
           </div>
         );
       })}
@@ -1493,45 +1620,122 @@ function MobileSidebar({
   toggleCategory,
   selectedSpuId,
   setSelectedSpuId,
+  expandedTopLevel,
+  toggleTopLevel,
+  selectedStaticItem,
+  setSelectedStaticItem,
 }: {
   categoriesWithSpus: CategoryWithSpus[];
   expandedCategories: Set<string>;
   toggleCategory: (id: string) => void;
   selectedSpuId: string;
   setSelectedSpuId: (id: string) => void;
+  expandedTopLevel: Set<string>;
+  toggleTopLevel: (id: string) => void;
+  selectedStaticItem: string | null;
+  setSelectedStaticItem: (id: string | null) => void;
 }) {
+  const isProductsExpanded = expandedTopLevel.has("products");
+  const hasSelectedProduct = selectedSpuId !== "" && selectedStaticItem === null;
+
   return (
     <div className="content-stretch flex flex-col items-start relative shrink-0 w-full">
-      {categoriesWithSpus.map((cat) => {
-        const isExpanded = expandedCategories.has(cat.id);
-        const hasSelectedSpu = cat.spus.some((spu) => spu.id === selectedSpuId);
+      {/* Products top-level */}
+      <div className="w-full">
+        <div
+          className="content-stretch flex items-center justify-between py-[16px] relative shrink-0 w-full cursor-pointer"
+          onClick={() => toggleTopLevel("products")}
+        >
+          <p
+            className={`font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[22px] text-[16px] whitespace-nowrap ${
+              hasSelectedProduct ? "text-[#ba0020]" : "text-[#333]"
+            }`}
+          >
+            Products
+          </p>
+          <ChevronIcon expanded={isProductsExpanded} />
+        </div>
+        <AnimatedCollapse expanded={isProductsExpanded}>
+          <div className="pl-[12px]">
+            {categoriesWithSpus.map((cat) => {
+              const isExpanded = expandedCategories.has(cat.id);
+              const hasSelectedSpu = cat.spus.some((spu) => spu.id === selectedSpuId) && selectedStaticItem === null;
+              return (
+                <div key={cat.id} className="w-full">
+                  <div
+                    className="content-stretch flex items-center justify-between py-[12px] relative shrink-0 w-full cursor-pointer"
+                    onClick={() => toggleCategory(cat.id)}
+                  >
+                    <p
+                      className={`font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[22px] text-[14px] whitespace-nowrap ${
+                        hasSelectedSpu ? "text-[#ba0020]" : "text-[#333]"
+                      }`}
+                    >
+                      {cat.name}
+                    </p>
+                    <ChevronIcon expanded={isExpanded} />
+                  </div>
+                  <AnimatedSpuList
+                    expanded={isExpanded}
+                    spus={cat.spus}
+                    selectedSpuId={selectedStaticItem === null ? selectedSpuId : ""}
+                    setSelectedSpuId={(id) => {
+                      setSelectedStaticItem(null);
+                      setSelectedSpuId(id);
+                    }}
+                    itemClassName={(isSelected) =>
+                      `content-stretch flex items-center pl-[16px] py-[12px] relative shrink-0 w-full cursor-pointer transition-colors duration-150 ${
+                        isSelected ? "bg-[rgba(0,0,0,0.05)]" : "hover:bg-[rgba(0,0,0,0.03)]"
+                      }`
+                    }
+                    textClassName="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[22px] text-[#333] text-[14px] whitespace-nowrap"
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </AnimatedCollapse>
+      </div>
+
+      {/* Static sections: Alarm Triggered, Battery */}
+      {STATIC_SECTIONS.map((section) => {
+        const isSectionExpanded = expandedTopLevel.has(section.id);
+        const hasSectionSelection = section.subItems.some((sub) => sub.id === selectedStaticItem);
         return (
-          <div key={cat.id} className="w-full">
+          <div key={section.id} className="w-full">
             <div
               className="content-stretch flex items-center justify-between py-[16px] relative shrink-0 w-full cursor-pointer"
-              onClick={() => toggleCategory(cat.id)}
+              onClick={() => toggleTopLevel(section.id)}
             >
               <p
                 className={`font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[22px] text-[16px] whitespace-nowrap ${
-                  hasSelectedSpu ? "text-[#ba0020]" : "text-[#333]"
+                  hasSectionSelection ? "text-[#ba0020]" : "text-[#333]"
                 }`}
               >
-                {cat.name}
+                {section.label}
               </p>
-              <ChevronIcon expanded={isExpanded} />
+              <ChevronIcon expanded={isSectionExpanded} />
             </div>
-            <AnimatedSpuList
-              expanded={isExpanded}
-              spus={cat.spus}
-              selectedSpuId={selectedSpuId}
-              setSelectedSpuId={setSelectedSpuId}
-              itemClassName={(isSelected) =>
-                `content-stretch flex items-center pl-[16px] py-[12px] relative shrink-0 w-full cursor-pointer transition-colors duration-150 ${
-                  isSelected ? "bg-[rgba(0,0,0,0.05)]" : "hover:bg-[rgba(0,0,0,0.03)]"
-                }`
-              }
-              textClassName="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[22px] text-[#333] text-[14px] whitespace-nowrap"
-            />
+            <AnimatedCollapse expanded={isSectionExpanded}>
+              <div className="pl-[12px]">
+                {section.subItems.map((sub) => {
+                  const isSelected = selectedStaticItem === sub.id;
+                  return (
+                    <div
+                      key={sub.id}
+                      className={`content-stretch flex items-center pl-[16px] py-[12px] relative shrink-0 w-full cursor-pointer transition-colors duration-150 ${
+                        isSelected ? "bg-[rgba(0,0,0,0.05)]" : "hover:bg-[rgba(0,0,0,0.03)]"
+                      }`}
+                      onClick={() => setSelectedStaticItem(sub.id)}
+                    >
+                      <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[22px] text-[#333] text-[14px] whitespace-nowrap">
+                        {sub.label}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            </AnimatedCollapse>
           </div>
         );
       })}
@@ -1751,6 +1955,769 @@ function MobileProductDetail({
   );
 }
 
+/* ==================== Static Placeholder Content ==================== */
+
+function StaticPlaceholderContent({ itemId }: { itemId: string }) {
+  if (itemId === "alarm-triggered-unexpectedly") {
+    return <AlarmTriggeredContent />;
+  }
+  const allItems = STATIC_SECTIONS.flatMap((s) => s.subItems);
+  const item = allItems.find((i) => i.id === itemId);
+  return (
+    <div className="content-stretch flex flex-col items-center justify-center min-h-[400px] w-full relative">
+      <p className="font-['Inter:Bold',sans-serif] font-bold leading-[34px] not-italic text-[24px] text-[rgba(0,0,0,0.9)] mb-[12px]">
+        {item?.label || ""}
+      </p>
+      <p className="font-['Inter:Regular',sans-serif] font-normal leading-[20px] not-italic text-[14px] text-[rgba(0,0,0,0.38)]">
+        Content coming soon.
+      </p>
+    </div>
+  );
+}
+
+function AlarmTriggeredContent() {
+  const checkIcon = (
+    <svg viewBox="0 0 16 16" fill="none" className="shrink-0 size-[16px]">
+      <path d="M13.3333 4L6 11.3333L2.66667 8" stroke="#BA0020" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+  const circleCheckIcon = (
+    <svg viewBox="0 0 16.501 16.501" fill="none" className="shrink-0 size-[18px]">
+      <path d="M15.599 6.753C16.305 10.217 14.496 13.703 11.258 15.121C8.019 16.539 4.231 15.502 2.164 12.634C0.098 9.766 0.316 5.844 2.686 3.221C5.056 0.599 8.936 -0.013 11.998 1.754" stroke="#16A34A" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M5.998 7.503L8.248 9.753L15.748 2.253" stroke="#16A34A" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+  const arrowDownIcon = (
+    <svg viewBox="0 0 18 18" fill="none" className="shrink-0 size-[18px]">
+      <path d="M9 3.75V14.25M14.25 9L9 14.25L3.75 9" stroke="black" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+  const wrenchIcon = (
+    <svg viewBox="0 0 18 18" fill="none" className="shrink-0 size-[18px]">
+      <path d="M11.025 4.725C10.739 5.017 10.739 5.483 11.025 5.775L12.225 6.975C12.517 7.261 12.983 7.261 13.275 6.975L15.605 4.646C15.845 4.405 16.252 4.481 16.342 4.81C16.804 6.492 16.253 8.29 14.926 9.424C13.6 10.557 11.737 10.822 10.148 10.103L4.215 16.035C3.594 16.656 2.586 16.656 1.965 16.035C1.345 15.414 1.345 14.406 1.966 13.785L7.898 7.853C7.179 6.263 7.443 4.401 8.577 3.074C9.71 1.747 11.509 1.196 13.191 1.658C13.52 1.748 13.596 2.155 13.355 2.396L11.025 4.725" stroke="#101820" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+
+  return (
+    <div className="content-stretch flex flex-col gap-[32px] items-start px-[20px] relative w-full">
+      {/* Header */}
+      <div className="content-stretch flex flex-col gap-[12px] items-start shrink-0 w-full">
+        <p className="font-['Inter:Bold',sans-serif] font-bold leading-[44px] text-[32px] text-black w-full">
+          Alarm triggered unexpectedly?
+        </p>
+        <p className="font-['Inter:Regular',sans-serif] leading-[22px] text-[16px] text-[rgba(0,0,0,0.54)] w-full">
+          {`Don't worry. False alarms are often caused by dust, environmental interference, or battery issues, and can usually be resolved quickly. Follow the steps below to troubleshoot.`}
+        </p>
+      </div>
+
+      {/* Steps */}
+      <div className="content-stretch flex flex-col gap-[24px] items-start shrink-0 w-full">
+
+        {/* ===== Step 1: Confirm there is no real hazard ===== */}
+        <div className="content-stretch flex gap-[16px] items-start shrink-0 w-full">
+          <div className="bg-[#022542] flex items-center justify-center rounded-[16px] shrink-0 size-[32px]">
+            <span className="font-['Inter:Semi_Bold',sans-serif] font-semibold text-[15px] text-[#f2f0ed] text-center leading-normal">1</span>
+          </div>
+          <div className="border-b border-[rgba(0,0,0,0.1)] flex flex-[1_0_0] flex-col gap-[16px] items-start min-w-px pb-[32px]">
+            <div className="flex flex-col gap-[2px] w-full">
+              <p className="font-['Inter:Bold',sans-serif] font-bold leading-[34px] text-[24px] text-[rgba(0,0,0,0.9)] w-full">
+                Confirm there is no real hazard
+              </p>
+              <p className="font-['Inter:Regular',sans-serif] leading-[20px] text-[14px] text-[rgba(0,0,0,0.54)] w-full">
+                {`Before assuming it's a false alarm, quickly scan the area for actual signs of fire.`}
+              </p>
+            </div>
+            <div className="content-start flex flex-wrap gap-[16px_32px] items-start py-[16px] shrink-0 w-full">
+              <div className="flex gap-[8px] items-center shrink-0">
+                <svg viewBox="0 0 18 18" fill="none" className="shrink-0 size-[18px]"><path d="M9 2.25C9.5 4.25 10.5 5.875 12 7.125C13.5 8.375 14.25 9.75 14.25 11.25C14.25 14.1476 11.8976 16.5 9 16.5C6.10245 16.5 3.75 14.1476 3.75 11.25C3.75 10.4386 4.01317 9.64911 4.5 9C4.5 10.0355 5.33947 10.875 6.375 10.875C7.41053 10.875 8.25 10.0355 8.25 9C8.25 7.5 7.125 6.75 7.125 5.25C7.125 4.25 7.75 3.25 9 2.25" stroke="#757575" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                <span className="font-['Inter:Regular',sans-serif] text-[14px] text-[rgba(0,0,0,0.9)] leading-[20px] whitespace-nowrap">Visible open flame</span>
+              </div>
+              <div className="flex gap-[8px] items-center shrink-0">
+                <svg viewBox="0 0 18 18" fill="none" className="shrink-0 size-[18px]"><path d="M3 11.1742C1.47371 9.61483 1.07111 7.2739 1.98875 5.29418C2.90639 3.31445 4.95292 2.10873 7.12933 2.26558C9.30573 2.42243 11.1582 3.90916 11.7825 6H13.125C14.6118 5.99983 15.9235 6.9726 16.3551 8.39536C16.7866 9.81811 16.2363 11.3557 15 12.1815M12 12.75H5.25M12.75 15.75H6.75" stroke="#757575" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                <span className="font-['Inter:Regular',sans-serif] text-[14px] text-[rgba(0,0,0,0.9)] leading-[20px] whitespace-nowrap">Obvious smoke</span>
+              </div>
+              <div className="flex gap-[8px] items-center shrink-0">
+                <svg viewBox="0 0 18 18" fill="none" className="shrink-0 size-[18px]"><path d="M9.6 14.7C10.1221 15.0916 10.8375 15.1006 11.3694 14.7224C11.9012 14.3441 12.1274 13.6654 11.9289 13.0437C11.7304 12.422 11.1526 12 10.5 12H1.5M13.125 6C13.654 5.29461 14.6031 5.05314 15.4049 5.41991C16.2068 5.78668 16.6447 6.66258 16.457 7.52411C16.2693 8.38564 15.5067 9 14.625 9H1.5M7.35 3.3C7.87211 2.90842 8.5875 2.89937 9.11935 3.27761C9.6512 3.65586 9.87744 4.33459 9.67891 4.9563C9.48038 5.57801 8.90264 6 8.25 6H1.5" stroke="#757575" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                <span className="font-['Inter:Regular',sans-serif] text-[14px] text-[rgba(0,0,0,0.9)] leading-[20px] whitespace-nowrap">Burning or scorched odor</span>
+              </div>
+              <div className="flex gap-[8px] items-center shrink-0">
+                <svg viewBox="0 0 18 18" fill="none" className="shrink-0 size-[18px]"><path d="M3 10.5C2.71031 10.501 2.44596 10.3351 2.32091 10.0737C2.19587 9.81243 2.23249 9.50247 2.415 9.2775L9.84 1.6275C9.95471 1.49509 10.1458 1.45975 10.3003 1.54238C10.4548 1.62501 10.5315 1.80358 10.485 1.9725L9.045 6.4875C8.95881 6.71818 8.99135 6.97648 9.13207 7.17857C9.27278 7.38066 9.50374 7.5008 9.75 7.5H15C15.2897 7.49901 15.554 7.66495 15.6791 7.92626C15.8041 8.18757 15.7675 8.49753 15.585 8.7225L8.16 16.3725C8.04529 16.5049 7.85418 16.5403 7.6997 16.4576C7.54522 16.375 7.46854 16.1964 7.515 16.0275L8.955 11.5125C9.04119 11.2818 9.00865 11.0235 8.86793 10.8214C8.72722 10.6193 8.49626 10.4992 8.25 10.5H3" stroke="#757575" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                <span className="font-['Inter:Regular',sans-serif] text-[14px] text-[rgba(0,0,0,0.9)] leading-[20px] whitespace-nowrap">Overheating electronics</span>
+              </div>
+            </div>
+            <div className="flex flex-col gap-[12px] w-full">
+              <div className="bg-[rgba(255,59,59,0.05)] flex flex-col gap-[4px] items-start pl-[16px] pr-[20px] py-[16px] relative w-full">
+                <div className="flex gap-[8px] items-start w-full">
+                  <div className="flex items-center justify-center shrink-0 size-[24px]">
+                    <svg viewBox="0 0 18 18" fill="none" className="shrink-0 size-[18px]"><path d="M16.298 13.5L10.298 3C10.031 2.53 9.533 2.24 8.993 2.24C8.452 2.24 7.954 2.53 7.688 3L1.688 13.5C1.418 13.966 1.42 14.541 1.691 15.006C1.962 15.471 2.462 15.755 3 15.75H15C15.536 15.75 16.03 15.463 16.298 14.999C16.566 14.535 16.565 13.964 16.298 13.5M9 6.75V9.75M9 12.75H9.008" stroke="#E11D48" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  </div>
+                  <div className="flex flex-[1_0_0] flex-col gap-[2px] min-w-px">
+                    <p className="font-['Inter:Medium',sans-serif] font-medium leading-[24px] text-[16px] text-[#ff3b3b]">If any are present</p>
+                    <p className="font-['Inter:Regular',sans-serif] leading-[20px] text-[14px] text-[rgba(0,0,0,0.54)]">Leave the area immediately and follow your household fire emergency procedures.</p>
+                  </div>
+                </div>
+                <div className="absolute bg-[#ff3b3b] h-[78px] left-0 top-1/2 -translate-y-1/2 w-[4px]" />
+              </div>
+              <div className="border border-[rgba(0,0,0,0.2)] flex flex-col gap-[4px] items-start pl-[17px] pr-[21px] py-[17px] relative w-full">
+                <div className="flex gap-[8px] items-start w-full">
+                  <div className="flex items-center justify-center shrink-0 size-[24px]">{arrowDownIcon}</div>
+                  <div className="flex flex-[1_0_0] flex-col gap-[2px] min-w-px">
+                    <p className="font-['Inter:Medium',sans-serif] font-medium leading-[24px] text-[16px] text-black">If none of the above is present</p>
+                    <p className="font-['Inter:Regular',sans-serif] leading-[20px] text-[14px] text-[rgba(0,0,0,0.54)]">Continue to the next step.</p>
+                  </div>
+                </div>
+                <div className="absolute bg-[#d9d9d9] h-[78px] left-[-1px] top-1/2 -translate-y-1/2 w-[4px]" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ===== Step 2: Check for nearby interference ===== */}
+        <div className="content-stretch flex gap-[16px] items-start shrink-0 w-full">
+          <div className="bg-[#022542] flex items-center justify-center rounded-[16px] shrink-0 size-[32px]">
+            <span className="font-['Inter:Semi_Bold',sans-serif] font-semibold text-[15px] text-[#f2f0ed] text-center leading-normal">2</span>
+          </div>
+          <div className="border-b border-[rgba(0,0,0,0.1)] flex flex-[1_0_0] flex-col gap-[16px] items-start min-w-px pb-[32px]">
+            <div className="flex flex-col gap-[2px] w-full">
+              <p className="font-['Inter:Bold',sans-serif] font-bold leading-[34px] text-[24px] text-[rgba(0,0,0,0.9)] w-full">
+                Check for nearby interference
+              </p>
+              <p className="font-['Inter:Regular',sans-serif] leading-[20px] text-[14px] text-[rgba(0,0,0,0.54)] w-full">
+                Tiny particles in the air can trick the sensor. Check if any of these are near the alarm:
+              </p>
+            </div>
+            <div className="content-start flex flex-wrap gap-[16px_32px] items-start py-[16px] shrink-0 w-full">
+              <div className="flex gap-[8px] items-center shrink-0">
+                <svg viewBox="0 0 18 18" fill="none" className="shrink-0 size-[18px]"><path d="M13.125 14.25H6.75C4.04678 14.2493 1.78595 12.1961 1.52573 9.50538C1.26551 6.81471 3.09096 4.36627 5.74395 3.84756C8.39694 3.32885 11.0102 4.90946 11.7825 7.5H13.125C14.9877 7.5 16.5 9.01229 16.5 10.875C16.5 12.7377 14.9877 14.25 13.125 14.25" stroke="#757575" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                <span className="font-['Inter:Regular',sans-serif] text-[14px] text-[rgba(0,0,0,0.9)] leading-[20px] whitespace-nowrap">Cooking fumes</span>
+              </div>
+              <div className="flex gap-[8px] items-center shrink-0">
+                <svg viewBox="0 0 15 15.757" fill="none" className="shrink-0 size-[18px]"><path d="M3.75 10.71C5.4 10.71 6.75 9.3375 6.75 7.6725C6.75 6.8025 6.3225 5.9775 5.4675 5.28C4.6125 4.5825 3.9675 3.5475 3.75 2.46C3.5325 3.5475 2.895 4.59 2.0325 5.28C1.17 5.97 0.75 6.81 0.75 7.6725C0.75 9.3375 2.1 10.71 3.75 10.71" stroke="#757575" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M7.92 3.435C8.4354 2.61063 8.80102 1.70165 9 0.75C9.375 2.625 10.5 4.425 12 5.625C13.5 6.825 14.25 8.25 14.25 9.75C14.2588 11.8702 12.9878 13.7863 11.0311 14.6029C9.0744 15.4194 6.81841 14.975 5.3175 13.4775" stroke="#757575" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                <span className="font-['Inter:Regular',sans-serif] text-[14px] text-[rgba(0,0,0,0.9)] leading-[20px] whitespace-nowrap">Steam from bathroom</span>
+              </div>
+              <div className="flex gap-[8px] items-center shrink-0">
+                <svg viewBox="0 0 16.496 15.746" fill="none" className="shrink-0 size-[18px]"><path d="M10.496 7.5L3.467 14.53C2.845 15.151 1.838 15.151 1.216 14.53C0.595 13.909 0.595 12.901 1.216 12.28L8.246 5.25M12.746 9.75L15.746 6.75" stroke="#757575" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M15.371 7.125L13.936 5.69C13.655 5.408 13.497 5.027 13.496 4.629V4.371C13.496 3.973 13.338 3.592 13.057 3.311L11.814 2.068C10.971 1.224 9.826 0.75 8.633 0.75H5.996L6.929 1.682C7.772 2.526 8.246 3.67 8.246 4.864V6L9.746 7.5H10.625C11.023 7.5 11.405 7.658 11.686 7.94L13.121 9.375" stroke="#757575" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                <span className="font-['Inter:Regular',sans-serif] text-[14px] text-[rgba(0,0,0,0.9)] leading-[20px] whitespace-nowrap">Dust or renovation debris</span>
+              </div>
+              <div className="flex gap-[8px] items-center shrink-0">
+                <svg viewBox="0 0 18 18" fill="none" className="shrink-0 size-[18px]"><path d="M2.25 2.25H2.2575M5.25 3.75H5.2575M8.25 5.25H8.2575M2.25 5.25H2.2575M5.25 6.75H5.2575M2.25 8.25H2.2575M11.25 3.75H14.25V6.75H11.25L2.25 2.25M5.25 5.25L6.75 6.75V14.25C6.75 14.7 6.45 15 6 15H1.5C1.05 15 0.75 14.7 0.75 14.25V8.25L2.25 6.75M0.75 10.5L6.75 9M0.75 14.25L6.75 12.75" stroke="#757575" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                <span className="font-['Inter:Regular',sans-serif] text-[14px] text-[rgba(0,0,0,0.9)] leading-[20px] whitespace-nowrap">Aerosol sprays or incense</span>
+              </div>
+            </div>
+            {/* What to do */}
+            <div className="bg-[rgba(0,0,0,0.05)] flex flex-col gap-[16px] items-start p-[24px] shrink-0 w-full">
+              <div className="flex gap-[8px] items-center w-full">
+                <div className="flex items-center justify-center shrink-0 size-[24px]">{wrenchIcon}</div>
+                <span className="font-['Inter:Medium',sans-serif] font-medium leading-[24px] text-[16px] text-[rgba(0,0,0,0.9)]">What to do</span>
+              </div>
+              <div className="flex flex-col gap-[12px] w-full">
+                <div className="flex gap-[12px] items-start w-full">
+                  <div className="flex items-center justify-center shrink-0 size-[20px]">{checkIcon}</div>
+                  <p className="flex-[1_0_0] font-['Inter:Regular',sans-serif] text-[14px] text-[rgba(0,0,0,0.9)] leading-[20px] min-w-px">Open windows for ventilation</p>
+                </div>
+                <div className="flex gap-[12px] items-start w-full">
+                  <div className="flex items-center justify-center shrink-0 size-[20px]">{checkIcon}</div>
+                  <p className="flex-[1_0_0] font-['Inter:Regular',sans-serif] text-[14px] text-[rgba(0,0,0,0.9)] leading-[20px] min-w-px">Allow the air to return to a clean state</p>
+                </div>
+                <div className="flex gap-[12px] items-start w-full">
+                  <div className="flex items-center justify-center shrink-0 size-[20px]">{checkIcon}</div>
+                  <p className="flex-[1_0_0] font-['Inter:Regular',sans-serif] text-[14px] text-[rgba(0,0,0,0.9)] leading-[20px] min-w-px">Use a soft brush or a vacuum cleaner to gently clean the smoke inlet and surface dust</p>
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-col gap-[12px] w-full">
+              <div className="bg-[rgba(22,221,0,0.05)] flex flex-col gap-[4px] items-start pl-[16px] pr-[20px] py-[16px] relative w-full">
+                <div className="flex gap-[8px] items-start w-full">
+                  <div className="flex items-center justify-center shrink-0 size-[24px]">{circleCheckIcon}</div>
+                  <div className="flex flex-[1_0_0] flex-col gap-[2px] min-w-px">
+                    <p className="font-['Inter:Medium',sans-serif] font-medium leading-[24px] text-[16px] text-[#16a34a]">If the alarm stops</p>
+                    <p className="font-['Inter:Regular',sans-serif] leading-[20px] text-[14px] text-[rgba(0,0,0,0.54)]">It was likely an environmental false alarm caused by airborne particles.</p>
+                  </div>
+                </div>
+                <div className="absolute bg-[#16dd00] h-[78px] left-0 top-1/2 -translate-y-1/2 w-[4px]" />
+              </div>
+              <div className="border border-[rgba(0,0,0,0.2)] flex flex-col gap-[4px] items-start pl-[17px] pr-[21px] py-[17px] relative w-full">
+                <div className="flex gap-[8px] items-start w-full">
+                  <div className="flex items-center justify-center shrink-0 size-[24px]">{arrowDownIcon}</div>
+                  <div className="flex flex-[1_0_0] flex-col gap-[2px] min-w-px">
+                    <p className="font-['Inter:Medium',sans-serif] font-medium leading-[24px] text-[16px] text-black">If the alarm continues</p>
+                    <p className="font-['Inter:Regular',sans-serif] leading-[20px] text-[14px] text-[rgba(0,0,0,0.54)]">Proceed to the next step.</p>
+                  </div>
+                </div>
+                <div className="absolute bg-[#d9d9d9] h-[78px] left-[-1px] top-1/2 -translate-y-1/2 w-[4px]" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ===== Step 3: Inspect the battery ===== */}
+        <div className="content-stretch flex gap-[16px] items-start shrink-0 w-full">
+          <div className="bg-[#022542] flex items-center justify-center rounded-[16px] shrink-0 size-[32px]">
+            <span className="font-['Inter:Semi_Bold',sans-serif] font-semibold text-[15px] text-[#f2f0ed] text-center leading-normal">3</span>
+          </div>
+          <div className="border-b border-[rgba(0,0,0,0.1)] flex flex-[1_0_0] flex-col gap-[16px] items-start min-w-px pb-[32px]">
+            <div className="flex flex-col gap-[2px] w-full">
+              <p className="font-['Inter:Bold',sans-serif] font-bold leading-[34px] text-[24px] text-[rgba(0,0,0,0.9)] w-full">
+                Inspect the battery
+              </p>
+              <p className="font-['Inter:Regular',sans-serif] leading-[20px] text-[14px] text-[rgba(0,0,0,0.54)] w-full">
+                Low voltage or improper battery installation frequently causes random chirps or full alarms.
+              </p>
+            </div>
+            <div className="bg-[rgba(0,0,0,0.05)] flex flex-col gap-[16px] items-start p-[24px] shrink-0 w-full">
+              <div className="flex gap-[8px] items-center w-full">
+                <div className="flex items-center justify-center shrink-0 size-[24px]">{wrenchIcon}</div>
+                <span className="font-['Inter:Medium',sans-serif] font-medium leading-[24px] text-[16px] text-[rgba(0,0,0,0.9)]">What to do</span>
+              </div>
+              <div className="flex flex-col gap-[12px] w-full">
+                <div className="flex gap-[12px] items-start w-full">
+                  <div className="flex items-center justify-center shrink-0 size-[20px]">{checkIcon}</div>
+                  <p className="flex-[1_0_0] font-['Inter:Regular',sans-serif] text-[14px] text-[rgba(0,0,0,0.9)] leading-[20px] min-w-px">Replace the current battery with a brand-new one.</p>
+                </div>
+                <div className="flex gap-[12px] items-start w-full">
+                  <div className="flex items-center justify-center shrink-0 size-[20px]">{checkIcon}</div>
+                  <p className="flex-[1_0_0] font-['Inter:Regular',sans-serif] text-[14px] text-[rgba(0,0,0,0.9)] leading-[20px] min-w-px">Ensure the positive (+) and negative (-) terminals match the markings inside the device.</p>
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-col gap-[12px] w-full">
+              <div className="bg-[rgba(22,221,0,0.05)] flex flex-col gap-[4px] items-start pl-[16px] pr-[20px] py-[16px] relative w-full">
+                <div className="flex gap-[8px] items-start w-full">
+                  <div className="flex items-center justify-center shrink-0 size-[24px]">{circleCheckIcon}</div>
+                  <div className="flex flex-[1_0_0] flex-col gap-[2px] min-w-px">
+                    <p className="font-['Inter:Medium',sans-serif] font-medium leading-[24px] text-[16px] text-[#16a34a]">If the alarm stops</p>
+                    <p className="font-['Inter:Regular',sans-serif] leading-[20px] text-[14px] text-[rgba(0,0,0,0.54)]">The issue was caused by insufficient battery power.</p>
+                  </div>
+                </div>
+                <div className="absolute bg-[#16dd00] h-[78px] left-0 top-1/2 -translate-y-1/2 w-[4px]" />
+              </div>
+              <div className="border border-[rgba(0,0,0,0.2)] flex flex-col gap-[4px] items-start pl-[17px] pr-[21px] py-[17px] relative w-full">
+                <div className="flex gap-[8px] items-start w-full">
+                  <div className="flex items-center justify-center shrink-0 size-[24px]">{arrowDownIcon}</div>
+                  <div className="flex flex-[1_0_0] flex-col gap-[2px] min-w-px">
+                    <p className="font-['Inter:Medium',sans-serif] font-medium leading-[24px] text-[16px] text-black">If the issue is still not resolved</p>
+                    <p className="font-['Inter:Regular',sans-serif] leading-[20px] text-[14px] text-[rgba(0,0,0,0.54)]">Proceed to the next step.</p>
+                  </div>
+                </div>
+                <div className="absolute bg-[#d9d9d9] h-[78px] left-[-1px] top-1/2 -translate-y-1/2 w-[4px]" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ===== Step 4: Verify the installation location ===== */}
+        <div className="content-stretch flex gap-[16px] items-start shrink-0 w-full">
+          <div className="bg-[#022542] flex items-center justify-center rounded-[16px] shrink-0 size-[32px]">
+            <span className="font-['Inter:Semi_Bold',sans-serif] font-semibold text-[15px] text-[#f2f0ed] text-center leading-normal">4</span>
+          </div>
+          <div className="border-b border-[rgba(0,0,0,0.1)] flex flex-[1_0_0] flex-col gap-[16px] items-start min-w-px pb-[32px]">
+            <div className="flex flex-col gap-[2px] w-full">
+              <p className="font-['Inter:Bold',sans-serif] font-bold leading-[34px] text-[24px] text-[rgba(0,0,0,0.9)] w-full">
+                Verify the installation location
+              </p>
+              <p className="font-['Inter:Regular',sans-serif] leading-[20px] text-[14px] text-[rgba(0,0,0,0.54)] w-full">
+                Alarms placed too close to hazard-mimicking sources will trigger constantly.
+              </p>
+            </div>
+            <div className="content-start flex flex-wrap gap-[16px_32px] items-start py-[16px] shrink-0 w-full">
+              <div className="flex gap-[8px] items-center shrink-0">
+                <svg viewBox="0 0 13.5 16.5" fill="none" className="shrink-0 size-[18px]"><path d="M12.75 6.75C12.75 10.495 8.596 14.395 7.201 15.599C6.934 15.8 6.566 15.8 6.299 15.599C4.904 14.395 0.75 10.495 0.75 6.75C0.75 3.439 3.439 0.75 6.75 0.75C10.062 0.75 12.75 3.439 12.75 6.75" stroke="#757575" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M4.5 6.75C4.5 7.992 5.508 9 6.75 9C7.992 9 9 7.992 9 6.75C9 5.508 7.992 4.5 6.75 4.5C5.508 4.5 4.5 5.508 4.5 6.75" stroke="#757575" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                <span className="font-['Inter:Regular',sans-serif] text-[14px] text-[rgba(0,0,0,0.9)] leading-[20px] whitespace-nowrap">Directly inside a kitchen</span>
+              </div>
+              <div className="flex gap-[8px] items-center shrink-0">
+                <svg viewBox="0 0 13.5 16.5" fill="none" className="shrink-0 size-[18px]"><path d="M12.75 6.75C12.75 10.495 8.596 14.395 7.201 15.599C6.934 15.8 6.566 15.8 6.299 15.599C4.904 14.395 0.75 10.495 0.75 6.75C0.75 3.439 3.439 0.75 6.75 0.75C10.062 0.75 12.75 3.439 12.75 6.75" stroke="#757575" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M4.5 6.75C4.5 7.992 5.508 9 6.75 9C7.992 9 9 7.992 9 6.75C9 5.508 7.992 4.5 6.75 4.5C5.508 4.5 4.5 5.508 4.5 6.75" stroke="#757575" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                <span className="font-['Inter:Regular',sans-serif] text-[14px] text-[rgba(0,0,0,0.9)] leading-[20px] whitespace-nowrap">Just outside a steamy bathroom</span>
+              </div>
+              <div className="flex gap-[8px] items-center shrink-0">
+                <svg viewBox="0 0 13.5 16.5" fill="none" className="shrink-0 size-[18px]"><path d="M12.75 6.75C12.75 10.495 8.596 14.395 7.201 15.599C6.934 15.8 6.566 15.8 6.299 15.599C4.904 14.395 0.75 10.495 0.75 6.75C0.75 3.439 3.439 0.75 6.75 0.75C10.062 0.75 12.75 3.439 12.75 6.75" stroke="#757575" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M4.5 6.75C4.5 7.992 5.508 9 6.75 9C7.992 9 9 7.992 9 6.75C9 5.508 7.992 4.5 6.75 4.5C5.508 4.5 4.5 5.508 4.5 6.75" stroke="#757575" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                <span className="font-['Inter:Regular',sans-serif] text-[14px] text-[rgba(0,0,0,0.9)] leading-[20px] whitespace-nowrap">Near an AC vent or drafty window</span>
+              </div>
+              <div className="flex gap-[8px] items-center shrink-0">
+                <svg viewBox="0 0 13.5 16.5" fill="none" className="shrink-0 size-[18px]"><path d="M12.75 6.75C12.75 10.495 8.596 14.395 7.201 15.599C6.934 15.8 6.566 15.8 6.299 15.599C4.904 14.395 0.75 10.495 0.75 6.75C0.75 3.439 3.439 0.75 6.75 0.75C10.062 0.75 12.75 3.439 12.75 6.75" stroke="#757575" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M4.5 6.75C4.5 7.992 5.508 9 6.75 9C7.992 9 9 7.992 9 6.75C9 5.508 7.992 4.5 6.75 4.5C5.508 4.5 4.5 5.508 4.5 6.75" stroke="#757575" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                <span className="font-['Inter:Regular',sans-serif] text-[14px] text-[rgba(0,0,0,0.9)] leading-[20px] whitespace-nowrap">In high-dust or high-humidity areas</span>
+              </div>
+            </div>
+            <div className="bg-[rgba(0,0,0,0.05)] flex flex-col gap-[16px] items-start p-[24px] shrink-0 w-full">
+              <div className="flex gap-[8px] items-center w-full">
+                <div className="flex items-center justify-center shrink-0 size-[24px]">{wrenchIcon}</div>
+                <span className="font-['Inter:Medium',sans-serif] font-medium leading-[24px] text-[16px] text-[rgba(0,0,0,0.9)]">What to do</span>
+              </div>
+              <div className="flex flex-col gap-[12px] w-full">
+                <div className="flex gap-[12px] items-start w-full">
+                  <div className="flex items-center justify-center shrink-0 size-[20px]">{checkIcon}</div>
+                  <p className="flex-[1_0_0] font-['Inter:Regular',sans-serif] text-[14px] text-[rgba(0,0,0,0.9)] leading-[20px] min-w-px">Relocate the alarm at least 10 feet (3 meters) away from cooking appliances or bathrooms.</p>
+                </div>
+                <div className="flex gap-[12px] items-start w-full">
+                  <div className="flex items-center justify-center shrink-0 size-[20px]">{checkIcon}</div>
+                  <p className="flex-[1_0_0] font-['Inter:Regular',sans-serif] text-[14px] text-[rgba(0,0,0,0.9)] leading-[20px] min-w-px">Check the product manual for exact height and clearance requirements.</p>
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-col gap-[12px] w-full">
+              <div className="bg-[rgba(22,221,0,0.05)] flex flex-col gap-[4px] items-start pl-[16px] pr-[20px] py-[16px] relative w-full">
+                <div className="flex gap-[8px] items-start w-full">
+                  <div className="flex items-center justify-center shrink-0 size-[24px]">{circleCheckIcon}</div>
+                  <div className="flex flex-[1_0_0] flex-col gap-[2px] min-w-px">
+                    <p className="font-['Inter:Medium',sans-serif] font-medium leading-[24px] text-[16px] text-[#16a34a]">If the alarm stops after relocating</p>
+                    <p className="font-['Inter:Regular',sans-serif] leading-[20px] text-[14px] text-[rgba(0,0,0,0.54)]">The placement was causing environmental interference.</p>
+                  </div>
+                </div>
+                <div className="absolute bg-[#16dd00] h-[78px] left-0 top-1/2 -translate-y-1/2 w-[4px]" />
+              </div>
+              <div className="border border-[rgba(0,0,0,0.2)] flex flex-col gap-[4px] items-start pl-[17px] pr-[21px] py-[17px] relative w-full">
+                <div className="flex gap-[8px] items-start w-full">
+                  <div className="flex items-center justify-center shrink-0 size-[24px]">{arrowDownIcon}</div>
+                  <div className="flex flex-[1_0_0] flex-col gap-[2px] min-w-px">
+                    <p className="font-['Inter:Medium',sans-serif] font-medium leading-[24px] text-[16px] text-black">If the issue still persists</p>
+                    <p className="font-['Inter:Regular',sans-serif] leading-[20px] text-[14px] text-[rgba(0,0,0,0.54)]">Continue to the final step.</p>
+                  </div>
+                </div>
+                <div className="absolute bg-[#d9d9d9] h-[78px] left-[-1px] top-1/2 -translate-y-1/2 w-[4px]" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ===== Step 5: Contact Support ===== */}
+        <div className="content-stretch flex gap-[16px] items-start shrink-0 w-full">
+          <div className="bg-[#022542] flex items-center justify-center rounded-[16px] shrink-0 size-[32px]">
+            <span className="font-['Inter:Semi_Bold',sans-serif] font-semibold text-[15px] text-[#f2f0ed] text-center leading-normal">5</span>
+          </div>
+          <div className="flex flex-[1_0_0] flex-col gap-[16px] items-start min-w-px pb-[32px]">
+            <div className="flex flex-col gap-[2px] w-full">
+              <p className="font-['Inter:Bold',sans-serif] font-bold leading-[34px] text-[24px] text-[rgba(0,0,0,0.9)] w-full">
+                Contact Support
+              </p>
+              <p className="font-['Inter:Regular',sans-serif] leading-[20px] text-[14px] text-[rgba(0,0,0,0.54)] w-full">
+                If you have completed all the steps and the alarm is still triggering for no reason, the device may require professional service or replacement.
+              </p>
+            </div>
+            <div className="border border-[rgba(0,0,0,0.2)] flex flex-col gap-[32px] items-start p-[25px] shrink-0 w-full">
+              <div className="flex flex-col gap-[16px] w-full">
+                <div className="flex flex-col gap-[2px] w-full">
+                  <p className="font-['Inter:Medium',sans-serif] font-medium leading-[24px] text-[16px] text-[rgba(0,0,0,0.9)]">Prepare before calling</p>
+                  <p className="font-['Inter:Regular',sans-serif] leading-[20px] text-[14px] text-[rgba(0,0,0,0.54)]">Having this information ready will help our team assist you faster:</p>
+                </div>
+                <div className="content-start flex flex-wrap gap-[16px_32px] items-start w-full">
+                  <div className="flex gap-[8px] items-center shrink-0">
+                    <svg viewBox="0 0 14.663 14.663" fill="none" className="shrink-0 size-[16px]"><path d="M7.724 1.057C7.474 0.807 7.135 0.667 6.781 0.667H2C1.264 0.667 0.667 1.264 0.667 2V6.781C0.667 7.135 0.807 7.474 1.057 7.724L6.86 13.527C7.491 14.154 8.509 14.154 9.14 13.527L13.527 9.14C14.154 8.509 14.154 7.491 13.527 6.86L7.724 1.057" stroke="#757575" strokeWidth="1.333" strokeLinecap="round" strokeLinejoin="round"/><path d="M4 4.333C4 4.517 4.149 4.667 4.333 4.667C4.517 4.667 4.667 4.517 4.667 4.333C4.667 4.149 4.517 4 4.333 4C4.149 4 4 4.149 4 4.333" fill="#757575" stroke="#757575" strokeWidth="1.333" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    <span className="font-['Inter:Regular',sans-serif] text-[14px] text-[rgba(0,0,0,0.9)] leading-[20px] whitespace-nowrap">Product model</span>
+                  </div>
+                  <div className="flex gap-[8px] items-center shrink-0">
+                    <svg viewBox="0 0 13.333 14.667" fill="none" className="shrink-0 size-[16px]"><path d="M4 0.667V3.333M9.333 0.667V3.333" stroke="#757575" strokeWidth="1.333" strokeLinecap="round" strokeLinejoin="round"/><path d="M2 2H11.333C12.069 2 12.667 2.597 12.667 3.333V12.667C12.667 13.403 12.069 14 11.333 14H2C1.264 14 0.667 13.403 0.667 12.667V3.333C0.667 2.597 1.264 2 2 2" stroke="#757575" strokeWidth="1.333" strokeLinecap="round" strokeLinejoin="round"/><path d="M0.667 6H12.667" stroke="#757575" strokeWidth="1.333" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    <span className="font-['Inter:Regular',sans-serif] text-[14px] text-[rgba(0,0,0,0.9)] leading-[20px] whitespace-nowrap">Purchase date</span>
+                  </div>
+                  <div className="flex gap-[8px] items-center shrink-0">
+                    <svg viewBox="0 0 16 16" fill="none" className="shrink-0 size-[16px]"><path d="M14.667 8H13.013C12.415 7.999 11.888 8.397 11.727 8.973L10.16 14.547C10.139 14.618 10.074 14.667 10 14.667C9.926 14.667 9.861 14.618 9.84 14.547L6.16 1.453C6.139 1.382 6.074 1.333 6 1.333C5.926 1.333 5.861 1.382 5.84 1.453L4.273 7.027C4.112 7.601 3.59 7.998 2.993 8H1.333" stroke="#757575" strokeWidth="1.333" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    <span className="font-['Inter:Regular',sans-serif] text-[14px] text-[rgba(0,0,0,0.9)] leading-[20px] whitespace-nowrap">Alarm frequency</span>
+                  </div>
+                  <div className="flex gap-[8px] items-center shrink-0">
+                    <svg viewBox="0 0 12 14.667" fill="none" className="shrink-0 size-[16px]"><path d="M11.333 6C11.333 9.329 7.641 12.795 6.401 13.866C6.163 14.044 5.837 14.044 5.599 13.866C4.359 12.795 0.667 9.329 0.667 6C0.667 3.056 3.056 0.667 6 0.667C8.944 0.667 11.333 3.056 11.333 6" stroke="#757575" strokeWidth="1.333" strokeLinecap="round" strokeLinejoin="round"/><path d="M4 6C4 7.104 4.896 8 6 8C7.104 8 8 7.104 8 6C8 4.896 7.104 4 6 4C4.896 4 4 4.896 4 6" stroke="#757575" strokeWidth="1.333" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    <span className="font-['Inter:Regular',sans-serif] text-[14px] text-[rgba(0,0,0,0.9)] leading-[20px] whitespace-nowrap">Exact install location</span>
+                  </div>
+                  <div className="flex gap-[8px] items-center shrink-0">
+                    <svg viewBox="0 0 16 16" fill="none" className="shrink-0 size-[16px]"><path d="M10 9.333C10.133 8.667 10.467 8.2 11 7.667C11.667 7.067 12 6.2 12 5.333C12 3.126 10.208 1.333 8 1.333C5.792 1.333 4 3.126 4 5.333C4 6 4.133 6.8 5 7.667C5.467 8.133 5.867 8.667 6 9.333M6 12H10M6.667 14.667H9.333" stroke="#757575" strokeWidth="1.333" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    <span className="font-['Inter:Regular',sans-serif] text-[14px] text-[rgba(0,0,0,0.9)] leading-[20px] whitespace-nowrap">LED light color/status</span>
+                  </div>
+                </div>
+              </div>
+              <a
+                href="https://www.x-sense.com/pages/contact-us"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-[#ba0020] hover:bg-[#a0001b] flex items-center justify-center gap-[4px] px-[16px] py-[8px] rounded-[50px] h-[40px] transition-colors cursor-pointer"
+              >
+                <span className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[20px] text-[14px] text-white text-center whitespace-nowrap">Contact Support</span>
+              </a>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  );
+}
+
+function MobileAlarmTriggeredContent() {
+  const checkIcon = (
+    <svg viewBox="0 0 16 16" fill="none" className="shrink-0 size-[16px]">
+      <path d="M13.3333 4L6 11.3333L2.66667 8" stroke="#BA0020" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+  const circleCheckIcon = (
+    <svg viewBox="0 0 16.501 16.501" fill="none" className="shrink-0 size-[18px]">
+      <path d="M15.599 6.753C16.305 10.217 14.496 13.703 11.258 15.121C8.019 16.539 4.231 15.502 2.164 12.634C0.098 9.766 0.316 5.844 2.686 3.221C5.056 0.599 8.936 -0.013 11.998 1.754" stroke="#16A34A" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M5.998 7.503L8.248 9.753L15.748 2.253" stroke="#16A34A" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+  const arrowDownIcon = (
+    <svg viewBox="0 0 18 18" fill="none" className="shrink-0 size-[18px]">
+      <path d="M9 3.75V14.25M14.25 9L9 14.25L3.75 9" stroke="black" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+  const wrenchIcon = (
+    <svg viewBox="0 0 18 18" fill="none" className="shrink-0 size-[18px]">
+      <path d="M11.025 4.725C10.739 5.017 10.739 5.483 11.025 5.775L12.225 6.975C12.517 7.261 12.983 7.261 13.275 6.975L15.605 4.646C15.845 4.405 16.252 4.481 16.342 4.81C16.804 6.492 16.253 8.29 14.926 9.424C13.6 10.557 11.737 10.822 10.148 10.103L4.215 16.035C3.594 16.656 2.586 16.656 1.965 16.035C1.345 15.414 1.345 14.406 1.966 13.785L7.898 7.853C7.179 6.263 7.443 4.401 8.577 3.074C9.71 1.747 11.509 1.196 13.191 1.658C13.52 1.748 13.596 2.155 13.355 2.396L11.025 4.725" stroke="#101820" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+
+  return (
+    <div className="content-stretch flex flex-col gap-[32px] items-start relative w-full">
+      {/* Header */}
+      <div className="content-stretch flex flex-col gap-[12px] items-start shrink-0 w-full">
+        <p className="font-['Inter:Bold',sans-serif] font-bold leading-[44px] text-[32px] text-black w-full">
+          Alarm triggered unexpectedly?
+        </p>
+        <p className="font-['Inter:Regular',sans-serif] leading-[22px] text-[16px] text-[rgba(0,0,0,0.54)] w-full">
+          {`Don't worry. False alarms are often caused by dust, environmental interference, or battery issues, and can usually be resolved quickly. Follow the steps below to troubleshoot.`}
+        </p>
+      </div>
+
+      {/* Steps */}
+      <div className="content-stretch flex flex-col gap-[24px] items-start shrink-0 w-full">
+
+        {/* ===== Step 1: Confirm there is no real hazard ===== */}
+        <div className="content-stretch flex gap-[16px] items-start shrink-0 w-full">
+          <div className="bg-[#022542] flex items-center justify-center rounded-[16px] shrink-0 size-[32px]">
+            <span className="font-['Inter:Semi_Bold',sans-serif] font-semibold text-[15px] text-[#f2f0ed] text-center leading-normal">1</span>
+          </div>
+          <div className="border-b border-[rgba(0,0,0,0.1)] flex flex-[1_0_0] flex-col gap-[16px] items-start min-w-px pb-[32px]">
+            <div className="flex flex-col gap-[2px] w-full">
+              <p className="font-['Inter:Bold',sans-serif] font-bold leading-[34px] text-[24px] text-[rgba(0,0,0,0.9)] w-full">
+                Confirm there is no real hazard
+              </p>
+              <p className="font-['Inter:Regular',sans-serif] leading-[20px] text-[14px] text-[rgba(0,0,0,0.54)] w-full">
+                {`Before assuming it's a false alarm, quickly scan the area for actual signs of fire.`}
+              </p>
+            </div>
+            <div className="content-start flex flex-wrap gap-[16px_32px] items-start pb-[16px] shrink-0 w-full">
+              <div className="flex gap-[8px] items-center shrink-0">
+                <svg viewBox="0 0 18 18" fill="none" className="shrink-0 size-[18px]"><path d="M9 2.25C9.5 4.25 10.5 5.875 12 7.125C13.5 8.375 14.25 9.75 14.25 11.25C14.25 14.1476 11.8976 16.5 9 16.5C6.10245 16.5 3.75 14.1476 3.75 11.25C3.75 10.4386 4.01317 9.64911 4.5 9C4.5 10.0355 5.33947 10.875 6.375 10.875C7.41053 10.875 8.25 10.0355 8.25 9C8.25 7.5 7.125 6.75 7.125 5.25C7.125 4.25 7.75 3.25 9 2.25" stroke="#757575" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                <span className="font-['Inter:Regular',sans-serif] text-[14px] text-[rgba(0,0,0,0.9)] leading-[20px] whitespace-nowrap">Visible open flame</span>
+              </div>
+              <div className="flex gap-[8px] items-center shrink-0">
+                <svg viewBox="0 0 18 18" fill="none" className="shrink-0 size-[18px]"><path d="M3 11.1742C1.47371 9.61483 1.07111 7.2739 1.98875 5.29418C2.90639 3.31445 4.95292 2.10873 7.12933 2.26558C9.30573 2.42243 11.1582 3.90916 11.7825 6H13.125C14.6118 5.99983 15.9235 6.9726 16.3551 8.39536C16.7866 9.81811 16.2363 11.3557 15 12.1815M12 12.75H5.25M12.75 15.75H6.75" stroke="#757575" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                <span className="font-['Inter:Regular',sans-serif] text-[14px] text-[rgba(0,0,0,0.9)] leading-[20px] whitespace-nowrap">Obvious smoke</span>
+              </div>
+              <div className="flex gap-[8px] items-center shrink-0">
+                <svg viewBox="0 0 18 18" fill="none" className="shrink-0 size-[18px]"><path d="M9.6 14.7C10.1221 15.0916 10.8375 15.1006 11.3694 14.7224C11.9012 14.3441 12.1274 13.6654 11.9289 13.0437C11.7304 12.422 11.1526 12 10.5 12H1.5M13.125 6C13.654 5.29461 14.6031 5.05314 15.4049 5.41991C16.2068 5.78668 16.6447 6.66258 16.457 7.52411C16.2693 8.38564 15.5067 9 14.625 9H1.5M7.35 3.3C7.87211 2.90842 8.5875 2.89937 9.11935 3.27761C9.6512 3.65586 9.87744 4.33459 9.67891 4.9563C9.48038 5.57801 8.90264 6 8.25 6H1.5" stroke="#757575" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                <span className="font-['Inter:Regular',sans-serif] text-[14px] text-[rgba(0,0,0,0.9)] leading-[20px] whitespace-nowrap">Burning or scorched odor</span>
+              </div>
+              <div className="flex gap-[8px] items-center shrink-0">
+                <svg viewBox="0 0 18 18" fill="none" className="shrink-0 size-[18px]"><path d="M3 10.5C2.71031 10.501 2.44596 10.3351 2.32091 10.0737C2.19587 9.81243 2.23249 9.50247 2.415 9.2775L9.84 1.6275C9.95471 1.49509 10.1458 1.45975 10.3003 1.54238C10.4548 1.62501 10.5315 1.80358 10.485 1.9725L9.045 6.4875C8.95881 6.71818 8.99135 6.97648 9.13207 7.17857C9.27278 7.38066 9.50374 7.5008 9.75 7.5H15C15.2897 7.49901 15.554 7.66495 15.6791 7.92626C15.8041 8.18757 15.7675 8.49753 15.585 8.7225L8.16 16.3725C8.04529 16.5049 7.85418 16.5403 7.6997 16.4576C7.54522 16.375 7.46854 16.1964 7.515 16.0275L8.955 11.5125C9.04119 11.2818 9.00865 11.0235 8.86793 10.8214C8.72722 10.6193 8.49626 10.4992 8.25 10.5H3" stroke="#757575" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                <span className="font-['Inter:Regular',sans-serif] text-[14px] text-[rgba(0,0,0,0.9)] leading-[20px] whitespace-nowrap">Overheating electronics</span>
+              </div>
+            </div>
+            <div className="flex flex-col gap-[12px] w-full">
+              <div className="bg-[rgba(255,59,59,0.05)] flex flex-col gap-[4px] items-start p-[16px] relative w-full">
+                <div className="flex gap-[8px] items-start w-full">
+                  <div className="flex items-center justify-center shrink-0 size-[24px]">
+                    <svg viewBox="0 0 18 18" fill="none" className="shrink-0 size-[18px]"><path d="M16.298 13.5L10.298 3C10.031 2.53 9.533 2.24 8.993 2.24C8.452 2.24 7.954 2.53 7.688 3L1.688 13.5C1.418 13.966 1.42 14.541 1.691 15.006C1.962 15.471 2.462 15.755 3 15.75H15C15.536 15.75 16.03 15.463 16.298 14.999C16.566 14.535 16.565 13.964 16.298 13.5M9 6.75V9.75M9 12.75H9.008" stroke="#E11D48" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  </div>
+                  <div className="flex flex-[1_0_0] flex-col gap-[2px] min-w-px">
+                    <p className="font-['Inter:Medium',sans-serif] font-medium leading-[24px] text-[16px] text-[#ff3b3b]">If any are present</p>
+                    <p className="font-['Inter:Regular',sans-serif] leading-[20px] text-[14px] text-[rgba(0,0,0,0.54)]">Leave the area immediately and follow your household fire emergency procedures.</p>
+                  </div>
+                </div>
+                <div className="absolute bg-[#ff3b3b] inset-y-0 left-0 w-[4px]" />
+              </div>
+              <div className="border border-[rgba(0,0,0,0.2)] flex flex-col gap-[4px] items-start p-[17px] relative w-full">
+                <div className="flex gap-[8px] items-start w-full">
+                  <div className="flex items-center justify-center shrink-0 size-[24px]">{arrowDownIcon}</div>
+                  <div className="flex flex-[1_0_0] flex-col gap-[2px] min-w-px">
+                    <p className="font-['Inter:Medium',sans-serif] font-medium leading-[24px] text-[16px] text-black">If none of the above is present</p>
+                    <p className="font-['Inter:Regular',sans-serif] leading-[20px] text-[14px] text-[rgba(0,0,0,0.54)]">Continue to the next step.</p>
+                  </div>
+                </div>
+                <div className="absolute bg-[#d9d9d9] inset-y-0 left-[-1px] w-[4px]" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ===== Step 2: Check for nearby interference ===== */}
+        <div className="content-stretch flex gap-[16px] items-start shrink-0 w-full">
+          <div className="bg-[#022542] flex items-center justify-center rounded-[16px] shrink-0 size-[32px]">
+            <span className="font-['Inter:Semi_Bold',sans-serif] font-semibold text-[15px] text-[#f2f0ed] text-center leading-normal">2</span>
+          </div>
+          <div className="border-b border-[rgba(0,0,0,0.1)] flex flex-[1_0_0] flex-col gap-[16px] items-start min-w-px pb-[32px]">
+            <div className="flex flex-col gap-[2px] w-full">
+              <p className="font-['Inter:Bold',sans-serif] font-bold leading-[34px] text-[24px] text-[rgba(0,0,0,0.9)] w-full">
+                Check for nearby interference
+              </p>
+              <p className="font-['Inter:Regular',sans-serif] leading-[20px] text-[14px] text-[rgba(0,0,0,0.54)] w-full">
+                Tiny particles in the air can trick the sensor. Check if any of these are near the alarm:
+              </p>
+            </div>
+            <div className="content-start flex flex-wrap gap-[16px_32px] items-start py-[16px] shrink-0 w-full">
+              <div className="flex gap-[8px] items-center shrink-0">
+                <svg viewBox="0 0 18 18" fill="none" className="shrink-0 size-[18px]"><path d="M13.125 14.25H6.75C4.04678 14.2493 1.78595 12.1961 1.52573 9.50538C1.26551 6.81471 3.09096 4.36627 5.74395 3.84756C8.39694 3.32885 11.0102 4.90946 11.7825 7.5H13.125C14.9877 7.5 16.5 9.01229 16.5 10.875C16.5 12.7377 14.9877 14.25 13.125 14.25" stroke="#757575" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                <span className="font-['Inter:Regular',sans-serif] text-[14px] text-[rgba(0,0,0,0.9)] leading-[20px] whitespace-nowrap">Cooking fumes</span>
+              </div>
+              <div className="flex gap-[8px] items-center shrink-0">
+                <svg viewBox="0 0 15 15.757" fill="none" className="shrink-0 size-[18px]"><path d="M3.75 10.71C5.4 10.71 6.75 9.3375 6.75 7.6725C6.75 6.8025 6.3225 5.9775 5.4675 5.28C4.6125 4.5825 3.9675 3.5475 3.75 2.46C3.5325 3.5475 2.895 4.59 2.0325 5.28C1.17 5.97 0.75 6.81 0.75 7.6725C0.75 9.3375 2.1 10.71 3.75 10.71" stroke="#757575" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M7.92 3.435C8.4354 2.61063 8.80102 1.70165 9 0.75C9.375 2.625 10.5 4.425 12 5.625C13.5 6.825 14.25 8.25 14.25 9.75C14.2588 11.8702 12.9878 13.7863 11.0311 14.6029C9.0744 15.4194 6.81841 14.975 5.3175 13.4775" stroke="#757575" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                <span className="font-['Inter:Regular',sans-serif] text-[14px] text-[rgba(0,0,0,0.9)] leading-[20px] whitespace-nowrap">Steam from bathroom</span>
+              </div>
+              <div className="flex gap-[8px] items-center shrink-0">
+                <svg viewBox="0 0 16.496 15.746" fill="none" className="shrink-0 size-[18px]"><path d="M10.496 7.5L3.467 14.53C2.845 15.151 1.838 15.151 1.216 14.53C0.595 13.909 0.595 12.901 1.216 12.28L8.246 5.25M12.746 9.75L15.746 6.75" stroke="#757575" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M15.371 7.125L13.936 5.69C13.655 5.408 13.497 5.027 13.496 4.629V4.371C13.496 3.973 13.338 3.592 13.057 3.311L11.814 2.068C10.971 1.224 9.826 0.75 8.633 0.75H5.996L6.929 1.682C7.772 2.526 8.246 3.67 8.246 4.864V6L9.746 7.5H10.625C11.023 7.5 11.405 7.658 11.686 7.94L13.121 9.375" stroke="#757575" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                <span className="font-['Inter:Regular',sans-serif] text-[14px] text-[rgba(0,0,0,0.9)] leading-[20px] whitespace-nowrap">Dust or renovation debris</span>
+              </div>
+              <div className="flex gap-[8px] items-center shrink-0">
+                <svg viewBox="0 0 18 18" fill="none" className="shrink-0 size-[18px]"><path d="M2.25 2.25H2.2575M5.25 3.75H5.2575M8.25 5.25H8.2575M2.25 5.25H2.2575M5.25 6.75H5.2575M2.25 8.25H2.2575M11.25 3.75H14.25V6.75H11.25L2.25 2.25M5.25 5.25L6.75 6.75V14.25C6.75 14.7 6.45 15 6 15H1.5C1.05 15 0.75 14.7 0.75 14.25V8.25L2.25 6.75M0.75 10.5L6.75 9M0.75 14.25L6.75 12.75" stroke="#757575" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                <span className="font-['Inter:Regular',sans-serif] text-[14px] text-[rgba(0,0,0,0.9)] leading-[20px] whitespace-nowrap">Aerosol sprays or incense</span>
+              </div>
+            </div>
+            <div className="bg-[rgba(0,0,0,0.05)] flex flex-col gap-[16px] items-start p-[24px] shrink-0 w-full">
+              <div className="flex gap-[8px] items-center w-full">
+                <div className="flex items-center justify-center shrink-0 size-[24px]">{wrenchIcon}</div>
+                <span className="font-['Inter:Medium',sans-serif] font-medium leading-[24px] text-[16px] text-[rgba(0,0,0,0.9)]">What to do</span>
+              </div>
+              <div className="flex flex-col gap-[12px] w-full">
+                <div className="flex gap-[12px] items-start w-full">
+                  <div className="flex items-center justify-center shrink-0 size-[20px]">{checkIcon}</div>
+                  <p className="flex-[1_0_0] font-['Inter:Regular',sans-serif] text-[14px] text-[rgba(0,0,0,0.9)] leading-[20px] min-w-px">Open windows for ventilation</p>
+                </div>
+                <div className="flex gap-[12px] items-start w-full">
+                  <div className="flex items-center justify-center shrink-0 size-[20px]">{checkIcon}</div>
+                  <p className="flex-[1_0_0] font-['Inter:Regular',sans-serif] text-[14px] text-[rgba(0,0,0,0.9)] leading-[20px] min-w-px">Allow the air to return to a clean state</p>
+                </div>
+                <div className="flex gap-[12px] items-start w-full">
+                  <div className="flex items-center justify-center shrink-0 size-[20px]">{checkIcon}</div>
+                  <p className="flex-[1_0_0] font-['Inter:Regular',sans-serif] text-[14px] text-[rgba(0,0,0,0.9)] leading-[20px] min-w-px">Use a soft brush or a vacuum cleaner to gently clean the smoke inlet and surface dust</p>
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-col gap-[12px] w-full">
+              <div className="bg-[rgba(22,221,0,0.05)] flex flex-col gap-[4px] items-start p-[16px] relative w-full">
+                <div className="flex gap-[8px] items-start w-full">
+                  <div className="flex items-center justify-center shrink-0 size-[24px]">{circleCheckIcon}</div>
+                  <div className="flex flex-[1_0_0] flex-col gap-[2px] min-w-px">
+                    <p className="font-['Inter:Medium',sans-serif] font-medium leading-[24px] text-[16px] text-[#16a34a]">If the alarm stops</p>
+                    <p className="font-['Inter:Regular',sans-serif] leading-[20px] text-[14px] text-[rgba(0,0,0,0.54)]">It was likely an environmental false alarm caused by airborne particles.</p>
+                  </div>
+                </div>
+                <div className="absolute bg-[#16dd00] inset-y-0 left-0 w-[4px]" />
+              </div>
+              <div className="border border-[rgba(0,0,0,0.2)] flex flex-col gap-[4px] items-start p-[17px] relative w-full">
+                <div className="flex gap-[8px] items-start w-full">
+                  <div className="flex items-center justify-center shrink-0 size-[24px]">{arrowDownIcon}</div>
+                  <div className="flex flex-[1_0_0] flex-col gap-[2px] min-w-px">
+                    <p className="font-['Inter:Medium',sans-serif] font-medium leading-[24px] text-[16px] text-black">If the alarm continues</p>
+                    <p className="font-['Inter:Regular',sans-serif] leading-[20px] text-[14px] text-[rgba(0,0,0,0.54)]">Proceed to the next step.</p>
+                  </div>
+                </div>
+                <div className="absolute bg-[#d9d9d9] inset-y-0 left-[-1px] w-[4px]" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ===== Step 3: Inspect the battery ===== */}
+        <div className="content-stretch flex gap-[16px] items-start shrink-0 w-full">
+          <div className="bg-[#022542] flex items-center justify-center rounded-[16px] shrink-0 size-[32px]">
+            <span className="font-['Inter:Semi_Bold',sans-serif] font-semibold text-[15px] text-[#f2f0ed] text-center leading-normal">3</span>
+          </div>
+          <div className="border-b border-[rgba(0,0,0,0.1)] flex flex-[1_0_0] flex-col gap-[16px] items-start min-w-px pb-[32px]">
+            <div className="flex flex-col gap-[2px] w-full">
+              <p className="font-['Inter:Bold',sans-serif] font-bold leading-[34px] text-[24px] text-[rgba(0,0,0,0.9)] w-full">
+                Inspect the battery
+              </p>
+              <p className="font-['Inter:Regular',sans-serif] leading-[20px] text-[14px] text-[rgba(0,0,0,0.54)] w-full">
+                Low voltage or improper battery installation frequently causes random chirps or full alarms.
+              </p>
+            </div>
+            <div className="bg-[rgba(0,0,0,0.05)] flex flex-col gap-[16px] items-start p-[24px] shrink-0 w-full">
+              <div className="flex gap-[8px] items-center w-full">
+                <div className="flex items-center justify-center shrink-0 size-[24px]">{wrenchIcon}</div>
+                <span className="font-['Inter:Medium',sans-serif] font-medium leading-[24px] text-[16px] text-[rgba(0,0,0,0.9)]">What to do</span>
+              </div>
+              <div className="flex flex-col gap-[12px] w-full">
+                <div className="flex gap-[12px] items-start w-full">
+                  <div className="flex items-center justify-center shrink-0 size-[20px]">{checkIcon}</div>
+                  <p className="flex-[1_0_0] font-['Inter:Regular',sans-serif] text-[14px] text-[rgba(0,0,0,0.9)] leading-[20px] min-w-px">Replace the current battery with a brand-new one.</p>
+                </div>
+                <div className="flex gap-[12px] items-start w-full">
+                  <div className="flex items-center justify-center shrink-0 size-[20px]">{checkIcon}</div>
+                  <p className="flex-[1_0_0] font-['Inter:Regular',sans-serif] text-[14px] text-[rgba(0,0,0,0.9)] leading-[20px] min-w-px">Ensure the positive (+) and negative (-) terminals match the markings inside the device.</p>
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-col gap-[12px] w-full">
+              <div className="bg-[rgba(22,221,0,0.05)] flex flex-col gap-[4px] items-start p-[16px] relative w-full">
+                <div className="flex gap-[8px] items-start w-full">
+                  <div className="flex items-center justify-center shrink-0 size-[24px]">{circleCheckIcon}</div>
+                  <div className="flex flex-[1_0_0] flex-col gap-[2px] min-w-px">
+                    <p className="font-['Inter:Medium',sans-serif] font-medium leading-[24px] text-[16px] text-[#16a34a]">If the alarm stops</p>
+                    <p className="font-['Inter:Regular',sans-serif] leading-[20px] text-[14px] text-[rgba(0,0,0,0.54)]">The issue was caused by insufficient battery power.</p>
+                  </div>
+                </div>
+                <div className="absolute bg-[#16dd00] inset-y-0 left-0 w-[4px]" />
+              </div>
+              <div className="border border-[rgba(0,0,0,0.2)] flex flex-col gap-[4px] items-start p-[17px] relative w-full">
+                <div className="flex gap-[8px] items-start w-full">
+                  <div className="flex items-center justify-center shrink-0 size-[24px]">{arrowDownIcon}</div>
+                  <div className="flex flex-[1_0_0] flex-col gap-[2px] min-w-px">
+                    <p className="font-['Inter:Medium',sans-serif] font-medium leading-[24px] text-[16px] text-black">If the issue is still not resolved</p>
+                    <p className="font-['Inter:Regular',sans-serif] leading-[20px] text-[14px] text-[rgba(0,0,0,0.54)]">Proceed to the next step.</p>
+                  </div>
+                </div>
+                <div className="absolute bg-[#d9d9d9] inset-y-0 left-[-1px] w-[4px]" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ===== Step 4: Verify the installation location ===== */}
+        <div className="content-stretch flex gap-[16px] items-start shrink-0 w-full">
+          <div className="bg-[#022542] flex items-center justify-center rounded-[16px] shrink-0 size-[32px]">
+            <span className="font-['Inter:Semi_Bold',sans-serif] font-semibold text-[15px] text-[#f2f0ed] text-center leading-normal">4</span>
+          </div>
+          <div className="border-b border-[rgba(0,0,0,0.1)] flex flex-[1_0_0] flex-col gap-[16px] items-start min-w-px pb-[32px]">
+            <div className="flex flex-col gap-[2px] w-full">
+              <p className="font-['Inter:Bold',sans-serif] font-bold leading-[34px] text-[24px] text-[rgba(0,0,0,0.9)] w-full">
+                Verify the installation location
+              </p>
+              <p className="font-['Inter:Regular',sans-serif] leading-[20px] text-[14px] text-[rgba(0,0,0,0.54)] w-full">
+                Alarms placed too close to hazard-mimicking sources will trigger constantly.
+              </p>
+            </div>
+            <div className="content-start flex flex-wrap gap-[16px_32px] items-start py-[16px] shrink-0 w-full">
+              <div className="flex gap-[8px] items-center shrink-0">
+                <svg viewBox="0 0 13.5 16.5" fill="none" className="shrink-0 size-[18px]"><path d="M12.75 6.75C12.75 10.495 8.596 14.395 7.201 15.599C6.934 15.8 6.566 15.8 6.299 15.599C4.904 14.395 0.75 10.495 0.75 6.75C0.75 3.439 3.439 0.75 6.75 0.75C10.062 0.75 12.75 3.439 12.75 6.75" stroke="#757575" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M4.5 6.75C4.5 7.992 5.508 9 6.75 9C7.992 9 9 7.992 9 6.75C9 5.508 7.992 4.5 6.75 4.5C5.508 4.5 4.5 5.508 4.5 6.75" stroke="#757575" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                <span className="font-['Inter:Regular',sans-serif] text-[14px] text-[rgba(0,0,0,0.9)] leading-[20px] whitespace-nowrap">Directly inside a kitchen</span>
+              </div>
+              <div className="flex gap-[8px] items-center shrink-0">
+                <svg viewBox="0 0 13.5 16.5" fill="none" className="shrink-0 size-[18px]"><path d="M12.75 6.75C12.75 10.495 8.596 14.395 7.201 15.599C6.934 15.8 6.566 15.8 6.299 15.599C4.904 14.395 0.75 10.495 0.75 6.75C0.75 3.439 3.439 0.75 6.75 0.75C10.062 0.75 12.75 3.439 12.75 6.75" stroke="#757575" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M4.5 6.75C4.5 7.992 5.508 9 6.75 9C7.992 9 9 7.992 9 6.75C9 5.508 7.992 4.5 6.75 4.5C5.508 4.5 4.5 5.508 4.5 6.75" stroke="#757575" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                <span className="font-['Inter:Regular',sans-serif] text-[14px] text-[rgba(0,0,0,0.9)] leading-[20px] whitespace-nowrap">Just outside a steamy bathroom</span>
+              </div>
+              <div className="flex gap-[8px] items-center shrink-0">
+                <svg viewBox="0 0 13.5 16.5" fill="none" className="shrink-0 size-[18px]"><path d="M12.75 6.75C12.75 10.495 8.596 14.395 7.201 15.599C6.934 15.8 6.566 15.8 6.299 15.599C4.904 14.395 0.75 10.495 0.75 6.75C0.75 3.439 3.439 0.75 6.75 0.75C10.062 0.75 12.75 3.439 12.75 6.75" stroke="#757575" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M4.5 6.75C4.5 7.992 5.508 9 6.75 9C7.992 9 9 7.992 9 6.75C9 5.508 7.992 4.5 6.75 4.5C5.508 4.5 4.5 5.508 4.5 6.75" stroke="#757575" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                <span className="font-['Inter:Regular',sans-serif] text-[14px] text-[rgba(0,0,0,0.9)] leading-[20px] whitespace-nowrap">Near an AC vent or drafty window</span>
+              </div>
+              <div className="flex gap-[8px] items-center shrink-0">
+                <svg viewBox="0 0 13.5 16.5" fill="none" className="shrink-0 size-[18px]"><path d="M12.75 6.75C12.75 10.495 8.596 14.395 7.201 15.599C6.934 15.8 6.566 15.8 6.299 15.599C4.904 14.395 0.75 10.495 0.75 6.75C0.75 3.439 3.439 0.75 6.75 0.75C10.062 0.75 12.75 3.439 12.75 6.75" stroke="#757575" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M4.5 6.75C4.5 7.992 5.508 9 6.75 9C7.992 9 9 7.992 9 6.75C9 5.508 7.992 4.5 6.75 4.5C5.508 4.5 4.5 5.508 4.5 6.75" stroke="#757575" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                <span className="font-['Inter:Regular',sans-serif] text-[14px] text-[rgba(0,0,0,0.9)] leading-[20px] whitespace-nowrap">In high-dust or high-humidity areas</span>
+              </div>
+            </div>
+            <div className="bg-[rgba(0,0,0,0.05)] flex flex-col gap-[16px] items-start p-[24px] shrink-0 w-full">
+              <div className="flex gap-[8px] items-center w-full">
+                <div className="flex items-center justify-center shrink-0 size-[24px]">{wrenchIcon}</div>
+                <span className="font-['Inter:Medium',sans-serif] font-medium leading-[24px] text-[16px] text-[rgba(0,0,0,0.9)]">What to do</span>
+              </div>
+              <div className="flex flex-col gap-[12px] w-full">
+                <div className="flex gap-[12px] items-start w-full">
+                  <div className="flex items-center justify-center shrink-0 size-[20px]">{checkIcon}</div>
+                  <p className="flex-[1_0_0] font-['Inter:Regular',sans-serif] text-[14px] text-[rgba(0,0,0,0.9)] leading-[20px] min-w-px">Relocate the alarm at least 10 feet (3 meters) away from cooking appliances or bathrooms.</p>
+                </div>
+                <div className="flex gap-[12px] items-start w-full">
+                  <div className="flex items-center justify-center shrink-0 size-[20px]">{checkIcon}</div>
+                  <p className="flex-[1_0_0] font-['Inter:Regular',sans-serif] text-[14px] text-[rgba(0,0,0,0.9)] leading-[20px] min-w-px">Check the product manual for exact height and clearance requirements.</p>
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-col gap-[12px] w-full">
+              <div className="bg-[rgba(22,221,0,0.05)] flex flex-col gap-[4px] items-start p-[16px] relative w-full">
+                <div className="flex gap-[8px] items-start w-full">
+                  <div className="flex items-center justify-center shrink-0 size-[24px]">{circleCheckIcon}</div>
+                  <div className="flex flex-[1_0_0] flex-col gap-[2px] min-w-px">
+                    <p className="font-['Inter:Medium',sans-serif] font-medium leading-[24px] text-[16px] text-[#16a34a]">If the alarm stops after relocating</p>
+                    <p className="font-['Inter:Regular',sans-serif] leading-[20px] text-[14px] text-[rgba(0,0,0,0.54)]">The placement was causing environmental interference.</p>
+                  </div>
+                </div>
+                <div className="absolute bg-[#16dd00] inset-y-0 left-0 w-[4px]" />
+              </div>
+              <div className="border border-[rgba(0,0,0,0.2)] flex flex-col gap-[4px] items-start p-[17px] relative w-full">
+                <div className="flex gap-[8px] items-start w-full">
+                  <div className="flex items-center justify-center shrink-0 size-[24px]">{arrowDownIcon}</div>
+                  <div className="flex flex-[1_0_0] flex-col gap-[2px] min-w-px">
+                    <p className="font-['Inter:Medium',sans-serif] font-medium leading-[24px] text-[16px] text-black">If the issue still persists</p>
+                    <p className="font-['Inter:Regular',sans-serif] leading-[20px] text-[14px] text-[rgba(0,0,0,0.54)]">Continue to the final step.</p>
+                  </div>
+                </div>
+                <div className="absolute bg-[#d9d9d9] inset-y-0 left-[-1px] w-[4px]" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ===== Step 5: Contact Support ===== */}
+        <div className="content-stretch flex gap-[16px] items-start shrink-0 w-full">
+          <div className="bg-[#022542] flex items-center justify-center rounded-[16px] shrink-0 size-[32px]">
+            <span className="font-['Inter:Semi_Bold',sans-serif] font-semibold text-[15px] text-[#f2f0ed] text-center leading-normal">5</span>
+          </div>
+          <div className="flex flex-[1_0_0] flex-col gap-[16px] items-start min-w-px pb-[32px]">
+            <div className="flex flex-col gap-[2px] w-full">
+              <p className="font-['Inter:Bold',sans-serif] font-bold leading-[34px] text-[24px] text-[rgba(0,0,0,0.9)] w-full">
+                Contact Support
+              </p>
+              <p className="font-['Inter:Regular',sans-serif] leading-[20px] text-[14px] text-[rgba(0,0,0,0.54)] w-full">
+                If you have completed all the steps and the alarm is still triggering for no reason, the device may require professional service or replacement.
+              </p>
+            </div>
+            <div className="border border-[rgba(0,0,0,0.2)] flex flex-col gap-[32px] items-start p-[25px] shrink-0 w-full">
+              <div className="flex flex-col gap-[16px] w-full">
+                <div className="flex flex-col gap-[2px] w-full">
+                  <p className="font-['Inter:Medium',sans-serif] font-medium leading-[24px] text-[16px] text-[rgba(0,0,0,0.9)]">Prepare before calling</p>
+                  <p className="font-['Inter:Regular',sans-serif] leading-[20px] text-[14px] text-[rgba(0,0,0,0.54)]">Having this information ready will help our team assist you faster:</p>
+                </div>
+                <div className="content-start flex flex-wrap gap-[16px_32px] items-start w-full">
+                  <div className="flex gap-[8px] items-center shrink-0">
+                    <svg viewBox="0 0 14.663 14.663" fill="none" className="shrink-0 size-[16px]"><path d="M7.724 1.057C7.474 0.807 7.135 0.667 6.781 0.667H2C1.264 0.667 0.667 1.264 0.667 2V6.781C0.667 7.135 0.807 7.474 1.057 7.724L6.86 13.527C7.491 14.154 8.509 14.154 9.14 13.527L13.527 9.14C14.154 8.509 14.154 7.491 13.527 6.86L7.724 1.057" stroke="#757575" strokeWidth="1.333" strokeLinecap="round" strokeLinejoin="round"/><path d="M4 4.333C4 4.517 4.149 4.667 4.333 4.667C4.517 4.667 4.667 4.517 4.667 4.333C4.667 4.149 4.517 4 4.333 4C4.149 4 4 4.149 4 4.333" fill="#757575" stroke="#757575" strokeWidth="1.333" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    <span className="font-['Inter:Regular',sans-serif] text-[14px] text-[rgba(0,0,0,0.9)] leading-[20px] whitespace-nowrap">Product model</span>
+                  </div>
+                  <div className="flex gap-[8px] items-center shrink-0">
+                    <svg viewBox="0 0 13.333 14.667" fill="none" className="shrink-0 size-[16px]"><path d="M4 0.667V3.333M9.333 0.667V3.333" stroke="#757575" strokeWidth="1.333" strokeLinecap="round" strokeLinejoin="round"/><path d="M2 2H11.333C12.069 2 12.667 2.597 12.667 3.333V12.667C12.667 13.403 12.069 14 11.333 14H2C1.264 14 0.667 13.403 0.667 12.667V3.333C0.667 2.597 1.264 2 2 2" stroke="#757575" strokeWidth="1.333" strokeLinecap="round" strokeLinejoin="round"/><path d="M0.667 6H12.667" stroke="#757575" strokeWidth="1.333" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    <span className="font-['Inter:Regular',sans-serif] text-[14px] text-[rgba(0,0,0,0.9)] leading-[20px] whitespace-nowrap">Purchase date</span>
+                  </div>
+                  <div className="flex gap-[8px] items-center shrink-0">
+                    <svg viewBox="0 0 16 16" fill="none" className="shrink-0 size-[16px]"><path d="M14.667 8H13.013C12.415 7.999 11.888 8.397 11.727 8.973L10.16 14.547C10.139 14.618 10.074 14.667 10 14.667C9.926 14.667 9.861 14.618 9.84 14.547L6.16 1.453C6.139 1.382 6.074 1.333 6 1.333C5.926 1.333 5.861 1.382 5.84 1.453L4.273 7.027C4.112 7.601 3.59 7.998 2.993 8H1.333" stroke="#757575" strokeWidth="1.333" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    <span className="font-['Inter:Regular',sans-serif] text-[14px] text-[rgba(0,0,0,0.9)] leading-[20px] whitespace-nowrap">Alarm frequency</span>
+                  </div>
+                  <div className="flex gap-[8px] items-center shrink-0">
+                    <svg viewBox="0 0 12 14.667" fill="none" className="shrink-0 size-[16px]"><path d="M11.333 6C11.333 9.329 7.641 12.795 6.401 13.866C6.163 14.044 5.837 14.044 5.599 13.866C4.359 12.795 0.667 9.329 0.667 6C0.667 3.056 3.056 0.667 6 0.667C8.944 0.667 11.333 3.056 11.333 6" stroke="#757575" strokeWidth="1.333" strokeLinecap="round" strokeLinejoin="round"/><path d="M4 6C4 7.104 4.896 8 6 8C7.104 8 8 7.104 8 6C8 4.896 7.104 4 6 4C4.896 4 4 4.896 4 6" stroke="#757575" strokeWidth="1.333" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    <span className="font-['Inter:Regular',sans-serif] text-[14px] text-[rgba(0,0,0,0.9)] leading-[20px] whitespace-nowrap">Exact install location</span>
+                  </div>
+                  <div className="flex gap-[8px] items-center shrink-0">
+                    <svg viewBox="0 0 16 16" fill="none" className="shrink-0 size-[16px]"><path d="M10 9.333C10.133 8.667 10.467 8.2 11 7.667C11.667 7.067 12 6.2 12 5.333C12 3.126 10.208 1.333 8 1.333C5.792 1.333 4 3.126 4 5.333C4 6 4.133 6.8 5 7.667C5.467 8.133 5.867 8.667 6 9.333M6 12H10M6.667 14.667H9.333" stroke="#757575" strokeWidth="1.333" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    <span className="font-['Inter:Regular',sans-serif] text-[14px] text-[rgba(0,0,0,0.9)] leading-[20px] whitespace-nowrap">LED light color/status</span>
+                  </div>
+                </div>
+              </div>
+              <a
+                href="https://www.x-sense.com/pages/contact-us"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-[#ba0020] hover:bg-[#a0001b] active:bg-[#8a0018] flex items-center justify-center gap-[4px] px-[16px] py-[8px] rounded-[50px] h-[40px] transition-colors cursor-pointer"
+              >
+                <span className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[20px] text-[14px] text-white text-center whitespace-nowrap">Contact Support</span>
+              </a>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  );
+}
+
+function MobileStaticPlaceholderContent({ itemId }: { itemId: string }) {
+  if (itemId === "alarm-triggered-unexpectedly") {
+    return <MobileAlarmTriggeredContent />;
+  }
+  const allItems = STATIC_SECTIONS.flatMap((s) => s.subItems);
+  const item = allItems.find((i) => i.id === itemId);
+  return (
+    <div className="content-stretch flex flex-col items-center justify-center min-h-[300px] relative shrink-0 w-full">
+      <p className="font-['Inter:Bold',sans-serif] font-bold leading-[28px] not-italic text-[20px] text-[rgba(0,0,0,0.9)] mb-[8px]">
+        {item?.label || ""}
+      </p>
+      <p className="font-['Inter:Regular',sans-serif] font-normal leading-[18px] not-italic text-[13px] text-[rgba(0,0,0,0.38)]">
+        Content coming soon.
+      </p>
+    </div>
+  );
+}
+
 /* ==================== Sidebar Skeleton ==================== */
 
 function SidebarSkeleton() {
@@ -1786,12 +2753,15 @@ export default function DownloadCenterPage() {
   const [searchParams] = useSearchParams();
   const urlSpuId = searchParams.get("spuId");
   const urlTab = searchParams.get("tab");
+  const urlSection = searchParams.get("section");
 
   const [isMobile, setIsMobile] = useState(false);
   const { categoriesWithSpus, loading } = useDownloadCenterData();
   const { appData } = useSupportApp();
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+  const [expandedTopLevel, setExpandedTopLevel] = useState<Set<string>>(new Set(["products"]));
   const [selectedSpuId, setSelectedSpuId] = useState("");
+  const [selectedStaticItem, setSelectedStaticItem] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState(
     urlTab && TABS.includes(urlTab) ? urlTab : "Setup & Installation"
   );
@@ -1805,12 +2775,21 @@ export default function DownloadCenterPage() {
     });
   }, []);
 
+  const toggleTopLevel = useCallback((id: string) => {
+    setExpandedTopLevel((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
   useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 768);
+    const check = () => setIsMobile(window.innerWidth < 1024);
     check();
     window.addEventListener("resize", check);
     return () => window.removeEventListener("resize", check);
@@ -1821,6 +2800,18 @@ export default function DownloadCenterPage() {
     if (!loading && categoriesWithSpus.length > 0 && !initialized.current) {
       initialized.current = true;
 
+      // URL ?section= targets a static sidebar item (e.g. alarm-triggered-unexpectedly)
+      if (urlSection) {
+        const parentSection = STATIC_SECTIONS.find((s) =>
+          s.subItems.some((sub) => sub.id === urlSection)
+        );
+        if (parentSection) {
+          setSelectedStaticItem(urlSection);
+          setExpandedTopLevel(new Set([parentSection.id]));
+          return;
+        }
+      }
+
       const allSpus = categoriesWithSpus.flatMap((c) => c.spus);
       const targetSpu = urlSpuId ? allSpus.find((s) => s.id === urlSpuId) : null;
 
@@ -1828,21 +2819,23 @@ export default function DownloadCenterPage() {
         const ownerCat = categoriesWithSpus.find((c) => c.spus.some((s) => s.id === targetSpu.id));
         if (ownerCat) setExpandedCategories(new Set([ownerCat.id]));
         setSelectedSpuId(targetSpu.id);
+        setExpandedTopLevel(new Set(["products"]));
       } else {
         const firstCatWithSpus = categoriesWithSpus.find((c) => c.spus.length > 0);
         if (firstCatWithSpus) {
           setExpandedCategories(new Set([firstCatWithSpus.id]));
+          setExpandedTopLevel(new Set(["products"]));
           if (firstCatWithSpus.spus.length > 0) {
             setSelectedSpuId(firstCatWithSpus.spus[0].id);
           }
         }
       }
     }
-  }, [loading, categoriesWithSpus, urlSpuId]);
+  }, [loading, categoriesWithSpus, urlSpuId, urlSection]);
 
   const allSpus = categoriesWithSpus.flatMap((c) => c.spus);
   const selectedSpu = allSpus.find((s) => s.id === selectedSpuId) || null;
-  const { faqs, loading: faqsLoading } = useFaqs(selectedSpu?.categoryId);
+  const { faqs, loading: faqsLoading } = useFaqs(selectedStaticItem === null ? selectedSpu?.categoryId : undefined);
 
   if (isMobile) {
     return (
@@ -1855,7 +2848,7 @@ export default function DownloadCenterPage() {
           <div className="bg-[#101820] content-stretch flex flex-col items-center justify-center overflow-clip px-[20px] relative shrink-0 w-full">
             <div className="content-stretch flex items-center py-[10px] relative shrink-0 w-full">
               <p className="font-['Inter:Bold',sans-serif] font-bold leading-[28px] not-italic relative shrink-0 text-[20px] text-center text-white whitespace-nowrap">
-                Download Center
+                Help Center
               </p>
             </div>
           </div>
@@ -1868,6 +2861,8 @@ export default function DownloadCenterPage() {
                   <div key={i} className="h-[54px] w-full rounded-[4px] bg-[rgba(0,0,0,0.05)] animate-pulse" />
                 ))}
               </div>
+            ) : selectedStaticItem ? (
+              <MobileStaticPlaceholderContent itemId={selectedStaticItem} />
             ) : (
               <MobileProductDetail
                 spu={selectedSpu}
@@ -1887,9 +2882,9 @@ export default function DownloadCenterPage() {
   }
 
   return (
-    <div className="bg-white w-full min-h-screen">
+    <div className="bg-white w-full h-screen flex flex-col overflow-hidden">
       <GlobalNav />
-      <div className="pt-[104px]">
+      <div className="flex flex-col flex-1 pt-[104px] overflow-hidden">
         {/* Navigation Bar */}
         <div
           className="bg-[#101820] content-stretch flex flex-col items-center justify-center overflow-clip relative shrink-0 w-full"
@@ -1897,17 +2892,17 @@ export default function DownloadCenterPage() {
         >
           <div className="content-stretch flex items-center max-w-[1312px] py-[10px] relative shrink-0 w-full">
             <p className="font-['Inter:Bold',sans-serif] font-bold leading-[36px] not-italic relative shrink-0 text-[26px] text-center text-white whitespace-nowrap">
-              Download Center
+              Help Center
             </p>
           </div>
         </div>
 
         {/* Content Area */}
         <div
-          className="bg-white content-stretch flex items-start justify-center relative shrink-0 w-full"
-          style={{ padding: "40px clamp(24px, 8vw, 120px)" }}
+          className="bg-white flex flex-1 items-start justify-center relative w-full overflow-hidden"
+          style={{ padding: "32px clamp(24px, 8vw, 120px) 40px" }}
         >
-          <div className="content-stretch flex flex-[1_0_0] gap-[32px] items-start max-w-[1312px] min-h-px min-w-px relative">
+          <div className="flex flex-[1_0_0] gap-[32px] items-start max-w-[1312px] min-w-px relative h-full">
             {loading ? (
               <>
                 <SidebarSkeleton />
@@ -1921,22 +2916,29 @@ export default function DownloadCenterPage() {
                   toggleCategory={toggleCategory}
                   selectedSpuId={selectedSpuId}
                   setSelectedSpuId={setSelectedSpuId}
+                  expandedTopLevel={expandedTopLevel}
+                  toggleTopLevel={toggleTopLevel}
+                  selectedStaticItem={selectedStaticItem}
+                  setSelectedStaticItem={setSelectedStaticItem}
                 />
-                <ProductDetail
-                  spu={selectedSpu}
-                  appData={appData}
-                  faqs={faqs}
-                  faqsLoading={faqsLoading}
-                  activeTab={activeTab}
-                  setActiveTab={setActiveTab}
-                />
+                <div className="flex-[1_0_0] min-w-px h-full overflow-y-auto scrollbar-hide">
+                  {selectedStaticItem ? (
+                    <StaticPlaceholderContent itemId={selectedStaticItem} />
+                  ) : (
+                    <ProductDetail
+                      spu={selectedSpu}
+                      appData={appData}
+                      faqs={faqs}
+                      faqsLoading={faqsLoading}
+                      activeTab={activeTab}
+                      setActiveTab={setActiveTab}
+                    />
+                  )}
+                </div>
               </>
             )}
           </div>
         </div>
-
-        {/* Footer */}
-        <FooterSection />
       </div>
     </div>
   );

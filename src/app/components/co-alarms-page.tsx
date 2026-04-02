@@ -14,7 +14,7 @@ export default function CoAlarmsPage() {
 
   useEffect(() => {
     const checkDevice = () => {
-      setIsMobile(window.innerWidth < 768);
+      setIsMobile(window.innerWidth < 1024);
     };
 
     checkDevice();

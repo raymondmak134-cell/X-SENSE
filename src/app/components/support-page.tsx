@@ -1,4 +1,5 @@
 import { useRef, useEffect, useState } from "react";
+import { useNavigate } from "react-router";
 import { useCategories } from "./use-products"; // categories hook
 import GlobalNav from "./global-nav";
 import ProductSelectDialog from "./product-select-dialog";
@@ -238,11 +239,12 @@ function OrderTrackingIcon() {
 }
 
 function QuickLinksSectionWrapper() {
+  const navigate = useNavigate();
   return (
     <div className="content-stretch flex flex-col items-center w-full" style={{ padding: "48px clamp(24px, 8vw, 120px)" }}>
       <div className="content-stretch flex gap-[16px] items-center justify-center max-w-[1312px] relative shrink-0 w-full">
         {/* Connect to App */}
-        <div className="content-stretch flex flex-[1_0_0] gap-[24px] items-center justify-center min-h-px min-w-px overflow-clip relative rounded-[16px] cursor-pointer" style={{ backgroundImage: "linear-gradient(90deg, rgb(246, 246, 246) 0%, rgb(246, 246, 246) 100%), linear-gradient(90deg, rgba(94, 127, 156, 0.1) 0%, rgba(94, 127, 156, 0.1) 100%)" }}>
+        <div className="content-stretch flex flex-[1_0_0] gap-[24px] items-center justify-center min-h-px min-w-px overflow-clip relative rounded-[16px] cursor-pointer" onClick={() => navigate("/support/download-center?section=alarm-triggered-unexpectedly")} style={{ backgroundImage: "linear-gradient(90deg, rgb(246, 246, 246) 0%, rgb(246, 246, 246) 100%), linear-gradient(90deg, rgba(94, 127, 156, 0.1) 0%, rgba(94, 127, 156, 0.1) 100%)" }}>
           <div className="aspect-[213/213] flex-[1_0_0] min-h-px min-w-px relative">
             <img alt="" className="absolute inset-0 max-w-none object-cover pointer-events-none size-full" src={imgConnectApp} />
           </div>
@@ -250,7 +252,7 @@ function QuickLinksSectionWrapper() {
             <div className="flex flex-col justify-center size-full">
               <div className="content-stretch flex flex-col gap-[8px] items-start justify-center pr-[32px] relative size-full">
                 <ConnectToAppIcon />
-                <p className="font-['Inter:Medium',sans-serif] font-medium leading-[24px] min-w-full not-italic relative shrink-0 text-[16px] text-black w-[min-content]">Connect to the App</p>
+                <p className="font-['Inter:Medium',sans-serif] font-medium leading-[24px] min-w-full not-italic relative shrink-0 text-[16px] text-black w-[min-content]">Why did the alarm go off by itself?</p>
                 <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[20px] min-w-full not-italic relative shrink-0 text-[#5e0000] text-[14px] w-[min-content]">{`Learn More >`}</p>
               </div>
             </div>
@@ -265,7 +267,7 @@ function QuickLinksSectionWrapper() {
             <div className="flex flex-col justify-center size-full">
               <div className="content-stretch flex flex-col gap-[8px] items-start justify-center pr-[32px] relative size-full">
                 <SetupIcon />
-                <p className="font-['Inter:Medium',sans-serif] font-medium leading-[24px] min-w-full not-italic relative shrink-0 text-[16px] text-black w-[min-content]">{`Setup & Installation`}</p>
+                <p className="font-['Inter:Medium',sans-serif] font-medium leading-[24px] min-w-full not-italic relative shrink-0 text-[16px] text-black w-[min-content]">Get help with battery life</p>
                 <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[20px] min-w-full not-italic relative shrink-0 text-[#5e0000] text-[14px] w-[min-content]">{`Learn More >`}</p>
               </div>
             </div>
@@ -542,7 +544,7 @@ export default function SupportPage() {
 
   useEffect(() => {
     const checkDevice = () => {
-      setIsMobile(window.innerWidth < 768);
+      setIsMobile(window.innerWidth < 1024);
     };
     checkDevice();
     window.addEventListener("resize", checkDevice);
