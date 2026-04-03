@@ -13,17 +13,20 @@ import imgCombinationAlarms from "@/assets/placeholder-image-url";
 import imgHomeAlarms from "@/assets/placeholder-image-url";
 import imgHubBaseStation from "@/assets/placeholder-image-url";
 import imgAccessories from "@/assets/placeholder-image-url";
-import imgQuickLink1 from "@/assets/placeholder-image-url";
-import imgQuickLink1Overlay from "@/assets/placeholder-image-url";
-import imgQuickLink2 from "@/assets/placeholder-image-url";
-import imgQuickLink2Overlay from "@/assets/placeholder-image-url";
-import imgQuickLink3 from "@/assets/placeholder-image-url";
-import imgQuickLink3Overlay from "@/assets/placeholder-image-url";
+const imgAlarmGoOff = "/images/support-alarm-go-off.png";
+const imgBatteryLife = "/images/support-battery-life.png";
+const imgOrderTracking = "/images/support-order-tracking.png";
 import imgSafety1 from "@/assets/placeholder-image-url";
 import imgSafety2 from "@/assets/placeholder-image-url";
 import imgSafety3 from "@/assets/placeholder-image-url";
 import imgSafety4 from "@/assets/placeholder-image-url";
 
+
+export const QUICK_LINK_TITLES = [
+  "Alarm go off by itself?",
+  "Get help with battery life",
+  "Order tracking",
+] as const;
 
 const FALLBACK_IMAGES: Record<string, string> = {
   "smoke-alarms": imgSmokeAlarms,
@@ -149,7 +152,7 @@ function MobileProductItem({ name, imageUrl, isCombination, onClick }: { name: s
           <img alt={name} className="absolute inset-0 max-w-none object-cover pointer-events-none size-full" src={imageUrl} />
         )}
       </div>
-      <p className="font-['Inter:Medium',sans-serif] font-medium leading-[20px] min-w-full not-italic relative shrink-0 text-[14px] text-black text-center w-[min-content] group-hover:text-[#5E0000] transition-colors">{name}</p>
+      <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[20px] min-w-full not-italic relative shrink-0 text-[16px] text-black text-center w-[min-content] group-hover:text-[#5E0000] transition-colors">{name}</p>
     </div>
   );
 }
@@ -202,123 +205,51 @@ function MobileProductOverview({ onProductClick }: { onProductClick: (categoryId
 
 /* ==================== Quick Links ==================== */
 
-function QuickLinkCard({ bgClass, bgStyle, image, overlayImage, imageStyle, icon, title, linkText, onClick }: {
-  bgClass?: string;
-  bgStyle?: React.CSSProperties;
-  image: string;
-  overlayImage?: string;
-  imageStyle?: string;
-  icon: React.ReactNode;
-  title: string;
-  linkText: string;
-  onClick?: () => void;
-}) {
-  return (
-    <div className={`content-stretch flex flex-[1_0_0] gap-[16px] items-center min-h-px min-w-[318px] overflow-clip relative rounded-[16px] cursor-pointer ${bgClass || ""}`} style={bgStyle} onClick={onClick}>
-      <div className="relative shrink-0 size-[168.5px]">
-        <div aria-hidden="true" className="absolute inset-0 pointer-events-none">
-          {imageStyle ? (
-            <div className="absolute inset-0 overflow-hidden">
-              <img alt="" className={imageStyle} src={image} />
-            </div>
-          ) : (
-            <img alt="" className="absolute max-w-none object-cover size-full" src={image} />
-          )}
-          {overlayImage && (
-            <img alt="" className="absolute max-w-none object-cover size-full" src={overlayImage} />
-          )}
-        </div>
-      </div>
-      <div className="flex-[1_0_0] h-[168.5px] min-h-px min-w-px relative">
-        <div className="flex flex-col justify-center size-full">
-          <div className="content-stretch flex flex-col gap-[8px] items-start justify-center pr-[32px] relative size-full">
-            {icon}
-            <p className="font-['Inter:Medium',sans-serif] font-medium leading-[20px] min-w-full not-italic relative shrink-0 text-[14px] text-black w-[min-content]">{title}</p>
-            <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[20px] min-w-full not-italic relative shrink-0 text-[#5e0000] text-[14px] w-[min-content]">{linkText}</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ConnectToAppIcon() {
-  return (
-    <div className="relative shrink-0 size-[40px]">
-      <svg className="absolute block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 40 40">
-        <rect fill="white" height="40" rx="12" width="40" />
-        <rect height="39" rx="11.5" stroke="black" strokeOpacity="0.1" width="39" x="0.5" y="0.5" />
-        <path d={svgPaths.p1131600} fill="#101820" />
-        <path d={svgPaths.p12e96100} fill="#BA0020" />
-      </svg>
-    </div>
-  );
-}
-
-function SetupIcon() {
-  return (
-    <div className="relative shrink-0 size-[40px]">
-      <div className="-translate-x-1/2 -translate-y-1/2 absolute left-1/2 overflow-clip size-[32px] top-1/2">
-        <div className="absolute inset-[4.33%_3.43%_5%_5%]">
-          <svg className="absolute block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 29.3039 29.0135">
-            <path d={svgPaths.p2e621380} fill="black" fillOpacity="0.9" />
-          </svg>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function OrderTrackingIcon() {
-  return (
-    <div className="relative shrink-0 size-[40px]">
-      <div className="-translate-x-1/2 -translate-y-1/2 absolute left-1/2 overflow-clip size-[32px] top-1/2">
-        <div className="absolute flex inset-[16.17%_5.42%_11.32%_5.42%] items-center justify-center">
-          <div className="-scale-y-100 flex-none h-[23.201px] rotate-180 w-[28.534px]">
-            <div className="relative size-full">
-              <svg className="absolute block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 28.7998 23.4658">
-                <path d={svgPaths.p395d5700} fill="black" fillOpacity="0.9" />
-              </svg>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function MobileQuickLinks() {
   const navigate = useNavigate();
   return (
     <div className="bg-white max-w-[1312px] relative shrink-0 w-full">
       <div className="flex flex-row items-center justify-center max-w-[inherit] size-full">
         <div className="content-center flex flex-wrap gap-[16px] items-center justify-center max-w-[inherit] px-[20px] py-[32px] relative w-full">
-          <QuickLinkCard
-            bgStyle={{ backgroundImage: "linear-gradient(90deg, rgb(246, 246, 246) 0%, rgb(246, 246, 246) 100%), linear-gradient(90deg, rgba(94, 127, 156, 0.1) 0%, rgba(94, 127, 156, 0.1) 100%)" }}
-            image={imgQuickLink1}
-            overlayImage={imgQuickLink1Overlay}
-            icon={<ConnectToAppIcon />}
-            title="Connect to the App"
-            linkText="Learn More >"
-            onClick={() => navigate("/support/download-center?section=alarm-triggered-unexpectedly")}
-          />
-          <QuickLinkCard
-            bgClass="bg-[rgba(94,127,156,0.1)]"
-            image={imgQuickLink2}
-            overlayImage={imgQuickLink2Overlay}
-            icon={<SetupIcon />}
-            title="Setup & Installation"
-            linkText="Learn More >"
-          />
-          <QuickLinkCard
-            bgClass="bg-[rgba(217,190,161,0.15)]"
-            image={imgQuickLink3}
-            overlayImage={imgQuickLink3Overlay}
-            imageStyle="absolute h-[132.21%] left-[-45.93%] max-w-none top-[-22.57%] w-[166.46%]"
-            icon={<OrderTrackingIcon />}
-            title="Order tracking"
-            linkText="Learn More >"
-          />
+          {/* Alarm go off */}
+          <div className="bg-[#f6f6f6] content-stretch flex flex-[1_0_0] gap-[16px] items-center min-h-px min-w-[318px] overflow-clip relative rounded-[16px] cursor-pointer" onClick={() => navigate("/support/download-center?section=alarm-triggered-unexpectedly")}>
+            <div className="content-stretch flex flex-[1_0_0] flex-col gap-[8px] items-start justify-center min-h-px min-w-px pl-[20px] relative">
+              <div className="relative shrink-0 size-[40px]">
+                <img alt="" className="absolute block max-w-none size-full" src="/images/icon-alarm.svg" />
+              </div>
+              <p className="font-['Inter:Medium',sans-serif] font-medium leading-[24px] min-w-full not-italic relative shrink-0 text-[16px] text-black w-[min-content]">{QUICK_LINK_TITLES[0]}</p>
+              <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[20px] min-w-full not-italic relative shrink-0 text-[#5e0000] text-[14px] w-[min-content]">{`Learn More >`}</p>
+            </div>
+            <div className="aspect-square flex-[1_0_0] min-h-px min-w-px relative">
+              <img alt="" className="absolute inset-0 max-w-none object-cover pointer-events-none size-full" src={imgAlarmGoOff} />
+            </div>
+          </div>
+          {/* Battery life */}
+          <div className="bg-[rgba(94,127,156,0.1)] content-stretch flex flex-[1_0_0] gap-[16px] items-center min-h-px min-w-[318px] overflow-clip relative rounded-[16px] cursor-pointer">
+            <div className="content-stretch flex flex-[1_0_0] flex-col gap-[8px] items-start justify-center min-h-px min-w-px pl-[20px] relative">
+              <div className="relative shrink-0 size-[40px]">
+                <img alt="" className="absolute block max-w-none size-full" src="/images/icon-battery.svg" />
+              </div>
+              <p className="font-['Inter:Medium',sans-serif] font-medium leading-[24px] min-w-full not-italic relative shrink-0 text-[16px] text-black w-[min-content]">{QUICK_LINK_TITLES[1]}</p>
+              <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[20px] min-w-full not-italic relative shrink-0 text-[#5e0000] text-[14px] w-[min-content]">{`Learn More >`}</p>
+            </div>
+            <div className="aspect-square flex-[1_0_0] min-h-px min-w-px relative">
+              <img alt="" className="absolute inset-0 max-w-none object-cover pointer-events-none size-full" src={imgBatteryLife} />
+            </div>
+          </div>
+          {/* Order tracking */}
+          <div className="bg-[rgba(217,190,161,0.15)] content-stretch flex flex-[1_0_0] gap-[16px] items-center min-h-px min-w-[318px] overflow-clip relative rounded-[16px] cursor-pointer">
+            <div className="content-stretch flex flex-[1_0_0] flex-col gap-[8px] items-start justify-center min-h-px min-w-px pl-[20px] relative">
+              <div className="relative shrink-0 size-[40px]">
+                <img alt="" className="absolute block max-w-none size-full" src="/images/icon-order-tracking.svg" />
+              </div>
+              <p className="font-['Inter:Medium',sans-serif] font-medium leading-[24px] min-w-full not-italic relative shrink-0 text-[16px] text-black w-[min-content]">{QUICK_LINK_TITLES[2]}</p>
+              <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[20px] min-w-full not-italic relative shrink-0 text-[#5e0000] text-[14px] w-[min-content]">{`Learn More >`}</p>
+            </div>
+            <div className="aspect-square flex-[1_0_0] min-h-px min-w-px relative">
+              <img alt="" className="absolute inset-0 max-w-none object-cover pointer-events-none size-full" src={imgOrderTracking} />
+            </div>
+          </div>
         </div>
       </div>
     </div>

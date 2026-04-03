@@ -3,7 +3,7 @@ import { useNavigate } from "react-router";
 import { useCategories } from "./use-products"; // categories hook
 import GlobalNav from "./global-nav";
 import ProductSelectDialog from "./product-select-dialog";
-import MobileSupportPage from "./mobile-support-page";
+import MobileSupportPage, { QUICK_LINK_TITLES } from "./mobile-support-page";
 import Footer from "../../imports/Footer";
 import SplitText from "@/components/SplitText";
 import svgPaths from "../../imports/svg-zx55evvu35";
@@ -22,7 +22,7 @@ import imgHomeAlarms from "@/assets/placeholder-image-url";
 import imgHubBaseStation from "@/assets/placeholder-image-url";
 import imgAccessories from "@/assets/placeholder-image-url";
 const imgBanner = "/images/support-banner.jpg";
-const imgConnectApp = "/images/support-connect-app.png";
+const imgAlarmGoOff = "/images/support-alarm-go-off.png";
 const imgBatteryLife = "/images/support-battery-life.png";
 const imgOrderTracking = "/images/support-order-tracking.png";
 
@@ -135,7 +135,7 @@ function ProductItem({ name, imageUrl, isCombination, onClick }: { name: string;
           <img alt={name} className="absolute inset-0 max-w-none object-cover pointer-events-none size-full" src={imageUrl} />
         )}
       </div>
-      <p className="font-['Inter:Medium',sans-serif] font-medium leading-[24px] min-w-full not-italic relative shrink-0 text-[16px] text-black text-center w-[min-content] group-hover:text-[#5E0000] transition-colors">{name}</p>
+      <p className="font-['Inter:Medium',sans-serif] font-medium leading-[24px] min-w-full not-italic relative shrink-0 text-[16px] text-black text-center w-[min-content] group-hover:text-[#5E0000] group-hover:underline transition-colors">{name}</p>
     </div>
   );
 }
@@ -189,51 +189,26 @@ function ProductOverviewSection({ onProductClick }: { onProductClick: (categoryI
 
 /* ==================== Quick Links Section (3 cards) ==================== */
 
-function ConnectToAppIcon() {
+function AlarmIcon() {
   return (
-    <div className="relative shrink-0 size-[56px]">
-      <svg className="absolute block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 56 56">
-        <g>
-          <rect fill="var(--fill-0, white)" height="56" rx="16" width="56" />
-          <rect height="55" rx="15.5" stroke="var(--stroke-0, black)" strokeOpacity="0.1" width="55" x="0.5" y="0.5" />
-          <g>
-            <path d={svgPaths.p2df60a00} fill="#101820" />
-            <path d={svgPaths.p13d8ee00} fill="var(--fill-0, #BA0020)" />
-          </g>
-        </g>
-      </svg>
+    <div className="relative shrink-0 size-[40px]">
+      <img alt="" className="absolute block max-w-none size-full" src="/images/icon-alarm.svg" />
     </div>
   );
 }
 
-function SetupIcon() {
+function BatteryIcon() {
   return (
-    <div className="relative shrink-0 size-[56px]">
-      <div className="-translate-x-1/2 -translate-y-1/2 absolute left-1/2 overflow-clip size-[40px] top-1/2">
-        <div className="absolute inset-[4.33%_3.43%_5%_5%]">
-          <svg className="absolute block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 36.6308 36.2658">
-            <path d={svgPaths.p7f19900} fill="var(--fill-0, black)" fillOpacity="0.9" />
-          </svg>
-        </div>
-      </div>
+    <div className="relative shrink-0 size-[40px]">
+      <img alt="" className="absolute block max-w-none size-full" src="/images/icon-battery.svg" />
     </div>
   );
 }
 
 function OrderTrackingIcon() {
   return (
-    <div className="relative shrink-0 size-[56px]">
-      <div className="absolute left-[8px] overflow-clip size-[40px] top-[8px]">
-        <div className="absolute flex inset-[16.17%_5.42%_11.32%_5.42%] items-center justify-center">
-          <div className="-scale-y-100 flex-none h-[29.001px] rotate-180 w-[35.667px]">
-            <div className="relative size-full">
-              <svg className="absolute block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 35.667 29">
-                <path d={svgPaths.p17f61000} fill="var(--fill-0, black)" fillOpacity="0.9" />
-              </svg>
-            </div>
-          </div>
-        </div>
-      </div>
+    <div className="relative shrink-0 size-[40px]">
+      <img alt="" className="absolute block max-w-none size-full" src="/images/icon-order-tracking.svg" />
     </div>
   );
 }
@@ -242,52 +217,38 @@ function QuickLinksSectionWrapper() {
   const navigate = useNavigate();
   return (
     <div className="content-stretch flex flex-col items-center w-full" style={{ padding: "48px clamp(24px, 8vw, 120px)" }}>
-      <div className="content-stretch flex gap-[16px] items-center justify-center max-w-[1312px] relative shrink-0 w-full">
-        {/* Connect to App */}
-        <div className="content-stretch flex flex-[1_0_0] gap-[24px] items-center justify-center min-h-px min-w-px overflow-clip relative rounded-[16px] cursor-pointer" onClick={() => navigate("/support/download-center?section=alarm-triggered-unexpectedly")} style={{ backgroundImage: "linear-gradient(90deg, rgb(246, 246, 246) 0%, rgb(246, 246, 246) 100%), linear-gradient(90deg, rgba(94, 127, 156, 0.1) 0%, rgba(94, 127, 156, 0.1) 100%)" }}>
-          <div className="aspect-[213/213] flex-[1_0_0] min-h-px min-w-px relative">
-            <img alt="" className="absolute inset-0 max-w-none object-cover pointer-events-none size-full" src={imgConnectApp} />
+      <div className="content-stretch flex gap-[20px] items-center justify-center max-w-[1312px] relative shrink-0 w-full">
+        {/* Alarm go off */}
+        <div className="group bg-[#f6f6f6] content-stretch flex flex-[1_0_0] gap-[24px] items-center justify-center min-h-px min-w-px overflow-clip relative rounded-[16px] cursor-pointer" onClick={() => navigate("/support/download-center?section=alarm-triggered-unexpectedly")}>
+          <div className="content-stretch flex flex-[1_0_0] flex-col gap-[8px] items-start justify-center min-h-px min-w-px pl-[24px] relative">
+            <AlarmIcon />
+            <p className="font-['Inter:Medium',sans-serif] font-medium leading-[24px] min-w-full not-italic relative shrink-0 text-[16px] text-black w-[min-content]">{QUICK_LINK_TITLES[0]}</p>
+            <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[20px] min-w-full not-italic relative shrink-0 text-[#5e0000] text-[14px] w-[min-content] group-hover:underline">{`Learn More >`}</p>
           </div>
-          <div className="aspect-[160/160] flex-[1_0_0] min-h-px min-w-px relative">
-            <div className="flex flex-col justify-center size-full">
-              <div className="content-stretch flex flex-col gap-[8px] items-start justify-center pr-[32px] relative size-full">
-                <ConnectToAppIcon />
-                <p className="font-['Inter:Medium',sans-serif] font-medium leading-[24px] min-w-full not-italic relative shrink-0 text-[16px] text-black w-[min-content]">Why did the alarm go off by itself?</p>
-                <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[20px] min-w-full not-italic relative shrink-0 text-[#5e0000] text-[14px] w-[min-content]">{`Learn More >`}</p>
-              </div>
-            </div>
+          <div className="aspect-[120/120] flex-[1_0_0] min-h-px min-w-px relative">
+            <img alt="" className="absolute inset-0 max-w-none object-cover pointer-events-none size-full transition-transform duration-300 origin-top-left group-hover:scale-105" src={imgAlarmGoOff} />
           </div>
         </div>
-        {/* Setup & Installation */}
-        <div className="bg-[rgba(94,127,156,0.1)] content-stretch flex flex-[1_0_0] gap-[24px] items-center justify-center min-h-px min-w-px overflow-clip relative rounded-[16px] cursor-pointer">
-          <div className="aspect-[213/213] flex-[1_0_0] min-h-px min-w-px relative">
-            <img alt="" className="absolute inset-0 max-w-none object-cover pointer-events-none size-full" src={imgBatteryLife} />
+        {/* Battery life */}
+        <div className="group bg-[rgba(94,127,156,0.1)] content-stretch flex flex-[1_0_0] gap-[24px] items-center justify-center min-h-px min-w-px overflow-clip relative rounded-[16px] cursor-pointer">
+          <div className="content-stretch flex flex-[1_0_0] flex-col gap-[8px] items-start justify-center min-h-px min-w-px pl-[24px] relative">
+            <BatteryIcon />
+            <p className="font-['Inter:Medium',sans-serif] font-medium leading-[24px] min-w-full not-italic relative shrink-0 text-[16px] text-black w-[min-content]">{QUICK_LINK_TITLES[1]}</p>
+            <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[20px] min-w-full not-italic relative shrink-0 text-[#5e0000] text-[14px] w-[min-content] group-hover:underline">{`Learn More >`}</p>
           </div>
-          <div className="aspect-[160/160] flex-[1_0_0] min-h-px min-w-px relative">
-            <div className="flex flex-col justify-center size-full">
-              <div className="content-stretch flex flex-col gap-[8px] items-start justify-center pr-[32px] relative size-full">
-                <SetupIcon />
-                <p className="font-['Inter:Medium',sans-serif] font-medium leading-[24px] min-w-full not-italic relative shrink-0 text-[16px] text-black w-[min-content]">Get help with battery life</p>
-                <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[20px] min-w-full not-italic relative shrink-0 text-[#5e0000] text-[14px] w-[min-content]">{`Learn More >`}</p>
-              </div>
-            </div>
+          <div className="aspect-[200/200] flex-[1_0_0] min-h-px min-w-px relative">
+            <img alt="" className="absolute inset-0 max-w-none object-cover pointer-events-none size-full transition-transform duration-300 origin-top-left group-hover:scale-105" src={imgBatteryLife} />
           </div>
         </div>
         {/* Order tracking */}
-        <div className="bg-[rgba(217,190,161,0.15)] content-stretch flex flex-[1_0_0] gap-[24px] items-center justify-center min-h-px min-w-px overflow-clip relative rounded-[16px] cursor-pointer">
-          <div className="aspect-[213/213] flex-[1_0_0] min-h-px min-w-px relative">
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
-              <img alt="" className="absolute inset-0 max-w-none object-cover pointer-events-none size-full" src={imgOrderTracking} />
-            </div>
+        <div className="group bg-[rgba(217,190,161,0.15)] content-stretch flex flex-[1_0_0] gap-[24px] items-center justify-center min-h-px min-w-px overflow-clip relative rounded-[16px] cursor-pointer">
+          <div className="content-stretch flex flex-[1_0_0] flex-col gap-[8px] items-start justify-center min-h-px min-w-px pl-[24px] relative">
+            <OrderTrackingIcon />
+            <p className="font-['Inter:Medium',sans-serif] font-medium leading-[24px] min-w-full not-italic relative shrink-0 text-[16px] text-black w-[min-content]">{QUICK_LINK_TITLES[2]}</p>
+            <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[20px] min-w-full not-italic relative shrink-0 text-[#5e0000] text-[14px] w-[min-content] group-hover:underline">{`Learn More >`}</p>
           </div>
-          <div className="aspect-[160/160] flex-[1_0_0] min-h-px min-w-px relative">
-            <div className="flex flex-col justify-center size-full">
-              <div className="content-stretch flex flex-col gap-[8px] items-start justify-center pr-[32px] relative size-full">
-                <OrderTrackingIcon />
-                <p className="font-['Inter:Medium',sans-serif] font-medium leading-[24px] min-w-full not-italic relative shrink-0 text-[16px] text-black w-[min-content]">Order tracking</p>
-                <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[20px] min-w-full not-italic relative shrink-0 text-[#5e0000] text-[14px] w-[min-content]">{`Learn More >`}</p>
-              </div>
-            </div>
+          <div className="aspect-[200/200] flex-[1_0_0] min-h-px min-w-px relative">
+            <img alt="" className="absolute inset-0 max-w-none object-cover pointer-events-none size-full transition-transform duration-300 origin-top-left group-hover:scale-105" src={imgOrderTracking} />
           </div>
         </div>
       </div>

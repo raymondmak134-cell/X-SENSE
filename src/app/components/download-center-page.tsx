@@ -2368,7 +2368,7 @@ function MobileAlarmTriggeredContent() {
         <p className="font-['Inter:Bold',sans-serif] font-bold leading-[44px] text-[32px] text-black w-full">
           Alarm triggered unexpectedly?
         </p>
-        <p className="font-['Inter:Regular',sans-serif] leading-[22px] text-[16px] text-[rgba(0,0,0,0.54)] w-full">
+        <p className="font-['Inter:Regular',sans-serif] leading-[22px] text-[14px] text-[rgba(0,0,0,0.54)] w-full">
           {`Don't worry. False alarms are often caused by dust, environmental interference, or battery issues, and can usually be resolved quickly. Follow the steps below to troubleshoot.`}
         </p>
       </div>
@@ -2449,7 +2449,7 @@ function MobileAlarmTriggeredContent() {
                 Tiny particles in the air can trick the sensor. Check if any of these are near the alarm:
               </p>
             </div>
-            <div className="content-start flex flex-wrap gap-[16px_32px] items-start py-[16px] shrink-0 w-full">
+            <div className="content-start flex flex-wrap gap-[16px_32px] items-start py-0 shrink-0 w-full">
               <div className="flex gap-[8px] items-center shrink-0">
                 <svg viewBox="0 0 18 18" fill="none" className="shrink-0 size-[18px]"><path d="M13.125 14.25H6.75C4.04678 14.2493 1.78595 12.1961 1.52573 9.50538C1.26551 6.81471 3.09096 4.36627 5.74395 3.84756C8.39694 3.32885 11.0102 4.90946 11.7825 7.5H13.125C14.9877 7.5 16.5 9.01229 16.5 10.875C16.5 12.7377 14.9877 14.25 13.125 14.25" stroke="#757575" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                 <span className="font-['Inter:Regular',sans-serif] text-[14px] text-[rgba(0,0,0,0.9)] leading-[20px] whitespace-nowrap">Cooking fumes</span>
