@@ -190,6 +190,11 @@ const POWER_SOURCE_BY_CATEGORY: Record<string, string[]> = {
     "Replaceable Battery (Included)",
     "AC Plug-in + Replaceable Battery Backup",
   ],
+  "combination-alarms": [
+    "10-Year Sealed Lithium Battery",
+    "Replaceable Battery (Included)",
+    "AC Hardwired",
+  ],
 };
 
 /** Return the power-source option list for a given category */
@@ -1703,14 +1708,16 @@ function RadioSelector({
   options,
   value,
   onChange,
+  disabled = false,
 }: {
   label: string;
   options: string[];
   value: string;
   onChange: (val: string) => void;
+  disabled?: boolean;
 }) {
   return (
-    <div className="flex flex-col gap-2">
+    <div className={`flex flex-col gap-2 ${disabled ? "opacity-50 pointer-events-none" : ""}`}>
       <label className="text-[13px] text-[#555]">{label}</label>
       <div className="flex flex-wrap gap-2">
         {options.map((opt) => {
@@ -1719,11 +1726,14 @@ function RadioSelector({
             <button
               key={opt}
               type="button"
+              disabled={disabled}
               onClick={() => onChange(active ? "" : opt)}
-              className={`px-3 py-[6px] rounded-lg text-[13px] border transition-all cursor-pointer ${
-                active
-                  ? "bg-[#ba0020] text-white border-[#ba0020]"
-                  : "bg-white text-[#555] border-[#e0e0e0] hover:border-[#ba0020] hover:text-[#ba0020]"
+              className={`px-3 py-[6px] rounded-lg text-[13px] border transition-all ${
+                disabled
+                  ? "cursor-not-allowed bg-[#f5f5f5] text-[#bbb] border-[#e0e0e0]"
+                  : active
+                    ? "bg-[#ba0020] text-white border-[#ba0020] cursor-pointer"
+                    : "bg-white text-[#555] border-[#e0e0e0] hover:border-[#ba0020] hover:text-[#ba0020] cursor-pointer"
               }`}
             >
               {opt}
@@ -2664,8 +2674,8 @@ function SpuForm({
           <div className="border-t border-dashed border-[#e0e0e0] pt-4">
             <p className="text-[13px] text-[#999] mb-3">Attributes</p>
             <div className="flex flex-col gap-4">
-              <RadioSelector label="Power Source" options={getPowerSourceOptions(form.categoryId)} value={form.powerSource} onChange={(v) => set("powerSource", v)} />
-              <RadioSelector label="Battery Life" options={SPU_BATTERY_LIFE_OPTIONS} value={form.batteryLife} onChange={(v) => set("batteryLife", v)} />
+              <RadioSelector label="Power Source" options={getPowerSourceOptions(form.categoryId)} value={form.powerSource} onChange={(v) => { set("powerSource", v); if (v === "AC Hardwired") set("batteryLife", ""); }} />
+              <RadioSelector label="Battery Life" options={SPU_BATTERY_LIFE_OPTIONS} value={form.batteryLife} onChange={(v) => set("batteryLife", v)} disabled={form.powerSource === "AC Hardwired"} />
             </div>
           </div>
         </>)}
