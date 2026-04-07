@@ -50,10 +50,7 @@ export default function MobileNav() {
   };
 
   const menuItems = [
-    { label: "Smoke Alarms", path: "/" },
-    { label: "CO Alarms", path: "/co-alarms" },
-    { label: "Combination Alarms", path: "/" },
-    { label: "Home Alarms", path: "/" },
+    { label: "Products", path: "/" },
     { label: "Support", path: "/support" },
     { label: "Explore", path: "/" },
     { label: "Partnership", path: "/", hasBorder: true },

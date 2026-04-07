@@ -585,7 +585,7 @@ function SelectModal({
                     </div>
                   </div>
                   <div className="content-stretch flex gap-[16px] items-center relative shrink-0">
-                    <button className="shadow-[inset_0_0_0_2px_#101820] content-stretch flex gap-[8px] items-center justify-center max-w-[240px] min-h-[56px] min-w-[180px] px-[24px] py-[16px] relative rounded-[50px] shrink-0 cursor-pointer bg-transparent border-none hover:bg-[rgba(0,0,0,0.04)] transition-colors">
+                    <button className="btn-outline-dark shadow-[inset_0_0_0_2px_#101820] content-stretch flex gap-[8px] items-center justify-center max-w-[240px] min-h-[56px] min-w-[180px] px-[24px] py-[16px] relative rounded-[50px] shrink-0 cursor-pointer bg-transparent border-none">
                       <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[22px] not-italic relative shrink-0 text-[16px] text-[#101820] text-center whitespace-nowrap">
                         Learn More
                       </p>

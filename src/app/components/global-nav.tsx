@@ -1,5 +1,7 @@
+import { useState, useRef, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router";
 import svgPaths from "../../imports/svg-wbn2vrrkrc";
+import ProductsDropdown from "./products-dropdown";
 
 // Safe hooks that won't crash outside Router context (e.g. Figma preview)
 function useSafeNavigate() {
@@ -88,16 +90,21 @@ function Logo() {
 }
 
 const NAV_TABS = [
-  { label: "Smoke Alarms", path: "/" },
-  { label: "CO Alarms", path: "/co-alarms" },
-  { label: "Combination Alarms", path: "/" },
-  { label: "Home Alarms", path: "/" },
+  { label: "Products", path: "/" },
   { label: "Support", path: "/support" },
   { label: "Explore", path: "/" },
   { label: "Partnership", path: "/" },
 ];
 
-function Tab() {
+function Tab({
+  onProductsEnter,
+  onProductsLeave,
+  productsOpen,
+}: {
+  onProductsEnter: () => void;
+  onProductsLeave: () => void;
+  productsOpen: boolean;
+}) {
   const navigate = useSafeNavigate();
   const location = useSafeLocation();
 
@@ -105,17 +112,25 @@ function Tab() {
     <div className="content-stretch flex flex-[1_0_0] gap-[12px] h-full items-center min-h-px min-w-px relative" data-name="Tab">
       {NAV_TABS.map((tab) => {
         const isActive = tab.path !== "/" && location.pathname === tab.path;
+        const isProducts = tab.label === "Products";
+        const showUnderline = isProducts && productsOpen;
         return (
           <div
             key={tab.label}
             className="h-full relative shrink-0 cursor-pointer"
             data-name="Web/Tab Bar"
             onClick={() => navigate(tab.path)}
+            onMouseEnter={isProducts ? onProductsEnter : undefined}
+            onMouseLeave={isProducts ? onProductsLeave : undefined}
           >
             <div className="flex flex-row items-center justify-center size-full">
               <div className={`content-stretch flex gap-[10px] h-full items-center justify-center px-[12px] py-[10px] relative group`}>
                 <p className="font-['Inter:Medium',sans-serif] font-medium leading-[20px] not-italic relative shrink-0 text-[14px] text-[rgba(0,0,0,0.9)]">{tab.label}</p>
-                <span className="absolute bottom-0 left-1/2 h-[2px] w-0 -translate-x-1/2 bg-[#ba0020] transition-all duration-300 ease-out group-hover:w-full" />
+                <span
+                  className={`absolute bottom-0 left-1/2 h-[2px] -translate-x-1/2 bg-[#ba0020] transition-all duration-300 ease-out ${
+                    showUnderline || isActive ? "w-full" : "w-0 group-hover:w-full"
+                  }`}
+                />
               </div>
             </div>
           </div>
@@ -158,12 +173,24 @@ function IconGroup() {
   );
 }
 
-function NavBody() {
+function NavBody({
+  onProductsEnter,
+  onProductsLeave,
+  productsOpen,
+}: {
+  onProductsEnter: () => void;
+  onProductsLeave: () => void;
+  productsOpen: boolean;
+}) {
   return (
     <div className="content-stretch flex flex-[1_0_0] items-center justify-center max-w-[1312px] min-h-px min-w-px relative w-full">
       <div className="content-stretch flex flex-[1_0_0] gap-[32px] h-full items-center min-h-px min-w-px relative">
         <Logo />
-        <Tab />
+        <Tab
+          onProductsEnter={onProductsEnter}
+          onProductsLeave={onProductsLeave}
+          productsOpen={productsOpen}
+        />
       </div>
       <div className="content-stretch flex items-center relative shrink-0">
         <IconGroup />
@@ -173,22 +200,50 @@ function NavBody() {
 }
 
 export default function GlobalNav() {
+  const [productsOpen, setProductsOpen] = useState(false);
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const openDropdown = useCallback(() => {
+    if (closeTimerRef.current) {
+      clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
+    setProductsOpen(true);
+  }, []);
+
+  const closeDropdown = useCallback(() => {
+    closeTimerRef.current = setTimeout(() => {
+      setProductsOpen(false);
+    }, 120);
+  }, []);
+
   return (
-    <div className="fixed content-stretch flex flex-col items-start left-0 right-0 top-0 z-50" data-name="GlobalNav">
-      <div className="bg-[#f6f6f6] relative shrink-0 w-full" data-name="Top Tips">
-        <div className="flex flex-col items-center justify-center overflow-clip rounded-[inherit] size-full">
-          <div className="content-stretch flex flex-col items-center justify-center w-full" style={{ padding: "0 clamp(24px, 8vw, 120px)" }}>
-            <TopTipBody />
+    <>
+      <div className="fixed content-stretch flex flex-col items-start left-0 right-0 top-0 z-50" data-name="GlobalNav">
+        <div className="bg-[#f6f6f6] relative shrink-0 w-full" data-name="Top Tips">
+          <div className="flex flex-col items-center justify-center overflow-clip rounded-[inherit] size-full">
+            <div className="content-stretch flex flex-col items-center justify-center w-full" style={{ padding: "0 clamp(24px, 8vw, 120px)" }}>
+              <TopTipBody />
+            </div>
+          </div>
+        </div>
+        <div className="bg-white h-[64px] relative shrink-0 w-full" data-name="Nav">
+          <div className="flex flex-col items-center justify-center size-full">
+            <div className="content-stretch flex flex-col items-center justify-center relative size-full" style={{ padding: "0 clamp(24px, 8vw, 120px)" }}>
+              <NavBody
+                onProductsEnter={openDropdown}
+                onProductsLeave={closeDropdown}
+                productsOpen={productsOpen}
+              />
+            </div>
           </div>
         </div>
       </div>
-      <div className="bg-white h-[64px] relative shrink-0 w-full" data-name="Nav">
-        <div className="flex flex-col items-center justify-center size-full">
-          <div className="content-stretch flex flex-col items-center justify-center relative size-full" style={{ padding: "0 clamp(24px, 8vw, 120px)" }}>
-            <NavBody />
-          </div>
-        </div>
-      </div>
-    </div>
+      <ProductsDropdown
+        isOpen={productsOpen}
+        onMouseEnter={openDropdown}
+        onMouseLeave={closeDropdown}
+      />
+    </>
   );
 }

@@ -37,3 +37,27 @@ div.-translate-x-1\/2.bottom-\[93\.18%\].top-\[1\.4%\] {
   justify-content: center !important;
   leading: normal !important;
 }
+
+/* Fix 6: Outline button hover — fill with border color, invert text */
+.btn-outline-dark {
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+.btn-outline-dark:hover {
+  background-color: #101820 !important;
+}
+.btn-outline-dark:hover p,
+.btn-outline-dark:hover span {
+  color: #fff !important;
+}
+
+/* Fix 7: Products dropdown staggered fade-in animation */
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

@@ -344,6 +344,7 @@ export interface Spu {
   imagePath: string;
   connectivity: string;
   powerSource: string;
+  categoryId?: string;
 }
 
 export function useSpus() {

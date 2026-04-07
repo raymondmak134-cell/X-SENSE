@@ -606,7 +606,7 @@ function MobileSelectModal({
 
               {/* Buttons */}
               <div className="content-stretch flex gap-[16px] items-center relative shrink-0 w-full">
-                <button className="shadow-[inset_0_0_0_2px_#101820] content-stretch flex flex-[1_0_0] h-[48px] items-center justify-center min-h-px min-w-px overflow-clip px-[16px] py-[9px] relative rounded-[100px] shrink-0 cursor-pointer bg-transparent border-none hover:bg-[rgba(0,0,0,0.04)] transition-colors">
+                <button className="btn-outline-dark shadow-[inset_0_0_0_2px_#101820] content-stretch flex flex-[1_0_0] h-[48px] items-center justify-center min-h-px min-w-px overflow-clip px-[16px] py-[9px] relative rounded-[100px] shrink-0 cursor-pointer bg-transparent border-none">
                   <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[22px] not-italic relative shrink-0 text-[16px] text-[#101820] text-center whitespace-nowrap">
                     Learn More
                   </p>

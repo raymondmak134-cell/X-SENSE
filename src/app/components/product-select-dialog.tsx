@@ -415,8 +415,8 @@ export default function ProductSelectDialog({
                                   key={spu.id}
                                   type="button"
                                   onClick={() => handleSpuClick(spu)}
-                                  className="content-stretch flex flex-[1_0_0] flex-col gap-[4px] items-center min-h-px min-w-px relative cursor-pointer bg-transparent border-none outline-none"
-                                  style={{ maxWidth: "calc(50% - 8px)" }}
+                                  className="content-stretch flex flex-col gap-[4px] items-center relative cursor-pointer bg-transparent border-none outline-none"
+                                  style={{ flex: "0 0 calc(50% - 8px)", maxWidth: "calc(50% - 8px)" }}
                                 >
                                   <div className="relative shrink-0 size-[140px]">
                                     {spu.imageUrl ? (
@@ -438,7 +438,7 @@ export default function ProductSelectDialog({
                               ))}
                               {/* Placeholder to maintain 2-col alignment */}
                               {sectionSpus.length % 2 !== 0 && (
-                                <div className="flex-[1_0_0] min-h-px min-w-px" style={{ maxWidth: "calc(50% - 8px)" }} />
+                                <div style={{ flex: "0 0 calc(50% - 8px)" }} />
                               )}
                             </div>
                           </div>
@@ -455,8 +455,8 @@ export default function ProductSelectDialog({
                               key={spu.id}
                               type="button"
                               onClick={() => handleSpuClick(spu)}
-                              className="content-stretch flex flex-[1_0_0] flex-col gap-[4px] items-center min-h-px min-w-px relative cursor-pointer bg-transparent border-none outline-none"
-                              style={{ maxWidth: "calc(50% - 8px)" }}
+                              className="content-stretch flex flex-col gap-[4px] items-center relative cursor-pointer bg-transparent border-none outline-none"
+                              style={{ flex: "0 0 calc(50% - 8px)", maxWidth: "calc(50% - 8px)" }}
                             >
                               <div className="relative shrink-0 size-[140px]">
                                 {spu.imageUrl ? (
@@ -485,7 +485,7 @@ export default function ProductSelectDialog({
                         )}
                         {/* Placeholder */}
                         {categorySpus.length % 2 !== 0 && (
-                          <div className="flex-[1_0_0] min-h-px min-w-px" style={{ maxWidth: "calc(50% - 8px)" }} />
+                          <div style={{ flex: "0 0 calc(50% - 8px)" }} />
                         )}
                       </div>
                     </div>
