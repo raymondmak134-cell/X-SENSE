@@ -2845,7 +2845,7 @@ export default function DownloadCenterPage() {
           <div className="h-[48px] w-full shrink-0" />
 
           {/* Navigation Bar */}
-          <div className="bg-[#101820] content-stretch flex flex-col items-center justify-center overflow-clip px-[20px] relative shrink-0 w-full">
+          <div className="bg-[#101820] content-stretch flex flex-col items-center justify-center overflow-clip px-[20px] sticky top-[48px] z-[40] shrink-0 w-full">
             <div className="content-stretch flex items-center py-[10px] relative shrink-0 w-full">
               <p className="font-['Inter:Bold',sans-serif] font-bold leading-[28px] not-italic relative shrink-0 text-[20px] text-center text-white whitespace-nowrap">
                 Help Center
