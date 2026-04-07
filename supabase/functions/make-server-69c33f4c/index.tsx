@@ -254,7 +254,6 @@ app.get("/make-server-69c33f4c/products", async (c) => {
     const refreshed = refreshPublicUrls(
       products || [],
       [
-        { urlField: "imageUrl", pathField: "imagePath" },
         { urlField: "imageUrlV2", pathField: "imagePathV2" },
       ],
       {
@@ -325,12 +324,21 @@ app.delete("/make-server-69c33f4c/products/:id", async (c) => {
     const id = c.req.param("id");
     // Get product first to clean up image
     const product = await kv.get(`${PRODUCTS_PREFIX}${id}`);
-    if (product?.imagePath) {
+    const pathsToDelete: string[] = [];
+    if (product?.imagePathV2) pathsToDelete.push(product.imagePathV2);
+    if (Array.isArray(product?.options)) {
+      for (const opt of product.options) {
+        if (opt.imagePath) pathsToDelete.push(opt.imagePath);
+        if (opt.hoverImagePath) pathsToDelete.push(opt.hoverImagePath);
+        if (opt.hoverImagePathV2) pathsToDelete.push(opt.hoverImagePathV2);
+      }
+    }
+    if (pathsToDelete.length > 0) {
       try {
         const sb = supabase();
-        await sb.storage.from(BUCKET_NAME).remove([product.imagePath]);
+        await sb.storage.from(BUCKET_NAME).remove(pathsToDelete);
       } catch (imgErr) {
-        console.log(`Warning: failed to delete image for product ${id}: ${imgErr}`);
+        console.log(`Warning: failed to delete images for product ${id}: ${imgErr}`);
       }
     }
     await kv.del(`${PRODUCTS_PREFIX}${id}`);

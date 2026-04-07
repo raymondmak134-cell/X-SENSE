@@ -616,7 +616,7 @@ function SkuOptionsEditor({
   const addSku = () => {
     const name = newName.trim();
     if (!name) return;
-    onChange([...options, { name, price: "", imageUrl: "", imagePath: "", hoverImageUrl: "", hoverImagePath: "", hoverImageUrlV2: "", hoverImagePathV2: "", packEnabled: false, packQty: "", discountEnabled: false, discountPercent: "", includeBaseStation: false, outOfStock: false }]);
+    onChange([...options, { name, price: "", imageUrl: "", imagePath: "", hoverImageUrl: "", hoverImagePath: "", hoverImageUrlV2: "", hoverImagePathV2: "", discountEnabled: false, discountPercent: "", outOfStock: false }]);
     setNewName("");
   };
 
@@ -735,26 +735,6 @@ function SkuOptionsEditor({
                     className="flex-1 h-[28px] px-2 rounded-md border border-[#e0e0e0] text-[12px] outline-none focus:border-[#ba0020]"
                   />
                 </div>
-                {/* Pack quantity toggle + input */}
-                <div className="flex items-center gap-2">
-                  <label className="flex items-center gap-1.5 cursor-pointer select-none shrink-0">
-                    <input
-                      type="checkbox"
-                      checked={!!sku.packEnabled}
-                      onChange={(e) => updateSku(i, { packEnabled: e.target.checked, packQty: e.target.checked ? (sku.packQty || "1") : "" })}
-                      className="accent-[#ba0020] size-3.5 cursor-pointer"
-                    />
-                    <span className="text-[12px] text-[#999]">Pack</span>
-                  </label>
-                  {sku.packEnabled && (
-                    <input
-                      value={sku.packQty || ""}
-                      onChange={(e) => updateSku(i, { packQty: e.target.value.replace(/[^0-9]/g, "") })}
-                      placeholder="Qty"
-                      className="w-[60px] h-[28px] px-2 rounded-md border border-[#e0e0e0] text-[12px] outline-none focus:border-[#ba0020] text-center"
-                    />
-                  )}
-                </div>
                 {/* Discount toggle + percentage input */}
                 <div className="flex items-center gap-2 flex-wrap">
                   <label className="flex items-center gap-1.5 cursor-pointer select-none shrink-0">
@@ -789,18 +769,6 @@ function SkuOptionsEditor({
                       )}
                     </>
                   )}
-                </div>
-                {/* Include Base Station toggle */}
-                <div className="flex items-center gap-2">
-                  <label className="flex items-center gap-1.5 cursor-pointer select-none shrink-0">
-                    <input
-                      type="checkbox"
-                      checked={!!sku.includeBaseStation}
-                      onChange={(e) => updateSku(i, { includeBaseStation: e.target.checked })}
-                      className="accent-[#ba0020] size-3.5 cursor-pointer"
-                    />
-                    <span className="text-[12px] text-[#999]">Include Base Station</span>
-                  </label>
                 </div>
                 {/* Out of Stock toggle */}
                 <div className="flex items-center gap-2">
@@ -844,8 +812,6 @@ function ProductForm({
 }) {
   const [form, setForm] = useState<Omit<Product, "id">>({
     name: product?.name ?? "",
-    imageUrl: product?.imageUrl ?? "",
-    imagePath: product?.imagePath ?? "",
     imageUrlV2: product?.imageUrlV2 ?? "",
     imagePathV2: product?.imagePathV2 ?? "",
     features: product?.features ?? [],
@@ -990,17 +956,8 @@ function ProductForm({
           </div>
         </div>
 
-        {/* Product Main Image */}
+        {/* Product Image */}
         <ImageUploader
-          imageUrl={form.imageUrl}
-          imagePath={form.imagePath}
-          onUploaded={(url, path) => setForm((prev) => ({ ...prev, imageUrl: url, imagePath: path }))}
-          onRemove={() => setForm((prev) => ({ ...prev, imageUrl: "", imagePath: "" }))}
-        />
-
-        {/* Product Image V2 – for new product card style */}
-        <ImageUploader
-          label="Product Image V2"
           imageUrl={form.imageUrlV2}
           imagePath={form.imagePathV2}
           onUploaded={(url, path) => setForm((prev) => ({ ...prev, imageUrlV2: url, imagePathV2: path }))}
@@ -1375,8 +1332,8 @@ function ProductRow({
         </div>
 
         <div className="shrink-0 size-[48px] rounded-xl bg-[#f5f5f5] flex items-center justify-center overflow-hidden">
-          {product.imageUrl ? (
-            <img src={product.imageUrl} alt="" className="size-full object-cover" />
+          {product.imageUrlV2 ? (
+            <img src={product.imageUrlV2} alt="" className="size-full object-cover" />
           ) : (
             <Package className="size-5 text-[#ccc]" />
           )}

@@ -542,37 +542,6 @@ function MobileSelectModal({
                               </p>
                             </div>
                           )}
-                          {!opt.includeBaseStation &&
-                            targetConnectivity ===
-                              "Base Station Interconnected (App)" && (
-                              <svg
-                                className="shrink-0"
-                                width="20"
-                                height="20"
-                                viewBox="0 0 20 20"
-                                fill="none"
-                              >
-                                <circle
-                                  cx="10"
-                                  cy="10"
-                                  r="7.5"
-                                  stroke="rgba(0,0,0,0.4)"
-                                  strokeWidth="1.2"
-                                />
-                                <path
-                                  d="M10 9v4"
-                                  stroke="rgba(0,0,0,0.4)"
-                                  strokeWidth="1.2"
-                                  strokeLinecap="round"
-                                />
-                                <circle
-                                  cx="10"
-                                  cy="7"
-                                  r="0.75"
-                                  fill="rgba(0,0,0,0.4)"
-                                />
-                              </svg>
-                            )}
                         </div>
                       );
                     })}

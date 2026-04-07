@@ -13,19 +13,14 @@ export interface SkuOption {
   hoverImagePath: string;
   hoverImageUrlV2: string;
   hoverImagePathV2: string;
-  packEnabled: boolean;
-  packQty: string;
   discountEnabled: boolean;
   discountPercent: string;
-  includeBaseStation: boolean;
   outOfStock: boolean;
 }
 
 export interface Product {
   id: string;
   name: string;
-  imageUrl: string;
-  imagePath: string;
   imageUrlV2: string;
   imagePathV2: string;
   features: string[];
@@ -52,11 +47,8 @@ export function normalizeProduct(raw: any): Product {
       hoverImagePath: "",
       hoverImageUrlV2: "",
       hoverImagePathV2: "",
-      packEnabled: false,
-      packQty: "",
       discountEnabled: false,
       discountPercent: "",
-      includeBaseStation: false,
       outOfStock: false,
     }));
   } else if (Array.isArray(p.options)) {
@@ -66,11 +58,8 @@ export function normalizeProduct(raw: any): Product {
       hoverImagePath: "",
       hoverImageUrlV2: "",
       hoverImagePathV2: "",
-      packEnabled: false,
-      packQty: "",
       discountEnabled: false,
       discountPercent: "",
-      includeBaseStation: false,
       outOfStock: false,
       ...o,
     }));

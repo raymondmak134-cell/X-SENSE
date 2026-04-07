@@ -770,8 +770,7 @@ function MobileProductCard({ product, useNewCard }: { product: Product; useNewCa
   const [isImageHovered, setIsImageHovered] = useState(false);
   const selectedSku = product.options[selectedSkuIndex];
   const displayPrice = selectedSku?.price ? `$${selectedSku.price}` : product.price;
-  const v2Image = (product as any).imageUrlV2 || "";
-  const displayImage = v2Image || product.imageUrl;
+  const displayImage = product.imageUrlV2 || "";
 
   const hasDiscount = selectedSku?.discountEnabled && selectedSku.discountPercent && selectedSku.price;
   const discountedPrice = hasDiscount
@@ -779,9 +778,6 @@ function MobileProductCard({ product, useNewCard }: { product: Product; useNewCa
     : null;
 
   {
-    const options = product.options;
-    const hasPacks = options.some(o => o.packEnabled && o.packQty);
-
     return (
       <div className="bg-white relative rounded-[32px] shrink-0 w-full overflow-clip" data-name="Product Card V2">
         {/* Product Container: image + name + pack badges */}
