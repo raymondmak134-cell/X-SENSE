@@ -248,7 +248,8 @@ export default function ProductsDropdown({
     const path =
       activeCategory.id === "smoke-alarms" ? "/" : `/${activeCategory.slug || activeCategory.id}`;
     navigate(path);
-  }, [activeCategory, navigate]);
+    onMouseLeave();
+  }, [activeCategory, navigate, onMouseLeave]);
 
   if (!shouldRender) return null;
 
