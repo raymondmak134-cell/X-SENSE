@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { useNavigate } from "react-router";
 import {
   useSpus,
   useProducts,
@@ -21,6 +22,7 @@ const SENSOR_TYPE_ORDER = [
 ];
 
 const SENSOR_TYPE_CATEGORY = "home-alarms";
+const HUB_BASE_STATION_CATEGORY = "hub-base-station";
 
 interface DropdownCard {
   id: string;
@@ -40,9 +42,6 @@ function buildDropdownCards(
   products: Product[],
   categoryId: string
 ): GroupedSection[] {
-  const order =
-    categoryId === SENSOR_TYPE_CATEGORY ? SENSOR_TYPE_ORDER : CONNECTIVITY_ORDER;
-
   const catSpus = spus.filter(
     (s) => (s.categoryId || "smoke-alarms") === categoryId
   );
@@ -51,6 +50,24 @@ function buildDropdownCards(
   for (const p of products) {
     if (p.spuId) productBySpuId.set(p.spuId, p);
   }
+
+  if (categoryId === HUB_BASE_STATION_CATEGORY) {
+    const cards: DropdownCard[] = catSpus.map((spu) => {
+      const linked = productBySpuId.get(spu.id);
+      return {
+        id: spu.id,
+        name: spu.name,
+        imageUrl: spu.imageUrl,
+        feature: spu.powerSource || undefined,
+        isHot: linked?.isHot ?? false,
+      };
+    });
+    if (cards.length === 0) return [];
+    return [{ title: "Hub / Base Station", cards }];
+  }
+
+  const order =
+    categoryId === SENSOR_TYPE_CATEGORY ? SENSOR_TYPE_ORDER : CONNECTIVITY_ORDER;
 
   const groups: Record<string, DropdownCard[]> = {};
   for (const spu of catSpus) {
@@ -174,6 +191,7 @@ export default function ProductsDropdown({
   onMouseEnter,
   onMouseLeave,
 }: ProductsDropdownProps) {
+  const navigate = useNavigate();
   const { spus } = useSpus();
   const { products } = useProducts();
   const { categories } = useCategories();
@@ -224,6 +242,13 @@ export default function ProductsDropdown({
   const shopAllLabel = activeCategory
     ? `Shop All ${activeCategory.name}`
     : "";
+
+  const handleShopAll = useCallback(() => {
+    if (!activeCategory) return;
+    const path =
+      activeCategory.id === "smoke-alarms" ? "/" : `/${activeCategory.slug || activeCategory.id}`;
+    navigate(path);
+  }, [activeCategory, navigate]);
 
   if (!shouldRender) return null;
 
@@ -315,6 +340,7 @@ export default function ProductsDropdown({
                   style={{
                     animationDelay: `${80 + sections.length * 60}ms`,
                   }}
+                  onClick={handleShopAll}
                 >
                   <p className="font-['Inter',sans-serif] font-semibold leading-[20px] text-[14px] text-[#101820] text-center whitespace-nowrap">
                     {shopAllLabel}

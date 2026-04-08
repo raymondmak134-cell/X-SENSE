@@ -1043,6 +1043,16 @@ export default function SmokeAlarmsNewPageMobile() {
     (p) => !p.categoryId || p.categoryId === "smoke-alarms"
   );
 
+  const smokeSpuIds = useMemo(
+    () => new Set(spus.filter((s) => !s.categoryId || s.categoryId === "smoke-alarms").map((s) => s.id)),
+    [spus]
+  );
+
+  const smokeCards = useMemo(
+    () => cards.filter((c) => c.spuIds.some((id) => smokeSpuIds.has(id))),
+    [cards, smokeSpuIds]
+  );
+
   const [selectModalOpen, setSelectModalOpen] = useState(false);
   const [selectCard, setSelectCard] = useState<ProductCardItem | null>(null);
   const [guideDialogOpen, setGuideDialogOpen] = useState(false);
@@ -1150,8 +1160,8 @@ export default function SmokeAlarmsNewPageMobile() {
                   <MobileProductCardSkeleton />
                   <MobileProductCardSkeleton />
                 </>
-              ) : cards.length > 0 ? (
-                cards.map((card) => (
+              ) : smokeCards.length > 0 ? (
+                smokeCards.map((card) => (
                   <MobileModelCard
                     key={card.id}
                     card={card}

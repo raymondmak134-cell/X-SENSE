@@ -15,6 +15,8 @@ import Footer from "../../imports/Footer";
 import CompareDialog from "./compare-dialog";
 import SplitText from "@/components/SplitText";
 
+const CATEGORY_ID = "co-alarms";
+
 /* ========== Skeleton Loaders ========== */
 
 function ProductCardSkeleton() {
@@ -510,9 +512,7 @@ function SelectModal({
                           className={`content-stretch flex gap-[4px] items-center justify-center overflow-clip px-[16px] h-[56px] relative rounded-[12px] shrink-0 cursor-pointer transition-all duration-200 ${
                             isSelected
                               ? "border-2 border-solid border-[#ba0020]"
-                              : opt.outOfStock
-                                ? "border-2 border-solid border-[rgba(0,0,0,0.2)]"
-                                : "border-2 border-solid border-[rgba(0,0,0,0.2)]"
+                              : "border-2 border-solid border-[rgba(0,0,0,0.2)]"
                           }`}
                           onClick={() => setSelectedSkuIdx(i)}
                           style={{
@@ -836,21 +836,16 @@ function GuideDetailDialog({
         {/* Content */}
         <div className="flex-1 min-h-0 overflow-y-auto w-full">
           <div className="flex flex-col gap-[24px] items-start px-[76px] pb-[32px] w-full">
-            {/* Body Title */}
             {guide.bodyTitle && (
               <p className="font-['Inter:Bold',sans-serif] font-bold leading-[44px] text-[32px] text-[#101820] w-full">
                 {guide.bodyTitle}
               </p>
             )}
-
-            {/* Body Content */}
             {guide.bodyContent && (
               <div className="font-['Inter:Regular',sans-serif] font-normal text-[14px] text-black leading-[20px] w-full whitespace-pre-line">
                 {guide.bodyContent}
               </div>
             )}
-
-            {/* Table of Contents */}
             {tocLines.length > 0 && (
               <div className="bg-[#f6f6f6] flex flex-col gap-[12px] items-start p-[12px] rounded-[12px] text-[14px] text-black w-full">
                 <p className="font-['Inter:Medium',sans-serif] font-medium leading-[20px] w-full">
@@ -865,8 +860,6 @@ function GuideDetailDialog({
                 </ul>
               </div>
             )}
-
-            {/* Link Text */}
             {guide.linkText && (
               guide.linkUrl ? (
                 <a
@@ -1011,27 +1004,27 @@ function TabBar({
 
 /* ========== Main Page Component ========== */
 
-export default function SmokeAlarmsNewPage() {
+export default function CoAlarmsNewPage() {
   const handleShopTitleAnimationComplete = useCallback(() => {
     console.log("All letters have animated!");
   }, []);
   const { products, loading: productsLoading } = useProducts();
   const { cards, loading: cardsLoading } = useProductCards();
-  const { guides, loading: guidesLoading } = useGuides("smoke-alarms");
+  const { guides, loading: guidesLoading } = useGuides(CATEGORY_ID);
   const { spus } = useSpus();
 
-  const smokeProducts = products.filter(
-    (p) => !p.categoryId || p.categoryId === "smoke-alarms"
+  const coProducts = products.filter(
+    (p) => p.categoryId === CATEGORY_ID
   );
 
-  const smokeSpuIds = useMemo(
-    () => new Set(spus.filter((s) => !s.categoryId || s.categoryId === "smoke-alarms").map((s) => s.id)),
+  const coSpuIds = useMemo(
+    () => new Set(spus.filter((s) => s.categoryId === CATEGORY_ID).map((s) => s.id)),
     [spus]
   );
 
-  const smokeCards = useMemo(
-    () => cards.filter((c) => c.spuIds.some((id) => smokeSpuIds.has(id))),
-    [cards, smokeSpuIds]
+  const coCards = useMemo(
+    () => cards.filter((c) => c.spuIds.some((id) => coSpuIds.has(id))),
+    [cards, coSpuIds]
   );
 
   const [activeTab, setActiveTab] = useState<TabId>("models");
@@ -1087,7 +1080,7 @@ export default function SmokeAlarmsNewPage() {
             {/* Title */}
             <div className="content-stretch flex gap-[8px] items-start relative shrink-0 w-full">
               <SplitText
-                text="Shop Smoke Alarm"
+                text="Shop CO Alarm"
                 className="font-['Inter:Bold',sans-serif] font-bold leading-[72px] not-italic relative shrink-0 text-[56px] text-black whitespace-nowrap"
                 delay={50}
                 duration={0.8}
@@ -1127,12 +1120,12 @@ export default function SmokeAlarmsNewPage() {
                       <ProductCardSkeleton />
                       <ProductCardSkeleton />
                     </>
-                  ) : smokeCards.length > 0 ? (
-                    smokeCards.map((card) => (
+                  ) : coCards.length > 0 ? (
+                    coCards.map((card) => (
                       <ModelCard
                         key={card.id}
                         card={card}
-                        minPrice={getMinPriceForCard(card, smokeProducts)}
+                        minPrice={getMinPriceForCard(card, coProducts)}
                         onSelectClick={() => {
                           setSelectCard(card);
                           setSelectModalOpen(true);
@@ -1157,7 +1150,7 @@ export default function SmokeAlarmsNewPage() {
                     {"Shopping guides. "}
                   </span>
                   <span className="leading-[36px] text-[26px] text-[rgba(0,0,0,0.4)]">
-                    Choose the Smoke Detector That Fits You Best
+                    Choose the CO Detector That Fits You Best
                   </span>
                 </p>
                 <div className="content-stretch flex gap-[24px] h-[374px] items-center relative shrink-0 w-full">
@@ -1209,7 +1202,7 @@ export default function SmokeAlarmsNewPage() {
           open={selectModalOpen}
           onClose={() => setSelectModalOpen(false)}
           card={selectCard}
-          products={smokeProducts}
+          products={coProducts}
           spus={spus}
         />
       )}
@@ -1227,7 +1220,7 @@ export default function SmokeAlarmsNewPage() {
       <CompareDialog
         open={compareOpen}
         onClose={() => setCompareOpen(false)}
-        categoryId="smoke-alarms"
+        categoryId={CATEGORY_ID}
       />
     </div>
   );
