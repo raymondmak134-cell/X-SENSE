@@ -19,7 +19,6 @@ import imgSmokeAlarms from "@/assets/placeholder-image-url";
 import imgCoAlarms from "@/assets/placeholder-image-url";
 import imgCombinationAlarms from "@/assets/placeholder-image-url";
 import imgHomeAlarms from "@/assets/placeholder-image-url";
-import imgHubBaseStation from "@/assets/placeholder-image-url";
 import imgAccessories from "@/assets/placeholder-image-url";
 const imgBanner = "/images/support-banner.jpg";
 const imgAlarmGoOff = "/images/support-alarm-go-off.png";
@@ -32,8 +31,6 @@ const FALLBACK_IMAGES: Record<string, string> = {
   "co-alarms": imgCoAlarms,
   "combination-alarms": imgCombinationAlarms,
   "home-alarms": imgHomeAlarms,
-  "hub-base-station": imgHubBaseStation,
-  "base-station": imgHubBaseStation,
   "accessories": imgAccessories,
 };
 
@@ -156,7 +153,6 @@ function ProductOverviewSection({ onProductClick }: { onProductClick: (categoryI
         { id: "co-alarms", name: "CO Alarms", imageUrl: imgCoAlarms },
         { id: "combination-alarms", name: "Combination Alarms", imageUrl: imgCombinationAlarms, isCombination: true },
         { id: "home-alarms", name: "Home Alarms", imageUrl: imgHomeAlarms },
-        { id: "hub-base-station", name: "Base Station", imageUrl: imgHubBaseStation },
         { id: "accessories", name: "Accessories", imageUrl: imgAccessories },
       ];
 

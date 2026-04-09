@@ -231,7 +231,12 @@ export function useCategories() {
         const res = await fetchWithRetry(`${API_BASE}/categories`, { headers: AUTH_HEADER });
         if (!res.ok) throw new Error(`Failed to fetch categories (${res.status})`);
         const data = await res.json();
-        setCategories((data.categories || []).sort((a: Category, b: Category) => (a.order ?? 0) - (b.order ?? 0)));
+        const REMOVED_CATEGORIES = ["hub-base-station"];
+        setCategories(
+          (data.categories || [])
+            .filter((c: Category) => !REMOVED_CATEGORIES.includes(c.id))
+            .sort((a: Category, b: Category) => (a.order ?? 0) - (b.order ?? 0))
+        );
       } catch (err: any) {
         console.error("Error fetching categories:", err);
       } finally {

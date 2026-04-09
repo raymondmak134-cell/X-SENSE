@@ -21,8 +21,13 @@ const SENSOR_TYPE_ORDER = [
   "Thermometer & Hygrometer",
 ];
 
+const ACCESSORIES_TYPE_ORDER = [
+  "Remote Controller",
+  "BaseStation",
+];
+
 const SENSOR_TYPE_CATEGORY = "home-alarms";
-const HUB_BASE_STATION_CATEGORY = "hub-base-station";
+const ACCESSORIES_CATEGORY = "accessories";
 
 interface DropdownCard {
   id: string;
@@ -51,23 +56,10 @@ function buildDropdownCards(
     if (p.spuId) productBySpuId.set(p.spuId, p);
   }
 
-  if (categoryId === HUB_BASE_STATION_CATEGORY) {
-    const cards: DropdownCard[] = catSpus.map((spu) => {
-      const linked = productBySpuId.get(spu.id);
-      return {
-        id: spu.id,
-        name: spu.name,
-        imageUrl: spu.imageUrl,
-        feature: spu.powerSource || undefined,
-        isHot: linked?.isHot ?? false,
-      };
-    });
-    if (cards.length === 0) return [];
-    return [{ title: "Hub / Base Station", cards }];
-  }
-
   const order =
-    categoryId === SENSOR_TYPE_CATEGORY ? SENSOR_TYPE_ORDER : CONNECTIVITY_ORDER;
+    categoryId === SENSOR_TYPE_CATEGORY ? SENSOR_TYPE_ORDER
+      : categoryId === ACCESSORIES_CATEGORY ? ACCESSORIES_TYPE_ORDER
+      : CONNECTIVITY_ORDER;
 
   const groups: Record<string, DropdownCard[]> = {};
   for (const spu of catSpus) {
@@ -153,9 +145,11 @@ function CardItem({ card }: { card: DropdownCard }) {
 function SectionBlock({
   section,
   animDelay,
+  hideInfoIcon = false,
 }: {
   section: GroupedSection;
   animDelay: number;
+  hideInfoIcon?: boolean;
 }) {
   return (
     <div
@@ -166,7 +160,7 @@ function SectionBlock({
         <p className="font-['Inter',sans-serif] font-medium leading-[20px] text-[14px] text-[rgba(0,0,0,0.54)] whitespace-nowrap">
           {section.title}
         </p>
-        <InfoIcon />
+        {!hideInfoIcon && <InfoIcon />}
       </div>
       <div className="content-stretch flex gap-[16px] items-center relative shrink-0 w-full">
         {section.cards.slice(0, 3).map((card) => (
@@ -323,6 +317,7 @@ export default function ProductsDropdown({
                   key={`${currentCategoryId}-${section.title}`}
                   section={section}
                   animDelay={80 + idx * 60}
+                  hideInfoIcon={currentCategoryId === "home-alarms" || currentCategoryId === "accessories"}
                 />
               ))}
 
@@ -335,7 +330,7 @@ export default function ProductsDropdown({
                 </div>
               )}
 
-              {sections.length > 0 && (
+              {sections.length > 0 && currentCategoryId !== "accessories" && (
                 <div
                   className="btn-outline-dark border-2 border-[#101820] border-solid content-stretch flex gap-[4px] items-center justify-center px-[16px] py-[8px] relative rounded-[53px] shrink-0 cursor-pointer opacity-0 translate-y-[8px] animate-[fadeSlideIn_0.35s_ease-out_forwards]"
                   style={{

@@ -435,8 +435,7 @@ const DEFAULT_CATEGORIES = [
   { id: "co-alarms", name: "CO Alarms", slug: "co-alarms", coverImageUrl: "", coverImagePath: "", description: "", bannerPcUrl: "", bannerPcPath: "", bannerMobileUrl: "", bannerMobilePath: "", order: 1 },
   { id: "combination-alarms", name: "Combination Alarms", slug: "combination-alarms", coverImageUrl: "", coverImagePath: "", description: "", bannerPcUrl: "", bannerPcPath: "", bannerMobileUrl: "", bannerMobilePath: "", order: 2 },
   { id: "home-alarms", name: "Home Alarms", slug: "home-alarms", coverImageUrl: "", coverImagePath: "", description: "", bannerPcUrl: "", bannerPcPath: "", bannerMobileUrl: "", bannerMobilePath: "", order: 3 },
-  { id: "hub-base-station", name: "Hub / Base Station", slug: "hub-base-station", coverImageUrl: "", coverImagePath: "", description: "", bannerPcUrl: "", bannerPcPath: "", bannerMobileUrl: "", bannerMobilePath: "", order: 4 },
-  { id: "accessories", name: "Accessories", slug: "accessories", coverImageUrl: "", coverImagePath: "", description: "", bannerPcUrl: "", bannerPcPath: "", bannerMobileUrl: "", bannerMobilePath: "", order: 5 },
+  { id: "accessories", name: "Accessories", slug: "accessories", coverImageUrl: "", coverImagePath: "", description: "", bannerPcUrl: "", bannerPcPath: "", bannerMobileUrl: "", bannerMobilePath: "", order: 4 },
 ];
 
 // Seed default categories on startup
@@ -456,11 +455,34 @@ const DEFAULT_CATEGORIES = [
   }
 })();
 
+// Migration: remove hub-base-station category and move its SPUs to accessories
+(async () => {
+  try {
+    const hubCat = await kv.get(`${CATEGORY_PREFIX}hub-base-station`);
+    if (hubCat) {
+      await kv.del(`${CATEGORY_PREFIX}hub-base-station`);
+      console.log("Deleted hub-base-station category.");
+      const allSpus = await kv.getByPrefix(SPU_PREFIX);
+      for (const spu of allSpus || []) {
+        if ((spu as any).categoryId === "hub-base-station") {
+          (spu as any).categoryId = "accessories";
+          (spu as any).connectivity = "BaseStation";
+          await kv.set(`${SPU_PREFIX}${(spu as any).id}`, spu);
+          console.log(`Migrated SPU ${(spu as any).id} (${(spu as any).name}) to accessories/BaseStation.`);
+        }
+      }
+    }
+  } catch (err) {
+    console.log(`Migration hub-base-station: ${err}`);
+  }
+})();
+
 // GET all categories
 app.get("/make-server-69c33f4c/categories", async (c) => {
   try {
     const categories = await kv.getByPrefix(CATEGORY_PREFIX);
-    const sorted = (categories || []).sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0));
+    const filtered = (categories || []).filter((c: any) => c.id !== "hub-base-station");
+    const sorted = filtered.sort((a: any, b: any) => (a.order ?? 0) - (b.order ?? 0));
     const refreshed = refreshPublicUrls(
       sorted,
       [

@@ -43,12 +43,18 @@ const SENSOR_TYPE_OPTIONS = [
   "Thermometer & Hygrometer",
 ];
 
+const ACCESSORIES_TYPE_OPTIONS = [
+  "Remote Controller",
+  "BaseStation",
+];
+
 const CATEGORIES_WITH_CONNECTIVITY = ["smoke-alarms", "co-alarms", "combination-alarms"];
 const CATEGORIES_WITH_SENSOR_TYPE = ["home-alarms"];
 
 function getFilterOptions(categoryId: string): string[] {
   if (CATEGORIES_WITH_CONNECTIVITY.includes(categoryId)) return CONNECTIVITY_OPTIONS;
   if (CATEGORIES_WITH_SENSOR_TYPE.includes(categoryId)) return SENSOR_TYPE_OPTIONS;
+  if (categoryId === "accessories") return ACCESSORIES_TYPE_OPTIONS;
   return [];
 }
 

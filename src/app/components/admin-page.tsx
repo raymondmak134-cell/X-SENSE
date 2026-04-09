@@ -214,11 +214,20 @@ const SENSOR_TYPE_OPTIONS = [
   "Thermometer & Hygrometer",
 ];
 
+const ACCESSORIES_TYPE_OPTIONS = [
+  "Remote Controller",
+  "BaseStation",
+];
+
 const getConnectivityOptions = (categoryId: string) =>
-  categoryId === "home-alarms" ? SENSOR_TYPE_OPTIONS : CONNECTIVITY_OPTIONS;
+  categoryId === "home-alarms" ? SENSOR_TYPE_OPTIONS
+    : categoryId === "accessories" ? ACCESSORIES_TYPE_OPTIONS
+    : CONNECTIVITY_OPTIONS;
 
 const getConnectivityLabel = (categoryId: string) =>
-  categoryId === "home-alarms" ? "Sensor Type" : "Connectivity";
+  categoryId === "home-alarms" ? "Sensor Type"
+    : categoryId === "accessories" ? "Type"
+    : "Connectivity";
 
 const FEATURES_OPTIONS = ["Voice Alerts", "Night Mode", "Magnetic Mount"];
 
@@ -1640,8 +1649,15 @@ const SPU_SENSOR_TYPE_OPTIONS = [
   "Thermometer & Hygrometer",
 ];
 
+const SPU_ACCESSORIES_TYPE_OPTIONS = [
+  "Remote Controller",
+  "BaseStation",
+];
+
 const getSpuConnectivityOptions = (categoryId?: string) =>
-  categoryId === "home-alarms" ? SPU_SENSOR_TYPE_OPTIONS : SPU_CONNECTIVITY_OPTIONS;
+  categoryId === "home-alarms" ? SPU_SENSOR_TYPE_OPTIONS
+    : categoryId === "accessories" ? SPU_ACCESSORIES_TYPE_OPTIONS
+    : SPU_CONNECTIVITY_OPTIONS;
 
 const SPU_CAPABILITY_OPTIONS: { key: keyof SpuCapabilities; label: string }[] = [
   { key: "appPushAlerts", label: "App Push Alerts" },
@@ -2638,8 +2654,8 @@ function SpuForm({
           onRemove={() => { set("imageUrl", ""); set("imagePath", ""); }}
         />
 
-        {form.categoryId !== "hub-base-station" && (<>
-          {/* Connectivity / Sensor Type (single select) */}
+        {(<>
+          {/* Connectivity / Sensor Type / Type (single select) */}
           <RadioSelector
             label={getConnectivityLabel(form.categoryId || "")}
             options={getSpuConnectivityOptions(form.categoryId)}
@@ -4977,7 +4993,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       ]);
       setProducts((prodData.products || []).map(normalizeProduct) as Product[]);
       setAllSpus(spuData.spus || []);
-      setAllCategories(catData.categories || []);
+      setAllCategories((catData.categories || []).filter((c: Category) => c.id !== "hub-base-station"));
     } catch (err: any) {
       console.error("Failed to load data:", err);
       showToast(err.message || "Failed to load data", "error");
