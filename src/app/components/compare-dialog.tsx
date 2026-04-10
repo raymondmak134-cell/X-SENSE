@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { projectId, publicAnonKey } from "../../../utils/supabase/info";
+import ModalCloseButton from "./modal-close-button";
 
 const API_BASE = `https://${projectId}.supabase.co/functions/v1/make-server-69c33f4c`;
 const AUTH_HEADER = { Authorization: `Bearer ${publicAnonKey}` };
@@ -89,19 +90,6 @@ function CrossIcon() {
   );
 }
 
-function CloseIcon() {
-  return (
-    <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
-      <path
-        clipRule="evenodd"
-        d="M16.6667 0C25.8714 0 33.3333 7.46192 33.3333 16.6667C33.3333 25.8714 25.8714 33.3333 16.6667 33.3333C7.46192 33.3333 0 25.8714 0 16.6667C0 7.46192 7.46192 0 16.6667 0ZM16.6667 14.5707L11.8236 9.72765L9.72765 11.8218L14.5725 16.6667L9.72765 21.5133L11.8218 23.6075L16.6667 18.7609L21.5133 23.6075L23.6075 21.5115L18.7627 16.6667L23.6075 11.8236L22.5604 10.7747L21.5115 9.72765L16.6667 14.5707Z"
-        fill="black"
-        fillOpacity="0.54"
-        fillRule="evenodd"
-      />
-    </svg>
-  );
-}
 
 function BatteryIcon() {
   return (
@@ -495,18 +483,18 @@ export default function CompareDialog({
       `}</style>
 
       <div
-        className={`bg-white flex flex-col max-w-[1312px] w-full max-h-[85vh] rounded-[32px] overflow-hidden transition-all duration-300 ease-in-out ${
+        className={`bg-white flex flex-col max-w-[1312px] w-full max-h-[85vh] rounded-[32px] overflow-hidden transition-all duration-300 ease-in-out relative ${
           open && !animating
             ? "scale-100 opacity-100"
             : "scale-95 opacity-0"
         }`}
         onClick={(e) => e.stopPropagation()}
       >
+        <ModalCloseButton onClick={handleClose} />
         {/* Title — fixed at top */}
         <div className="shrink-0 w-full">
-          <div className="flex items-start justify-center gap-[24px] pt-[32px] pb-[24px] px-[32px]">
-            <div className="shrink-0 size-[44px] opacity-0" />
-            <div className="flex-1 flex flex-col gap-[4px] items-center justify-center text-center">
+          <div className="flex items-start justify-center pt-[32px] pb-[24px] px-[32px]">
+            <div className="flex flex-col gap-[4px] items-center justify-center text-center w-full">
               <p className="font-['Inter',sans-serif] font-bold leading-[44px] text-[#101820] text-[32px] w-full">
                 Compare Similar Products
               </p>
@@ -514,12 +502,6 @@ export default function CompareDialog({
                 Find the best smoke alarms for you
               </p>
             </div>
-            <button
-              onClick={handleClose}
-              className="shrink-0 size-[40px] opacity-40 hover:opacity-70 transition-opacity cursor-pointer bg-transparent border-none p-0"
-            >
-              <CloseIcon />
-            </button>
           </div>
         </div>
 

@@ -13,6 +13,7 @@ import {
 import GlobalNav from "./global-nav";
 import Footer from "../../imports/Footer";
 import CompareDialog from "./compare-dialog";
+import ModalCloseButton from "./modal-close-button";
 import SplitText from "@/components/SplitText";
 
 /* ========== Skeleton Loaders ========== */
@@ -302,32 +303,17 @@ function SelectModal({
       onClick={handleClose}
     >
       <div
-        className={`bg-white flex flex-col items-center max-w-[720px] w-full overflow-clip rounded-[32px] max-h-[85vh] transition-all duration-300 ease-in-out ${
+        className={`bg-white flex flex-col items-center max-w-[720px] w-full overflow-clip rounded-[32px] max-h-[85vh] transition-all duration-300 ease-in-out relative ${
           isOpen ? "scale-100 opacity-100" : "scale-95 opacity-0"
         }`}
         onClick={(e) => e.stopPropagation()}
       >
+        <ModalCloseButton onClick={handleClose} />
         {/* Title */}
-        <div className="content-stretch flex gap-[24px] items-start justify-center pb-[24px] pt-[32px] px-[32px] relative shrink-0 w-full">
-          <div className="content-stretch flex flex-[1_0_0] flex-col gap-[4px] items-start justify-center min-h-px min-w-px relative">
-            <p className="font-['Inter:Bold',sans-serif] font-bold leading-[44px] not-italic relative shrink-0 text-[32px] text-[#101820] w-full">
-              {matchedSpu ? `Selected ${matchedSpu.name}` : `Select ${card.name}`}
-            </p>
-          </div>
-          <button
-            className="shrink-0 size-[40px] opacity-40 hover:opacity-70 transition-opacity cursor-pointer bg-transparent border-none p-0"
-            onClick={handleClose}
-          >
-            <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
-              <path
-                clipRule="evenodd"
-                d="M16.6667 0C25.8714 0 33.3333 7.46192 33.3333 16.6667C33.3333 25.8714 25.8714 33.3333 16.6667 33.3333C7.46192 33.3333 0 25.8714 0 16.6667C0 7.46192 7.46192 0 16.6667 0ZM16.6667 14.5707L11.8236 9.72765L9.72765 11.8218L14.5725 16.6667L9.72765 21.5133L11.8218 23.6075L16.6667 18.7609L21.5133 23.6075L23.6075 21.5115L18.7627 16.6667L23.6075 11.8236L22.5604 10.7747L21.5115 9.72765L16.6667 14.5707Z"
-                fill="black"
-                fillOpacity="0.54"
-                fillRule="evenodd"
-              />
-            </svg>
-          </button>
+        <div className="content-stretch flex flex-col gap-[4px] items-start justify-center pb-[24px] pt-[32px] px-[32px] relative shrink-0 w-full">
+          <p className="font-['Inter:Bold',sans-serif] font-bold leading-[44px] not-italic relative shrink-0 text-[32px] text-[#101820] w-full">
+            {matchedSpu ? `Selected ${matchedSpu.name}` : `Select ${card.name}`}
+          </p>
         </div>
 
         {/* Scrollable Body */}
@@ -810,28 +796,14 @@ function GuideDetailDialog({
       onClick={(e) => { if (e.target === overlayRef.current) handleClose(); }}
     >
       <div
-        className={`bg-white flex flex-col items-center w-[720px] max-h-[90vh] overflow-clip rounded-[32px] transition-all duration-300 ease-in-out ${
+        className={`bg-white flex flex-col items-center w-[720px] max-h-[90vh] overflow-clip rounded-[32px] transition-all duration-300 ease-in-out relative ${
           isOpen ? "scale-100 opacity-100" : "scale-95 opacity-0"
         }`}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Close button */}
-        <div className="flex items-start justify-end pt-[32px] px-[32px] shrink-0 w-full">
-          <button
-            className="shrink-0 size-[40px] opacity-40 hover:opacity-70 transition-opacity cursor-pointer bg-transparent border-none p-0"
-            onClick={handleClose}
-          >
-            <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
-              <path
-                clipRule="evenodd"
-                d="M16.6667 0C25.8714 0 33.3333 7.46192 33.3333 16.6667C33.3333 25.8714 25.8714 33.3333 16.6667 33.3333C7.46192 33.3333 0 25.8714 0 16.6667C0 7.46192 7.46192 0 16.6667 0ZM16.6667 14.5707L11.8236 9.72765L9.72765 11.8218L14.5725 16.6667L9.72765 21.5133L11.8218 23.6075L16.6667 18.7609L21.5133 23.6075L23.6075 21.5115L18.7627 16.6667L23.6075 11.8236L22.5604 10.7747L21.5115 9.72765L16.6667 14.5707Z"
-                fill="black"
-                fillOpacity="0.54"
-                fillRule="evenodd"
-              />
-            </svg>
-          </button>
-        </div>
+        <ModalCloseButton onClick={handleClose} />
+        {/* Spacer matching old close button row height */}
+        <div className="shrink-0 h-[32px] w-full" />
 
         {/* Content */}
         <div className="flex-1 min-h-0 overflow-y-auto w-full">

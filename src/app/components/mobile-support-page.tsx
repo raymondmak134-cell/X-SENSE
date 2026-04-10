@@ -15,15 +15,11 @@ import imgAccessories from "@/assets/placeholder-image-url";
 const imgAlarmGoOff = "/images/support-alarm-go-off.png";
 const imgBatteryLife = "/images/support-battery-life.png";
 const imgOrderTracking = "/images/support-order-tracking.png";
-import imgSafety1 from "@/assets/placeholder-image-url";
-import imgSafety2 from "@/assets/placeholder-image-url";
-import imgSafety3 from "@/assets/placeholder-image-url";
-import imgSafety4 from "@/assets/placeholder-image-url";
 
 
 export const QUICK_LINK_TITLES = [
   "Alarm go off by itself?",
-  "Get help with battery life",
+  "Battery draining fast?",
   "Order tracking",
 ] as const;
 
@@ -255,10 +251,10 @@ function MobileQuickLinks() {
 /* ==================== Safety Knowledge ==================== */
 
 const SAFETY_CARDS = [
-  { image: imgSafety1, title: "DO NOT use an open flame to test", description: "How to Tell If Your Smoke Alarm is Working？You can test your smoke alarm by pushing the Test/Hush button on the cover and holding it down for a minimum of 5 seconds. " },
-  { image: imgSafety2, title: "Fire and Carbon Monoxide Safety Tips", description: "Carbon monoxide alarms should be installed on every level of the home and in sleeping areas." },
-  { image: imgSafety3, title: "How to Choose a Heat Alarm", description: "Learn more about how to choose a heat alarm." },
-  { image: imgSafety4, title: "Fire and Carbon Monoxide Safety Tips", description: "Protect your home and family from the dangers of fire and carbon monoxide. Install smoke detectors and carbon monoxide" },
+  { image: "/images/do-not-use.jpg", title: "DO NOT use an open flame to test", description: "How to Tell If Your Smoke Alarm is Working？You can test your smoke alarm by pushing the Test/Hush button on the cover and holding it down for a minimum of 5 seconds. " },
+  { image: "/images/safety-tips.jpg", title: "Fire and Carbon Monoxide Safety Tips", description: "Carbon monoxide alarms should be installed on every level of the home and in sleeping areas." },
+  { image: "/images/choice.jpg", title: "How to Choose a Heat Alarm", description: "Learn more about how to choose a heat alarm." },
+  { image: "/images/safety-tips1.jpg", title: "Fire and Carbon Monoxide Safety Tips", description: "Protect your home and family from the dangers of fire and carbon monoxide. Install smoke detectors and carbon monoxide" },
 ];
 
 function MobileSafetyKnowledge() {
@@ -280,7 +276,6 @@ function MobileSafetyKnowledge() {
                 <div className="content-stretch flex flex-col gap-[16px] items-start justify-end min-w-[inherit] p-[16px] relative size-full">
                   <div className="content-stretch flex flex-col items-start justify-center not-italic relative shrink-0 w-full">
                     <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[24px] relative shrink-0 text-[18px] text-white w-full">{card.title}</p>
-                    <p className="font-['Inter:Regular',sans-serif] font-normal leading-[16px] overflow-hidden relative shrink-0 text-[12px] text-[rgba(255,255,255,0.9)] text-ellipsis w-full">{card.description}</p>
                   </div>
                   <div className="bg-white content-stretch flex gap-[4px] items-center justify-center px-[16px] py-[8px] relative rounded-[50px] shrink-0 cursor-pointer">
                     <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[20px] not-italic relative shrink-0 text-[14px] text-[rgba(0,0,0,0.9)] text-center whitespace-nowrap">Learn more</p>

@@ -2,8 +2,8 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router";
 import { projectId, publicAnonKey } from "../../../utils/supabase/info";
 import type { Category } from "./use-products";
-import svgClose from "../../imports/svg-eq26t96ixf";
 import svgMobile from "../../imports/svg-s77hhl3g4q";
+import ModalCloseButton from "./modal-close-button";
 
 const API_BASE = `https://${projectId}.supabase.co/functions/v1/make-server-69c33f4c`;
 const AUTH_HEADER = { Authorization: `Bearer ${publicAnonKey}` };
@@ -517,19 +517,19 @@ export default function ProductSelectDialog({
         if (e.target === overlayRef.current) handleClose();
       }}
     >
-      <div className={`bg-white flex flex-col items-center max-w-[1312px] w-full overflow-hidden rounded-[32px] max-h-[90vh] transition-all duration-300 ease-in-out ${
+      <div className={`bg-white flex flex-col items-center max-w-[1312px] w-full overflow-hidden rounded-[32px] max-h-[90vh] transition-all duration-300 ease-in-out relative ${
         open && !animating
           ? "scale-100 opacity-100"
           : "scale-95 opacity-0"
       }`}
         onClick={(e) => e.stopPropagation()}
       >
+        <ModalCloseButton onClick={handleClose} />
         {/* Title */}
         <div className="shrink-0 w-full">
           <div className="flex flex-row justify-center w-full">
-            <div className="flex gap-[24px] items-start justify-center pb-[24px] pt-[32px] px-[32px] w-full">
-              <div className="opacity-40 shrink-0 size-[44px]" />
-              <div className="flex flex-[1_0_0] flex-col gap-[4px] items-start justify-center min-h-px min-w-px text-center">
+            <div className="flex items-start justify-center pb-[24px] pt-[32px] px-[32px] w-full">
+              <div className="flex flex-col gap-[4px] items-start justify-center text-center w-full">
                 <p className="font-['Inter:Bold',sans-serif] font-bold leading-[44px] text-[#101820] text-[32px] w-full">
                   Select a product for support
                 </p>
@@ -537,22 +537,6 @@ export default function ProductSelectDialog({
                   How-to guides and technical help
                 </p>
               </div>
-              <button
-                onClick={handleClose}
-                className="relative opacity-40 overflow-clip shrink-0 size-[40px] cursor-pointer hover:opacity-60 transition-opacity mt-[2px]"
-              >
-                <div className="absolute inset-[8.33%]">
-                  <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 33.3333 33.3333">
-                    <path
-                      clipRule="evenodd"
-                      d={svgClose.p24650100}
-                      fill="black"
-                      fillOpacity="0.54"
-                      fillRule="evenodd"
-                    />
-                  </svg>
-                </div>
-              </button>
             </div>
           </div>
         </div>

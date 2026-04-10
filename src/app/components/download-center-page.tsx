@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams } from "react-router";
 import svgClose from "../../imports/svg-eq26t96ixf";
 import { projectId, publicAnonKey } from "../../../utils/supabase/info";
+import ModalCloseButton from "./modal-close-button";
 import { useCategories, type Category } from "./use-products";
 import GlobalNav from "./global-nav";
 import MobileNav from "./mobile-nav";
@@ -353,22 +354,27 @@ function ViewSupportedDevicesDialog({ open, onClose, spuName }: { open: boolean;
       }}
     >
       <div
-        className={`bg-white flex flex-col items-center w-full md:w-[720px] gap-[12px] md:gap-0 overflow-hidden rounded-[32px] transition-all duration-300 ease-in-out ${
+        className={`bg-white flex flex-col items-center w-full md:w-[720px] gap-[12px] md:gap-0 overflow-hidden rounded-[32px] transition-all duration-300 ease-in-out relative ${
           open && !animating ? "scale-100 opacity-100" : "scale-95 opacity-0"
         }`}
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Desktop close button — absolute positioned */}
+        <ModalCloseButton
+          onClick={handleClose}
+          className="hidden md:flex absolute top-[32px] right-[32px] z-10 shrink-0 size-[40px] opacity-40 hover:opacity-70 transition-opacity cursor-pointer bg-transparent border-none p-0 items-center justify-center"
+        />
         {/* Title */}
         <div className="content-stretch flex gap-[24px] items-start justify-center px-[24px] py-[16px] md:p-[24px] relative shrink-0 w-full">
-          <div className="hidden md:block opacity-40 shrink-0 size-[40px]" />
           <div className="content-stretch flex flex-[1_0_0] flex-col gap-[4px] items-start justify-center min-h-px min-w-px relative self-stretch">
             <p className="font-['Inter:Semi_Bold',sans-serif] md:font-['Inter:Bold',sans-serif] font-semibold md:font-bold leading-[24px] md:leading-[34px] not-italic text-[18px] md:text-[24px] text-[#101820] md:text-center w-full">
               View Supported Devices
             </p>
           </div>
+          {/* Mobile close button — in-flow */}
           <button
             onClick={handleClose}
-            className="opacity-40 overflow-clip relative shrink-0 size-[32px] md:size-[40px] cursor-pointer hover:opacity-60 transition-opacity border-none bg-transparent"
+            className="md:hidden opacity-40 overflow-clip relative shrink-0 size-[32px] cursor-pointer hover:opacity-60 transition-opacity border-none bg-transparent"
           >
             <div className="absolute inset-[8.33%]">
               <svg className="block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 33.3333 33.3333">

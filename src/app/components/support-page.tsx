@@ -8,10 +8,6 @@ import Footer from "../../imports/Footer";
 import SplitText from "@/components/SplitText";
 import svgPaths from "../../imports/svg-zx55evvu35";
 import svgArrow from "../../imports/svg-umdpbk5rtp";
-import imgFrame2117132003 from "@/assets/placeholder-image-url";
-import imgFrame2117131978 from "@/assets/placeholder-image-url";
-import imgFrame2117131979 from "@/assets/placeholder-image-url";
-import imgFrame2117131980 from "@/assets/placeholder-image-url";
 import imgImage1 from "@/assets/placeholder-image-url";
 import imgImage2 from "@/assets/placeholder-image-url";
 import imgImage3 from "@/assets/placeholder-image-url";
@@ -256,22 +252,22 @@ function QuickLinksSectionWrapper() {
 
 const SAFETY_CARDS = [
   {
-    image: imgFrame2117132003,
+    image: "/images/do-not-use.jpg",
     title: "DO NOT use an open flame to test",
     description: "How to Tell If Your Smoke Alarm is Working？You can test your smoke alarm by pushing the Test/Hush button on the cover and holding it down for a minimum of 5 seconds.",
   },
   {
-    image: imgFrame2117131978,
+    image: "/images/safety-tips.jpg",
     title: "Fire and Carbon Monoxide Safety Tips",
     description: "Carbon monoxide alarms should be installed on every level of the home and in sleeping areas.",
   },
   {
-    image: imgFrame2117131979,
+    image: "/images/choice.jpg",
     title: "How to Choose a Heat Alarm",
     description: "Learn more about how to choose a heat alarm.",
   },
   {
-    image: imgFrame2117131980,
+    image: "/images/safety-tips1.jpg",
     title: "Fire and Carbon Monoxide Safety Tips",
     description: "Protect your home and family from the dangers of fire and carbon monoxide. Install smoke detectors and carbon monoxide detectors in your home.",
   },
