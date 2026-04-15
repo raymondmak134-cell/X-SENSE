@@ -4939,6 +4939,115 @@ function GuidesPanel({
   );
 }
 
+/* ========== 用户管理面板 ========== */
+
+interface RegisteredUser {
+  id: string;
+  email: string;
+  createdAt: string;
+}
+
+function UsersPanel({ showToast }: { showToast: (msg: string, type?: "success" | "error") => void }) {
+  const [users, setUsers] = useState<RegisteredUser[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [deletingEmail, setDeletingEmail] = useState<string | null>(null);
+
+  const loadUsers = useCallback(async () => {
+    try {
+      setLoading(true);
+      const data = await apiGet<{ users: RegisteredUser[] }>("/auth/users");
+      setUsers(data.users || []);
+    } catch (err: any) {
+      showToast(err.message || "Failed to load users", "error");
+    } finally {
+      setLoading(false);
+    }
+  }, [showToast]);
+
+  useEffect(() => {
+    loadUsers();
+  }, [loadUsers]);
+
+  const handleDelete = async (email: string) => {
+    setDeletingEmail(email);
+    try {
+      await fetch(`${API_BASE}/auth/users/${encodeURIComponent(email)}`, {
+        method: "DELETE",
+        headers: AUTH_HEADER,
+      });
+      setUsers((prev) => prev.filter((u) => u.email !== email));
+      showToast("User deleted successfully");
+    } catch (err: any) {
+      showToast(err.message || "Failed to delete user", "error");
+    } finally {
+      setDeletingEmail(null);
+    }
+  };
+
+  return (
+    <div className="p-8 flex-1">
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-[20px] font-semibold text-[#1a1a1a]">Registered Users</h2>
+        <button
+          onClick={loadUsers}
+          disabled={loading}
+          className="flex items-center gap-2 h-[36px] px-4 rounded-xl text-[13px] text-[#666] border border-[#e0e0e0] hover:bg-[#f5f5f5] transition-colors cursor-pointer disabled:opacity-60"
+        >
+          <RefreshCw className={`size-3.5 ${loading ? "animate-spin" : ""}`} />
+          Refresh
+        </button>
+      </div>
+
+      <div className="bg-white rounded-2xl border border-[#eee] overflow-hidden">
+        <div className="flex items-center gap-4 px-6 py-3 border-b border-[#f0f0f0] bg-[#fafafa] text-[12px] text-[#aaa]">
+          <div className="flex-1">Email</div>
+          <div className="shrink-0 w-[180px]">Registered At</div>
+          <div className="shrink-0 w-[80px] text-right">Actions</div>
+        </div>
+
+        {loading ? (
+          <div className="py-16 flex flex-col items-center text-[#ccc]">
+            <Loader2 className="size-8 animate-spin mb-3 text-[#ba0020]" />
+            <p className="text-[14px] text-[#999]">Loading users...</p>
+          </div>
+        ) : users.length > 0 ? (
+          users.map((user) => (
+            <div key={user.email} className="flex items-center gap-4 px-6 py-4 border-b border-[#f5f5f5] hover:bg-[#fafafa] transition-colors">
+              <div className="flex-1 text-[14px] text-[#333] truncate">{user.email}</div>
+              <div className="shrink-0 w-[180px] text-[13px] text-[#999]">
+                {new Date(user.createdAt).toLocaleString()}
+              </div>
+              <div className="shrink-0 w-[80px] flex justify-end">
+                <button
+                  onClick={() => handleDelete(user.email)}
+                  disabled={deletingEmail === user.email}
+                  className="flex items-center gap-1.5 h-[32px] px-3 rounded-lg text-[12px] text-[#ba0020] hover:bg-[#fef2f2] transition-colors cursor-pointer disabled:opacity-60 border-none bg-transparent"
+                >
+                  {deletingEmail === user.email ? (
+                    <Loader2 className="size-3.5 animate-spin" />
+                  ) : (
+                    <Trash2 className="size-3.5" />
+                  )}
+                  Delete
+                </button>
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="py-16 flex flex-col items-center text-[#ccc]">
+            <Package className="size-10 mb-3" />
+            <p className="text-[14px]">No registered users yet</p>
+          </div>
+        )}
+      </div>
+
+      <p className="text-[12px] text-[#aaa] mt-4">
+        Total: {users.length} user{users.length !== 1 ? "s" : ""}
+      </p>
+    </div>
+  );
+}
+
 /* ========== 管理后台主体 ========== */
 
 function AdminDashboard({ onLogout }: { onLogout: () => void }) {
@@ -4955,6 +5064,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const isSpuSection = subTab === "spus" && !isManageCategories && !isSupportSection;
   const isProductCardSection = subTab === "product-cards" && !isManageCategories && !isSupportSection;
   const isGuidesSection = selectedCategoryId === "__guides__";
+  const isUsersSection = selectedCategoryId === "__users__";
 
   const [products, setProducts] = useState<Product[]>([]);
   const [allSpus, setAllSpus] = useState<Spu[]>([]);
@@ -5414,6 +5524,24 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
           {/* 分隔线 */}
           <div className="h-px bg-[#f0f0f0] my-2" />
 
+          {/* ── 用户管理入口 ── */}
+          <button
+            onClick={() => {
+              setSelectedCategoryId("__users__");
+              setShowForm(false);
+              setEditingProduct(null);
+              setSearch("");
+            }}
+            className={`flex items-center gap-2.5 w-full px-3 py-2.5 rounded-xl text-[14px] transition-colors cursor-pointer ${
+              isUsersSection
+                ? "bg-[#fef2f2] text-[#ba0020]"
+                : "text-[#555] hover:bg-[#f5f5f5]"
+            }`}
+          >
+            <ClipboardList className="size-4 shrink-0" />
+            <span className="flex-1 text-left">Registered Users</span>
+          </button>
+
           {/* ── 分类管理入口 ── */}
           <button
             onClick={() => {
@@ -5458,7 +5586,12 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
         {/* 顶部面包屑 */}
         <div className="h-[56px] bg-white border-b border-[#eee] flex items-center px-8 sticky top-0 z-10 shrink-0">
           <div className="flex items-center gap-2 text-[14px]">
-            {isManageCategories ? (
+            {isUsersSection ? (
+              <>
+                <ClipboardList className="size-4 text-[#ba0020]" />
+                <span className="text-[#1a1a1a]">Registered Users</span>
+              </>
+            ) : isManageCategories ? (
               <>
                 <Settings className="size-4 text-[#ba0020]" />
                 <span className="text-[#1a1a1a]">Manage Categories</span>
@@ -5492,7 +5625,9 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
         {/* 主内容 */}
         <div className="flex-1 p-8 min-w-0">
-          {isManageCategories ? (
+          {isUsersSection ? (
+            <UsersPanel showToast={showToast} />
+          ) : isManageCategories ? (
             <CategoryPanel categories={allCategories} onUpdate={loadProducts} showToast={showToast} />
           ) : isGuidesSection ? (
             <GuidesPanel

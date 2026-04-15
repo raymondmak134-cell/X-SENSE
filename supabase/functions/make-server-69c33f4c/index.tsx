@@ -740,4 +740,162 @@ app.delete("/make-server-69c33f4c/guides/:id", async (c) => {
   }
 });
 
+// ============ Auth (User Registration & Login) ============
+
+const USER_PREFIX = "user:";
+
+async function hashPassword(password: string, salt: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(salt + password);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+function generateSalt(): string {
+  const arr = new Uint8Array(16);
+  crypto.getRandomValues(arr);
+  return Array.from(arr)
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+// POST register
+app.post("/make-server-69c33f4c/auth/register", async (c) => {
+  try {
+    const { email, password } = await c.req.json();
+    if (!email || !password) {
+      return c.json({ error: "Email and password are required" }, 400);
+    }
+    const normalizedEmail = email.trim().toLowerCase();
+    const existing = await kv.get(`${USER_PREFIX}${normalizedEmail}`);
+    if (existing) {
+      return c.json({ error: "An account with this email already exists" }, 409);
+    }
+    const salt = generateSalt();
+    const passwordHash = await hashPassword(password, salt);
+    const user = {
+      id: Date.now().toString(),
+      email: normalizedEmail,
+      salt,
+      passwordHash,
+      createdAt: new Date().toISOString(),
+    };
+    await kv.set(`${USER_PREFIX}${normalizedEmail}`, user);
+    return c.json({
+      user: { id: user.id, email: user.email, createdAt: user.createdAt },
+    });
+  } catch (err) {
+    console.log(`Error registering user: ${err}`);
+    return c.json({ error: `Registration failed: ${err}` }, 500);
+  }
+});
+
+// POST login
+app.post("/make-server-69c33f4c/auth/login", async (c) => {
+  try {
+    const { email, password } = await c.req.json();
+    if (!email || !password) {
+      return c.json({ error: "Email and password are required" }, 400);
+    }
+    const normalizedEmail = email.trim().toLowerCase();
+    const user = await kv.get(`${USER_PREFIX}${normalizedEmail}`);
+    if (!user) {
+      return c.json({ error: "Invalid email or password" }, 401);
+    }
+    const passwordHash = await hashPassword(password, user.salt);
+    if (passwordHash !== user.passwordHash) {
+      return c.json({ error: "Invalid email or password" }, 401);
+    }
+    return c.json({
+      user: { id: user.id, email: user.email, createdAt: user.createdAt },
+    });
+  } catch (err) {
+    console.log(`Error logging in: ${err}`);
+    return c.json({ error: `Login failed: ${err}` }, 500);
+  }
+});
+
+// GET all users (admin)
+app.get("/make-server-69c33f4c/auth/users", async (c) => {
+  try {
+    const users = await kv.getByPrefix(USER_PREFIX);
+    const safeUsers = (users || []).map((u: any) => ({
+      id: u.id,
+      email: u.email,
+      createdAt: u.createdAt,
+    }));
+    return c.json({ users: safeUsers });
+  } catch (err) {
+    console.log(`Error fetching users: ${err}`);
+    return c.json({ error: `Error fetching users: ${err}` }, 500);
+  }
+});
+
+// DELETE a user (admin)
+app.delete("/make-server-69c33f4c/auth/users/:email", async (c) => {
+  try {
+    const email = decodeURIComponent(c.req.param("email"));
+    await kv.del(`${USER_PREFIX}${email}`);
+    return c.json({ success: true });
+  } catch (err) {
+    console.log(`Error deleting user: ${err}`);
+    return c.json({ error: `Error deleting user: ${err}` }, 500);
+  }
+});
+
+// ============ Profile CRUD ============
+
+const PROFILE_PREFIX = "profile:";
+
+app.get("/make-server-69c33f4c/profile/:id", async (c) => {
+  try {
+    const id = c.req.param("id");
+    const data = await kv.get(`${PROFILE_PREFIX}${id}`);
+    return c.json({ profile: data || null });
+  } catch (err) {
+    console.log(`Error getting profile: ${err}`);
+    return c.json({ error: `Error getting profile: ${err}` }, 500);
+  }
+});
+
+app.post("/make-server-69c33f4c/profile/:id", async (c) => {
+  try {
+    const id = c.req.param("id");
+    const data = await c.req.json();
+    await kv.set(`${PROFILE_PREFIX}${id}`, data);
+    return c.json({ profile: data });
+  } catch (err) {
+    console.log(`Error saving profile: ${err}`);
+    return c.json({ error: `Error saving profile: ${err}` }, 500);
+  }
+});
+
+// ============ Address CRUD ============
+
+const ADDRESS_PREFIX = "address:";
+
+app.get("/make-server-69c33f4c/address/:id", async (c) => {
+  try {
+    const id = c.req.param("id");
+    const data = await kv.get(`${ADDRESS_PREFIX}${id}`);
+    return c.json({ address: data || null });
+  } catch (err) {
+    console.log(`Error getting address: ${err}`);
+    return c.json({ error: `Error getting address: ${err}` }, 500);
+  }
+});
+
+app.post("/make-server-69c33f4c/address/:id", async (c) => {
+  try {
+    const id = c.req.param("id");
+    const data = await c.req.json();
+    await kv.set(`${ADDRESS_PREFIX}${id}`, data);
+    return c.json({ address: data });
+  } catch (err) {
+    console.log(`Error saving address: ${err}`);
+    return c.json({ error: `Error saving address: ${err}` }, 500);
+  }
+});
+
 Deno.serve(app.fetch);

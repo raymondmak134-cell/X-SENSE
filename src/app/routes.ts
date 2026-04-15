@@ -6,6 +6,7 @@ import CoAlarmsPage from "./components/co-alarms-page";
 import SpuDetailPage from "./components/spu-detail-page";
 import DownloadCenterPage from "./components/download-center-page";
 import AccountPage from "./components/account-page";
+import AuthPage from "./components/auth-page";
 import ScrollToTopLayout from "./components/scroll-to-top-layout";
 
 export const router = createBrowserRouter([
@@ -18,6 +19,7 @@ export const router = createBrowserRouter([
       { path: "/support/product/:spuId", Component: SpuDetailPage },
       { path: "/support/download-center", Component: DownloadCenterPage },
       { path: "/account", Component: AccountPage },
+      { path: "/login", Component: AuthPage },
       { path: "/admin", Component: AdminPage },
       { path: "*", Component: HomePage },
     ],

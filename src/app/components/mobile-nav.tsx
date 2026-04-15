@@ -4,6 +4,7 @@ import { motion } from "motion/react";
 import svgPaths from "../../imports/svg-5ypi4qa4uc";
 import menuSvg from "../../imports/svg-dhtqovvq16";
 import { useCategories } from "./use-products";
+import { getAuthUser } from "../hooks/use-auth";
 
 export default function MobileNav() {
   const navigate = useNavigate();
@@ -272,7 +273,7 @@ export default function MobileNav() {
           {/* User icon */}
           <motion.div
             className="overflow-clip relative shrink-0 size-[24px] cursor-pointer"
-            onClick={() => navigate("/account")}
+            onClick={() => navigate(getAuthUser() ? "/account" : "/login")}
             onDoubleClick={() => navigate("/admin")}
             initial={false}
             animate={{ opacity: menuOpen ? 0 : 1 }}
@@ -417,7 +418,7 @@ export default function MobileNav() {
                   {/* Account */}
                   <div
                     className="content-stretch flex gap-[8px] items-center py-[24px] relative shrink-0 w-full cursor-pointer"
-                    onClick={() => handleNavigate("/account")}
+                    onClick={() => handleNavigate(getAuthUser() ? "/account" : "/login")}
                   >
                     <div className="overflow-clip relative shrink-0 size-[24px]">
                       <div className="absolute inset-[12.5%_16.67%]">
