@@ -272,6 +272,7 @@ export default function MobileNav() {
           {/* User icon */}
           <motion.div
             className="overflow-clip relative shrink-0 size-[24px] cursor-pointer"
+            onClick={() => navigate("/account")}
             onDoubleClick={() => navigate("/admin")}
             initial={false}
             animate={{ opacity: menuOpen ? 0 : 1 }}
@@ -416,7 +417,7 @@ export default function MobileNav() {
                   {/* Account */}
                   <div
                     className="content-stretch flex gap-[8px] items-center py-[24px] relative shrink-0 w-full cursor-pointer"
-                    onClick={() => handleNavigate("/admin")}
+                    onClick={() => handleNavigate("/account")}
                   >
                     <div className="overflow-clip relative shrink-0 size-[24px]">
                       <div className="absolute inset-[12.5%_16.67%]">
@@ -441,7 +442,7 @@ export default function MobileNav() {
                     </div>
                     <div className="content-stretch flex flex-col items-start relative shrink-0">
                       <div className="flex flex-col font-['Inter:Semi_Bold',sans-serif] font-semibold justify-center leading-[0] not-italic relative shrink-0 text-[#333] text-[16px] whitespace-nowrap">
-                        <p className="leading-[22px]">Accouont</p>
+                        <p className="leading-[22px]">Account</p>
                       </div>
                     </div>
                   </div>

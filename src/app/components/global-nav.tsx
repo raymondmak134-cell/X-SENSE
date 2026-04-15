@@ -161,7 +161,7 @@ function IconGroup() {
           </svg>
         </div>
       </div>
-      <div className="overflow-clip relative shrink-0 size-[24px] cursor-pointer" onDoubleClick={() => navigate("/admin")}>
+      <div className="overflow-clip relative shrink-0 size-[24px] cursor-pointer" onClick={() => navigate("/account")} onDoubleClick={() => navigate("/admin")}>
         <div className="-translate-x-1/2 absolute aspect-[14.665620803833008/16] bottom-[8.33%] left-1/2 top-[8.33%]">
           <svg className="absolute block size-full" fill="none" preserveAspectRatio="none" viewBox="0 0 18 20"><g><path></path><path></path></g><g>
               <path d={svgPaths.p2a0cae80} fill="var(--fill-0, black)" fillOpacity="0.9" />
