@@ -83,13 +83,33 @@ export function useAuth() {
     }
   }, []);
 
+  const forgotPassword = useCallback(async (email: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`${API_BASE}/auth/forgot-password`, {
+        method: "POST",
+        headers: { ...AUTH_HEADER, "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to send reset email");
+      return data;
+    } catch (err: any) {
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   const logout = useCallback(() => {
     storeUser(null);
     setUser(null);
     setError(null);
   }, []);
 
-  return { user, loading, error, login, register, logout, isLoggedIn: !!user };
+  return { user, loading, error, login, register, forgotPassword, logout, isLoggedIn: !!user };
 }
 
 export function getAuthUser(): AuthUser | null {

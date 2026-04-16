@@ -149,10 +149,12 @@ interface SharedFormState {
 function LoginForm({
   onSuccess,
   onToast,
+  onForgotPassword,
   shared,
 }: {
   onSuccess: () => void;
   onToast: (msg: string) => void;
+  onForgotPassword: () => void;
   shared: SharedFormState;
 }) {
   const { login, loading } = useAuth();
@@ -245,7 +247,10 @@ function LoginForm({
         href="#"
         className="font-['Inter:Semi_Bold',sans-serif] font-semibold text-[14px] leading-[20px] no-underline"
         style={{ color: LINK_RED }}
-        onClick={(e) => e.preventDefault()}
+        onClick={(e) => {
+          e.preventDefault();
+          onForgotPassword();
+        }}
       >
         Forgot password?
       </a>
@@ -279,6 +284,181 @@ function LoginForm({
       >
         {loading && <Spinner />}
         Log in
+      </button>
+    </div>
+  );
+}
+
+/* ==================== Forgot Password Form ==================== */
+
+function BackArrow() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+      <path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function ForgotPasswordForm({
+  onBack,
+  onToast,
+  email: initialEmail,
+  isMobile,
+}: {
+  onBack: () => void;
+  onToast: (msg: string) => void;
+  email: string;
+  isMobile?: boolean;
+}) {
+  const { forgotPassword, loading } = useAuth();
+  const [email, setEmail] = useState(initialEmail);
+  const [emailError, setEmailError] = useState("");
+  const [serverError, setServerError] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+
+  const validateEmail = (value: string) => {
+    if (!value.trim()) {
+      setEmailError("Please enter your email address");
+      return false;
+    }
+    if (!EMAIL_REGEX.test(value.trim())) {
+      setEmailError("Please enter a valid email address");
+      return false;
+    }
+    setEmailError("");
+    return true;
+  };
+
+  const handleSubmit = async () => {
+    setServerError("");
+    const emailValid = validateEmail(email);
+    if (!emailValid) return;
+    try {
+      await forgotPassword(email.trim());
+      setSubmitted(true);
+    } catch (err: any) {
+      const msg = err.message || "Failed to send reset email";
+      if (msg.toLowerCase().includes("not registered") || msg.toLowerCase().includes("not found") || msg.toLowerCase().includes("no user")) {
+        onToast("This email is not registered. Please sign up first.");
+      } else {
+        setServerError(msg);
+      }
+    }
+  };
+
+  if (submitted) {
+    const maskedEmail = email.replace(
+      /(.{2})(.*)(@.*)/,
+      (_m, a, b, c) => a + b.replace(/./g, "*") + c,
+    );
+    return (
+      <div
+        className={
+          isMobile
+            ? "w-full flex flex-col items-center px-[24px] pt-[24px] pb-[32px] rounded-[20px]"
+            : "w-[480px] max-w-[calc(100vw-48px)] flex flex-col items-center px-[48px] pt-[32px] pb-[48px] rounded-[24px]"
+        }
+        style={{
+          backgroundColor: "rgba(255,255,255,0.9)",
+          backdropFilter: "blur(11px)",
+          WebkitBackdropFilter: "blur(11px)",
+        }}
+      >
+        <SuccessIcon />
+        <p
+          className={`font-['Inter:Bold',sans-serif] font-bold ${
+            isMobile ? "text-[20px] leading-[28px]" : "text-[24px] leading-[34px]"
+          } text-[rgba(0,0,0,0.9)] tracking-[0.24px] text-center mt-[24px]`}
+        >
+          Reset Your Password
+        </p>
+        <p className="font-['Inter:Regular',sans-serif] text-[14px] leading-[22px] text-[rgba(0,0,0,0.54)] text-center mt-[24px] w-full">
+          We've sent a password reset email to {maskedEmail}. Please check your inbox and follow the instructions to reset your password.
+        </p>
+        <button
+          onClick={onBack}
+          className={`w-full ${
+            isMobile ? "min-h-[48px]" : "min-h-[56px]"
+          } rounded-[50px] text-white font-['Inter:Semi_Bold',sans-serif] font-semibold text-[16px] leading-[22px] flex items-center justify-center cursor-pointer transition-colors border-none mt-[24px] px-[24px] py-[16px]`}
+          style={{ backgroundColor: BRAND_RED }}
+          onMouseEnter={(e) =>
+            (e.currentTarget.style.backgroundColor = "#9a001a")
+          }
+          onMouseLeave={(e) =>
+            (e.currentTarget.style.backgroundColor = BRAND_RED)
+          }
+        >
+          Back
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={
+        isMobile
+          ? "w-full flex flex-col gap-[20px] items-start px-[24px] pt-[24px] pb-[32px] rounded-[20px]"
+          : "w-[480px] max-w-[calc(100vw-48px)] flex flex-col gap-[24px] items-start px-[48px] pt-[32px] pb-[48px] rounded-[24px]"
+      }
+      style={{
+        backgroundColor: "rgba(255,255,255,0.9)",
+        backdropFilter: "blur(11px)",
+        WebkitBackdropFilter: "blur(11px)",
+      }}
+    >
+      <button
+        onClick={onBack}
+        className="flex items-center gap-[4px] bg-transparent border-none cursor-pointer p-0 font-['Inter:Semi_Bold',sans-serif] font-semibold text-[14px] leading-[20px] text-[rgba(0,0,0,0.9)] transition-colors self-start"
+      >
+        <BackArrow />
+        Back
+      </button>
+
+      <Input
+        value={email}
+        onChange={(e) => {
+          setEmail(e.target.value);
+          if (emailError) validateEmail(e.target.value);
+          setServerError("");
+        }}
+        onBlur={() => email && validateEmail(email)}
+        placeholder="Enter email"
+        status={emailError ? "error" : undefined}
+        style={{ height: 52, borderRadius: INPUT_RADIUS }}
+      />
+      {emailError && (
+        <p className="text-[#ff4d4f] text-[12px] leading-[18px] -mt-[18px] font-['Inter:Regular',sans-serif]">
+          {emailError}
+        </p>
+      )}
+
+      {serverError && (
+        <p className="text-[#ff4d4f] text-[13px] leading-[18px] -mt-[12px] font-['Inter:Regular',sans-serif]">
+          {serverError}
+        </p>
+      )}
+
+      <p className="font-['Inter:Regular',sans-serif] text-[14px] leading-[22px] text-[rgba(0,0,0,0.54)] m-0">
+        We'll send you an email with a link to reset your password.
+      </p>
+
+      <button
+        onClick={handleSubmit}
+        disabled={loading}
+        className={`w-full ${
+          isMobile ? "min-h-[48px]" : "min-h-[56px]"
+        } rounded-[50px] text-white font-['Inter:Semi_Bold',sans-serif] font-semibold text-[16px] leading-[22px] flex items-center justify-center gap-[8px] cursor-pointer transition-colors disabled:opacity-60 disabled:cursor-not-allowed border-none px-[24px] py-[16px]`}
+        style={{ backgroundColor: BRAND_RED }}
+        onMouseEnter={(e) =>
+          !loading && (e.currentTarget.style.backgroundColor = "#9a001a")
+        }
+        onMouseLeave={(e) =>
+          !loading && (e.currentTarget.style.backgroundColor = BRAND_RED)
+        }
+      >
+        {loading && <Spinner />}
+        Send Reset Link
       </button>
     </div>
   );
@@ -498,6 +678,7 @@ export default function AuthPage() {
   const [activeTab, setActiveTab] = useState<"login" | "signup">("login");
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const [registeredEmail, setRegisteredEmail] = useState<string | null>(null);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
   const [email, setEmail] = useState("");
@@ -533,6 +714,13 @@ export default function AuthPage() {
 
   const formPanel = registeredEmail ? (
     <RegistrationSuccess email={registeredEmail} isMobile={isMobile} />
+  ) : showForgotPassword ? (
+    <ForgotPasswordForm
+      onBack={() => setShowForgotPassword(false)}
+      onToast={setToastMsg}
+      email={email}
+      isMobile={isMobile}
+    />
   ) : (
     <div
       className={
@@ -547,6 +735,7 @@ export default function AuthPage() {
         <LoginForm
           onSuccess={() => navigate("/account")}
           onToast={setToastMsg}
+          onForgotPassword={() => setShowForgotPassword(true)}
           shared={shared}
         />
       ) : (

@@ -6,6 +6,7 @@ import dayjs from "dayjs";
 import type { DatePickerProps } from "antd";
 import { State, City } from "country-state-city";
 import GlobalNav from "./global-nav";
+import MobileNav from "./mobile-nav";
 import Footer from "../../imports/Footer";
 import { projectId, publicAnonKey } from "../../../utils/supabase/info";
 import { useAuth } from "../hooks/use-auth";
@@ -134,7 +135,7 @@ const MOCK_ORDERS: Order[] = [
       {
         name: "XC01-M Interconnected Smart Carbon Monoxide Alarm",
         image: "/images/order-XC01-M.jpg",
-        package: "5*Alarm+1*SBS50 Base Station(XC07-MR51)",
+        package: "5-Pack+BaseStation",
         originalPrice: "$199.00",
         price: "$170.00",
         quantity: 1,
@@ -260,7 +261,7 @@ function SavedToast({ visible, onDone }: { visible: boolean; onDone: () => void 
 
 type SaveState = "idle" | "saving" | "saved";
 
-function SaveButton({ onClick }: { onClick: () => Promise<void> }) {
+function SaveButton({ onClick, fullWidth }: { onClick: () => Promise<void>; fullWidth?: boolean }) {
   const [state, setState] = useState<SaveState>("idle");
   const [showToast, setShowToast] = useState(false);
 
@@ -286,7 +287,7 @@ function SaveButton({ onClick }: { onClick: () => Promise<void> }) {
       <button
         onClick={handleClick}
         disabled={state !== "idle"}
-        className="content-stretch flex gap-[8px] items-center justify-center px-[40px] py-[16px] relative rounded-[53px] shrink-0 bg-[#BA0020] cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed hover:bg-[#9a001a] transition-colors w-[180px] h-[56px] border-none"
+        className={`content-stretch flex gap-[8px] items-center justify-center px-[40px] py-[16px] relative rounded-[53px] shrink-0 bg-[#BA0020] cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed hover:bg-[#9a001a] transition-colors border-none ${fullWidth ? "w-full h-[48px]" : "w-[180px] h-[56px]"}`}
       >
         {state === "saving" && (
           <span className="text-white">
@@ -364,7 +365,7 @@ function ProfileSkeleton() {
   );
 }
 
-function MyProfileContent({ profileId }: { profileId: string }) {
+function MyProfileContent({ profileId, isMobile }: { profileId: string; isMobile?: boolean }) {
   const { user } = useAuth();
   const [profile, setProfile] = useState<ProfileData>({ ...DEFAULT_PROFILE, email: user?.email || "" });
   const [loading, setLoading] = useState(true);
@@ -403,26 +404,33 @@ function MyProfileContent({ profileId }: { profileId: string }) {
   if (loading) {
     return (
       <div className="content-stretch flex flex-[1_0_0] flex-col gap-[16px] items-start min-h-px min-w-px relative">
-        <p className="font-['Inter:Bold',sans-serif] font-bold leading-[34px] not-italic relative shrink-0 text-[24px] text-[rgba(0,0,0,0.9)] tracking-[0.24px] w-full">
-          My Profile
-        </p>
+        {!isMobile && (
+          <p className="font-['Inter:Bold',sans-serif] font-bold leading-[34px] not-italic relative shrink-0 text-[24px] text-[rgba(0,0,0,0.9)] tracking-[0.24px] w-full">
+            My Profile
+          </p>
+        )}
         <ProfileSkeleton />
       </div>
     );
   }
 
+  const fieldWidth = isMobile ? "w-full" : "w-[calc(50%-12px)]";
+  const labelClass = "font-['Inter:Medium',sans-serif] font-medium leading-[24px] not-italic text-[14px] text-[rgba(0,0,0,0.9)] tracking-[0.14px]";
+
   return (
     <ConfigProvider theme={ANT_THEME}>
-    <div className="content-stretch flex flex-[1_0_0] flex-col gap-[16px] items-start min-h-px min-w-px relative">
-      <p className="font-['Inter:Bold',sans-serif] font-bold leading-[34px] not-italic relative shrink-0 text-[24px] text-[rgba(0,0,0,0.9)] tracking-[0.24px] w-full">
-        My Profile
-      </p>
+    <div className={`content-stretch flex flex-col gap-[16px] items-start min-h-px min-w-px relative ${isMobile ? "w-full" : "flex-[1_0_0]"}`}>
+      {!isMobile && (
+        <p className="font-['Inter:Bold',sans-serif] font-bold leading-[34px] not-italic relative shrink-0 text-[24px] text-[rgba(0,0,0,0.9)] tracking-[0.24px] w-full">
+          My Profile
+        </p>
+      )}
 
-      <div className="content-stretch flex flex-col gap-[32px] items-start relative shrink-0 w-full bg-[#f6f6f6] rounded-[16px] p-[24px]">
-        <div className="content-stretch flex flex-wrap gap-x-[24px] gap-y-[24px] items-start relative w-full">
+      <div className={`content-stretch flex flex-col items-start relative shrink-0 w-full bg-[#f6f6f6] rounded-[16px] ${isMobile ? "p-[16px] gap-[24px]" : "p-[24px] gap-[32px]"}`}>
+        <div className={`content-stretch flex items-start relative w-full ${isMobile ? "flex-col gap-[24px]" : "flex-wrap gap-x-[24px] gap-y-[24px]"}`}>
           {/* Email (readonly) */}
-          <div className="flex flex-col gap-[4px] w-[calc(50%-12px)]">
-            <p className="font-['Inter:Medium',sans-serif] font-medium leading-[24px] not-italic text-[14px] text-[rgba(0,0,0,0.9)] tracking-[0.14px]">
+          <div className={`flex flex-col gap-[4px] ${fieldWidth}`}>
+            <p className={labelClass}>
               Email
             </p>
             <Input
@@ -432,12 +440,11 @@ function MyProfileContent({ profileId }: { profileId: string }) {
             />
           </div>
 
-          {/* Placeholder for right column of email row */}
-          <div className="w-[calc(50%-12px)]" />
+          {!isMobile && <div className="w-[calc(50%-12px)]" />}
 
           {/* First Name */}
-          <div className="flex flex-col gap-[4px] w-[calc(50%-12px)]">
-            <p className="font-['Inter:Medium',sans-serif] font-medium leading-[24px] not-italic text-[14px] text-[rgba(0,0,0,0.9)] tracking-[0.14px]">
+          <div className={`flex flex-col gap-[4px] ${fieldWidth}`}>
+            <p className={labelClass}>
               First Name<span className="text-[#ba0020]">*</span>
             </p>
             <Input
@@ -449,8 +456,8 @@ function MyProfileContent({ profileId }: { profileId: string }) {
           </div>
 
           {/* Last Name */}
-          <div className="flex flex-col gap-[4px] w-[calc(50%-12px)]">
-            <p className="font-['Inter:Medium',sans-serif] font-medium leading-[24px] not-italic text-[14px] text-[rgba(0,0,0,0.9)] tracking-[0.14px]">
+          <div className={`flex flex-col gap-[4px] ${fieldWidth}`}>
+            <p className={labelClass}>
               Last Name<span className="text-[#ba0020]">*</span>
             </p>
             <Input
@@ -462,8 +469,8 @@ function MyProfileContent({ profileId }: { profileId: string }) {
           </div>
 
           {/* Date of Birth */}
-          <div className="flex flex-col gap-[4px] w-[calc(50%-12px)]">
-            <p className="font-['Inter:Medium',sans-serif] font-medium leading-[24px] not-italic text-[14px] text-[rgba(0,0,0,0.9)] tracking-[0.14px]">
+          <div className={`flex flex-col gap-[4px] ${fieldWidth}`}>
+            <p className={labelClass}>
               Date of Birth
             </p>
             <DatePicker
@@ -479,8 +486,8 @@ function MyProfileContent({ profileId }: { profileId: string }) {
           </div>
 
           {/* Phone Number */}
-          <div className="flex flex-col gap-[4px] w-[calc(50%-12px)]">
-            <p className="font-['Inter:Medium',sans-serif] font-medium leading-[24px] not-italic text-[14px] text-[rgba(0,0,0,0.9)] tracking-[0.14px]">
+          <div className={`flex flex-col gap-[4px] ${fieldWidth}`}>
+            <p className={labelClass}>
               Phone Number
             </p>
             <Input
@@ -492,8 +499,8 @@ function MyProfileContent({ profileId }: { profileId: string }) {
           </div>
 
           {/* Country / Region */}
-          <div className="flex flex-col gap-[4px] w-[calc(50%-12px)]">
-            <p className="font-['Inter:Medium',sans-serif] font-medium leading-[24px] not-italic text-[14px] text-[rgba(0,0,0,0.9)] tracking-[0.14px]">
+          <div className={`flex flex-col gap-[4px] ${fieldWidth}`}>
+            <p className={labelClass}>
               Country / Region
             </p>
             <Select
@@ -507,7 +514,7 @@ function MyProfileContent({ profileId }: { profileId: string }) {
           </div>
         </div>
 
-        <SaveButton onClick={handleSave} />
+        <SaveButton onClick={handleSave} fullWidth={isMobile} />
       </div>
     </div>
     </ConfigProvider>
@@ -531,7 +538,7 @@ function AddressSkeleton() {
   );
 }
 
-function ShippingAddressContent({ profileId }: { profileId: string }) {
+function ShippingAddressContent({ profileId, isMobile }: { profileId: string; isMobile?: boolean }) {
   const [address, setAddress] = useState<AddressData>(DEFAULT_ADDRESS);
   const [loading, setLoading] = useState(true);
   const [cityOptions, setCityOptions] = useState<{ value: string; label: string }[]>([]);
@@ -579,26 +586,34 @@ function ShippingAddressContent({ profileId }: { profileId: string }) {
   if (loading) {
     return (
       <div className="content-stretch flex flex-[1_0_0] flex-col gap-[16px] items-start min-h-px min-w-px relative">
-        <p className="font-['Inter:Bold',sans-serif] font-bold leading-[34px] not-italic relative shrink-0 text-[24px] text-[rgba(0,0,0,0.9)] tracking-[0.24px] w-full">
-          Shipping Address
-        </p>
+        {!isMobile && (
+          <p className="font-['Inter:Bold',sans-serif] font-bold leading-[34px] not-italic relative shrink-0 text-[24px] text-[rgba(0,0,0,0.9)] tracking-[0.24px] w-full">
+            Shipping Address
+          </p>
+        )}
         <AddressSkeleton />
       </div>
     );
   }
 
+  const fieldWidth = isMobile ? "w-full" : "w-[calc(50%-12px)]";
+  const fieldWidthThird = isMobile ? "w-full" : "w-[calc(33.333%-16px)]";
+  const labelClass = "font-['Inter:Medium',sans-serif] font-medium leading-[24px] not-italic text-[14px] text-[rgba(0,0,0,0.9)] tracking-[0.14px]";
+
   return (
     <ConfigProvider theme={ANT_THEME}>
-    <div className="content-stretch flex flex-[1_0_0] flex-col gap-[16px] items-start min-h-px min-w-px relative">
-      <p className="font-['Inter:Bold',sans-serif] font-bold leading-[34px] not-italic relative shrink-0 text-[24px] text-[rgba(0,0,0,0.9)] tracking-[0.24px] w-full">
-        Shipping Address
-      </p>
+    <div className={`content-stretch flex flex-col gap-[16px] items-start min-h-px min-w-px relative ${isMobile ? "w-full" : "flex-[1_0_0]"}`}>
+      {!isMobile && (
+        <p className="font-['Inter:Bold',sans-serif] font-bold leading-[34px] not-italic relative shrink-0 text-[24px] text-[rgba(0,0,0,0.9)] tracking-[0.24px] w-full">
+          Shipping Address
+        </p>
+      )}
 
-      <div className="content-stretch flex flex-col gap-[32px] items-start relative shrink-0 w-full bg-[#f6f6f6] rounded-[16px] p-[24px]">
-        <div className="content-stretch flex flex-wrap gap-x-[24px] gap-y-[24px] items-start relative w-full">
+      <div className={`content-stretch flex flex-col items-start relative shrink-0 w-full bg-[#f6f6f6] rounded-[16px] ${isMobile ? "p-[16px] gap-[24px]" : "p-[24px] gap-[32px]"}`}>
+        <div className={`content-stretch flex items-start relative w-full ${isMobile ? "flex-col gap-[24px]" : "flex-wrap gap-x-[24px] gap-y-[24px]"}`}>
           {/* Address */}
-          <div className="flex flex-col gap-[4px] w-[calc(50%-12px)]">
-            <p className="font-['Inter:Medium',sans-serif] font-medium leading-[24px] not-italic text-[14px] text-[rgba(0,0,0,0.9)] tracking-[0.14px]">
+          <div className={`flex flex-col gap-[4px] ${fieldWidth}`}>
+            <p className={labelClass}>
               Address<span className="text-[#ba0020]">*</span>
             </p>
             <Input
@@ -610,8 +625,8 @@ function ShippingAddressContent({ profileId }: { profileId: string }) {
           </div>
 
           {/* Apartment */}
-          <div className="flex flex-col gap-[4px] w-[calc(50%-12px)]">
-            <p className="font-['Inter:Medium',sans-serif] font-medium leading-[24px] not-italic text-[14px] text-[rgba(0,0,0,0.9)] tracking-[0.14px]">
+          <div className={`flex flex-col gap-[4px] ${fieldWidth}`}>
+            <p className={labelClass}>
               Apartment
             </p>
             <Input
@@ -623,8 +638,8 @@ function ShippingAddressContent({ profileId }: { profileId: string }) {
           </div>
 
           {/* City */}
-          <div className="flex flex-col gap-[4px] w-[calc(33.333%-16px)]">
-            <p className="font-['Inter:Medium',sans-serif] font-medium leading-[24px] not-italic text-[14px] text-[rgba(0,0,0,0.9)] tracking-[0.14px]">
+          <div className={`flex flex-col gap-[4px] ${fieldWidthThird}`}>
+            <p className={labelClass}>
               City
             </p>
             <Select
@@ -642,8 +657,8 @@ function ShippingAddressContent({ profileId }: { profileId: string }) {
           </div>
 
           {/* State */}
-          <div className="flex flex-col gap-[4px] w-[calc(33.333%-16px)]">
-            <p className="font-['Inter:Medium',sans-serif] font-medium leading-[24px] not-italic text-[14px] text-[rgba(0,0,0,0.9)] tracking-[0.14px]">
+          <div className={`flex flex-col gap-[4px] ${fieldWidthThird}`}>
+            <p className={labelClass}>
               State
             </p>
             <Select
@@ -661,8 +676,8 @@ function ShippingAddressContent({ profileId }: { profileId: string }) {
           </div>
 
           {/* ZIP code */}
-          <div className="flex flex-col gap-[4px] w-[calc(33.333%-16px)]">
-            <p className="font-['Inter:Medium',sans-serif] font-medium leading-[24px] not-italic text-[14px] text-[rgba(0,0,0,0.9)] tracking-[0.14px]">
+          <div className={`flex flex-col gap-[4px] ${fieldWidthThird}`}>
+            <p className={labelClass}>
               ZIP code
             </p>
             <Input
@@ -674,7 +689,7 @@ function ShippingAddressContent({ profileId }: { profileId: string }) {
           </div>
         </div>
 
-        <SaveButton onClick={handleSave} />
+        <SaveButton onClick={handleSave} fullWidth={isMobile} />
       </div>
     </div>
     </ConfigProvider>
@@ -728,7 +743,7 @@ function PasswordChangedToast({ visible, onDone }: { visible: boolean; onDone: (
 
 type ChangePasswordState = "idle" | "saving" | "saved";
 
-function ChangePasswordButton({ onClick }: { onClick: () => Promise<void> }) {
+function ChangePasswordButton({ onClick, fullWidth }: { onClick: () => Promise<void>; fullWidth?: boolean }) {
   const [state, setState] = useState<ChangePasswordState>("idle");
   const [showToast, setShowToast] = useState(false);
 
@@ -755,7 +770,7 @@ function ChangePasswordButton({ onClick }: { onClick: () => Promise<void> }) {
       <button
         onClick={handleClick}
         disabled={state !== "idle"}
-        className="content-stretch flex gap-[8px] items-center justify-center px-[40px] py-[16px] relative rounded-[53px] shrink-0 bg-[#BA0020] cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed hover:bg-[#9a001a] transition-colors h-[56px] border-none"
+        className={`content-stretch flex gap-[8px] items-center justify-center px-[40px] py-[16px] relative rounded-[53px] shrink-0 bg-[#BA0020] cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed hover:bg-[#9a001a] transition-colors border-none ${fullWidth ? "w-full h-[48px]" : "h-[56px]"}`}
       >
         {state === "saving" && (
           <span className="text-white">
@@ -792,7 +807,7 @@ function EyeIcon({ visible }: { visible: boolean }) {
 
 /* ==================== Manage Account ==================== */
 
-function ManageAccountContent({ email }: { email: string }) {
+function ManageAccountContent({ email, isMobile }: { email: string; isMobile?: boolean }) {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -859,18 +874,22 @@ function ManageAccountContent({ email }: { email: string }) {
     setConfirmPasswordError("");
   };
 
+  const labelClass = "font-['Inter:Medium',sans-serif] font-medium leading-[24px] not-italic text-[14px] text-[rgba(0,0,0,0.9)] tracking-[0.14px]";
+
   return (
     <ConfigProvider theme={ANT_THEME}>
-      <div className="content-stretch flex flex-[1_0_0] flex-col gap-[16px] items-start min-h-px min-w-px relative">
-        <p className="font-['Inter:Bold',sans-serif] font-bold leading-[34px] not-italic relative shrink-0 text-[24px] text-[rgba(0,0,0,0.9)] tracking-[0.24px] w-full">
-          Manage Account
-        </p>
+      <div className={`content-stretch flex flex-col gap-[16px] items-start min-h-px min-w-px relative ${isMobile ? "w-full" : "flex-[1_0_0]"}`}>
+        {!isMobile && (
+          <p className="font-['Inter:Bold',sans-serif] font-bold leading-[34px] not-italic relative shrink-0 text-[24px] text-[rgba(0,0,0,0.9)] tracking-[0.24px] w-full">
+            Manage Account
+          </p>
+        )}
 
-        <div className="content-stretch flex flex-col gap-[32px] items-start relative shrink-0 w-full bg-[#f6f6f6] rounded-[16px] p-[24px]">
-          <div className="content-stretch flex flex-col gap-[24px] items-start relative w-full max-w-[calc(50%-12px)]">
+        <div className={`content-stretch flex flex-col items-start relative shrink-0 w-full bg-[#f6f6f6] rounded-[16px] ${isMobile ? "p-[16px] gap-[24px]" : "p-[24px] gap-[32px]"}`}>
+          <div className={`content-stretch flex flex-col gap-[24px] items-start relative w-full ${isMobile ? "" : "max-w-[calc(50%-12px)]"}`}>
             {/* Email (readonly) */}
             <div className="flex flex-col gap-[4px] w-full">
-              <p className="font-['Inter:Medium',sans-serif] font-medium leading-[24px] not-italic text-[14px] text-[rgba(0,0,0,0.9)] tracking-[0.14px]">
+              <p className={labelClass}>
                 Email
               </p>
               <Input
@@ -882,7 +901,7 @@ function ManageAccountContent({ email }: { email: string }) {
 
             {/* Current Password */}
             <div className="flex flex-col gap-[4px] w-full">
-              <p className="font-['Inter:Medium',sans-serif] font-medium leading-[24px] not-italic text-[14px] text-[rgba(0,0,0,0.9)] tracking-[0.14px]">
+              <p className={labelClass}>
                 Current Password<span className="text-[#ba0020]">*</span>
               </p>
               <Input
@@ -908,7 +927,7 @@ function ManageAccountContent({ email }: { email: string }) {
 
             {/* New Password */}
             <div className="flex flex-col gap-[4px] w-full">
-              <p className="font-['Inter:Medium',sans-serif] font-medium leading-[24px] not-italic text-[14px] text-[rgba(0,0,0,0.9)] tracking-[0.14px]">
+              <p className={labelClass}>
                 New Password<span className="text-[#ba0020]">*</span>
               </p>
               <Input
@@ -934,7 +953,7 @@ function ManageAccountContent({ email }: { email: string }) {
 
             {/* Confirm New Password */}
             <div className="flex flex-col gap-[4px] w-full">
-              <p className="font-['Inter:Medium',sans-serif] font-medium leading-[24px] not-italic text-[14px] text-[rgba(0,0,0,0.9)] tracking-[0.14px]">
+              <p className={labelClass}>
                 Confirm New Password<span className="text-[#ba0020]">*</span>
               </p>
               <Input
@@ -959,7 +978,7 @@ function ManageAccountContent({ email }: { email: string }) {
             </div>
           </div>
 
-          <ChangePasswordButton onClick={handleChangePassword} />
+          <ChangePasswordButton onClick={handleChangePassword} fullWidth={isMobile} />
         </div>
       </div>
     </ConfigProvider>
@@ -1202,15 +1221,17 @@ function CouponTabBar({
   );
 }
 
-function CouponsContent() {
+function CouponsContent({ isMobile }: { isMobile?: boolean }) {
   const [activeTab, setActiveTab] = useState<CouponTab>("available");
   const filtered = MOCK_COUPONS.filter((c) => c.status === activeTab);
 
   return (
-    <div className="content-stretch flex flex-[1_0_0] flex-col gap-[16px] items-start min-h-px min-w-px relative">
-      <p className="font-['Inter:Bold',sans-serif] font-bold leading-[34px] not-italic relative shrink-0 text-[24px] text-[rgba(0,0,0,0.9)] tracking-[0.24px] w-full">
-        Coupons
-      </p>
+    <div className={`content-stretch flex flex-col gap-[16px] items-start min-h-px min-w-px relative ${isMobile ? "w-full" : "flex-[1_0_0]"}`}>
+      {!isMobile && (
+        <p className="font-['Inter:Bold',sans-serif] font-bold leading-[34px] not-italic relative shrink-0 text-[24px] text-[rgba(0,0,0,0.9)] tracking-[0.24px] w-full">
+          Coupons
+        </p>
+      )}
 
       <CouponTabBar activeTab={activeTab} onTabChange={setActiveTab} />
 
@@ -1379,17 +1400,23 @@ function MyOrdersContent() {
 
 /* ==================== Protect-Premium ==================== */
 
-function ProtectPremiumContent() {
-  return (
-    <div className="content-stretch flex flex-[1_0_0] flex-col gap-[16px] items-start min-h-px min-w-px relative">
-      <p className="font-['Inter:Bold',sans-serif] font-bold leading-[34px] not-italic relative shrink-0 text-[24px] text-[rgba(0,0,0,0.9)] tracking-[0.24px] w-full">
-        Protect-Premium
-      </p>
+function ProtectPremiumContent({ isMobile }: { isMobile?: boolean }) {
+  const cardClass = isMobile
+    ? "relative w-full h-[236px] rounded-[16px] overflow-hidden"
+    : "relative w-[400px] h-[267px] rounded-[16px] overflow-hidden shrink-0";
 
-      <div className="content-stretch flex gap-[32px] items-start relative w-full">
+  return (
+    <div className={`content-stretch flex flex-col gap-[16px] items-start min-h-px min-w-px relative ${isMobile ? "w-full" : "flex-[1_0_0]"}`}>
+      {!isMobile && (
+        <p className="font-['Inter:Bold',sans-serif] font-bold leading-[34px] not-italic relative shrink-0 text-[24px] text-[rgba(0,0,0,0.9)] tracking-[0.24px] w-full">
+          Protect-Premium
+        </p>
+      )}
+
+      <div className={`content-stretch flex items-start relative w-full ${isMobile ? "flex-col gap-[20px]" : "gap-[32px]"}`}>
         {/* Protect + Card */}
         <div
-          className="relative w-[400px] h-[267px] rounded-[16px] overflow-hidden shrink-0"
+          className={cardClass}
           style={{
             backgroundImage: "url(/images/protect-plus.jpg)",
             backgroundSize: "cover",
@@ -1424,7 +1451,7 @@ function ProtectPremiumContent() {
 
         {/* Ai Alert Card */}
         <div
-          className="relative w-[400px] h-[267px] rounded-[16px] overflow-hidden shrink-0"
+          className={cardClass}
           style={{
             backgroundImage: "url(/images/ai-alert.jpg)",
             backgroundSize: "cover",
@@ -1439,6 +1466,8 @@ function ProtectPremiumContent() {
               <div className="flex items-center gap-[4px]">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                   <circle cx="8" cy="8" r="8" fill="white" fillOpacity="0.4"/>
+                  <path d="M8 4.5V9" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
+                  <circle cx="8" cy="11.5" r="0.75" fill="white"/>
                 </svg>
                 <span className="font-['Inter:Regular',sans-serif] font-normal text-[14px] leading-[20px] text-white tracking-[0.14px]">
                   Unsubscribed
@@ -1457,12 +1486,149 @@ function ProtectPremiumContent() {
   );
 }
 
+/* ==================== Mobile Components ==================== */
+
+const MOBILE_TAB_ITEMS = MENU_ITEMS.filter(
+  (item) => item.section !== "divider" && item.key !== "logout"
+);
+
+function MobileTabBar({
+  activeKey,
+  onSelect,
+}: {
+  activeKey: string;
+  onSelect: (key: string) => void;
+}) {
+  const activeRef = useRef<HTMLButtonElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    if (activeRef.current && scrollRef.current) {
+      const container = scrollRef.current;
+      const btn = activeRef.current;
+      const scrollLeft = btn.offsetLeft - container.offsetWidth / 2 + btn.offsetWidth / 2;
+      container.scrollTo({ left: Math.max(0, scrollLeft), behavior: "smooth" });
+    }
+  }, [activeKey]);
+
+  return (
+    <div className="w-full bg-white">
+      <div
+        ref={scrollRef}
+        className="flex gap-[8px] items-center overflow-x-auto px-[20px] py-[14px] scrollbar-hide"
+      >
+        {MOBILE_TAB_ITEMS.map((item) => {
+          const isActive = item.key === activeKey;
+          return (
+            <button
+              key={item.key}
+              ref={isActive ? activeRef : undefined}
+              onClick={() => onSelect(item.key)}
+              className={`shrink-0 h-[32px] px-[16px] rounded-[50px] cursor-pointer font-['Inter:Medium',sans-serif] font-medium text-[14px] leading-[20px] tracking-[0.14px] whitespace-nowrap transition-colors ${
+                isActive
+                  ? "bg-[#022542] text-white border-none"
+                  : "bg-[#f6f6f6] text-[rgba(0,0,0,0.54)] border-none"
+              }`}
+            >
+              {item.label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function MobileProductRow({ product }: { product: OrderProduct }) {
+  return (
+    <div className="flex gap-[8px] items-start w-full">
+      <img
+        src={product.image}
+        alt={product.name}
+        className="bg-[rgba(0,0,0,0.05)] rounded-[4px] shrink-0 size-[64px] object-contain"
+      />
+      <div className="flex flex-col gap-[8px] flex-[1_0_0] min-w-0">
+        <div className="flex flex-col gap-[4px]">
+          <p className="font-['Inter:Regular',sans-serif] font-normal text-[16px] leading-[22px] text-[rgba(0,0,0,0.9)] tracking-[0.16px]">
+            {product.name}
+          </p>
+          <p className="font-['Inter:Regular',sans-serif] font-normal text-[14px] leading-[20px] text-[rgba(0,0,0,0.54)] tracking-[0.14px]">
+            {product.package}
+          </p>
+        </div>
+        <div className="flex items-center justify-between w-full">
+          <div className="flex gap-[8px] items-center font-['Inter:Medium',sans-serif] font-medium text-[16px] tracking-[0.16px]">
+            <p className="text-[rgba(0,0,0,0.9)] leading-[22px]">{product.price}</p>
+            {product.originalPrice && (
+              <p className="text-[rgba(0,0,0,0.3)] leading-[22px] line-through">{product.originalPrice}</p>
+            )}
+          </div>
+          <p className="font-['Inter:Regular',sans-serif] font-normal text-[16px] leading-[22px] text-[rgba(0,0,0,0.9)] tracking-[0.16px] text-right">
+            Qty:{product.quantity}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MobileOrderCard({ order }: { order: Order }) {
+  return (
+    <div className="bg-[#f6f6f6] flex flex-col gap-[16px] items-start p-[16px] rounded-[16px] w-full">
+      <div className="flex flex-col gap-[4px] w-full">
+        <div className="flex items-center justify-between w-full">
+          <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold text-[18px] leading-[24px] text-[rgba(0,0,0,0.9)] tracking-[0.18px]">
+            Order {order.id}
+          </p>
+          <StatusBadge status={order.status} />
+        </div>
+        <p className="font-['Inter:Regular',sans-serif] font-normal text-[14px] leading-[20px] text-[rgba(0,0,0,0.54)] tracking-[0.14px]">
+          Date: {order.date}
+        </p>
+      </div>
+
+      {order.products.map((product, idx) => (
+        <MobileProductRow key={idx} product={product} />
+      ))}
+
+      <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold text-[18px] leading-[24px] text-[rgba(0,0,0,0.9)] tracking-[0.18px] text-right w-full">
+        Total: {order.total}
+      </p>
+
+      <div className="h-0 relative shrink-0 w-full">
+        <div className="absolute inset-[-0.5px_0] border-t border-[rgba(0,0,0,0.08)]" />
+      </div>
+
+      <div className="flex gap-[16px] items-center w-full">
+        <button className="flex-1 h-[48px] rounded-[53px] border-2 border-solid border-[#101820] bg-transparent flex items-center justify-center cursor-pointer">
+          <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold text-[14px] leading-[20px] text-[#101820] text-center tracking-[0.14px] whitespace-nowrap">
+            Invoice
+          </p>
+        </button>
+        <button className="flex-1 h-[48px] rounded-[53px] border-2 border-solid border-[#101820] bg-transparent flex items-center justify-center cursor-pointer">
+          <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold text-[14px] leading-[20px] text-[#101820] text-center tracking-[0.14px] whitespace-nowrap">
+            Track order
+          </p>
+        </button>
+      </div>
+    </div>
+  );
+}
+
 /* ==================== Main Page ==================== */
 
 export default function AccountPage() {
   const navigate = useNavigate();
   const { user, logout, isLoggedIn } = useAuth();
   const [activeMenu, setActiveMenu] = useState("orders");
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkDevice = () => setIsMobile(window.innerWidth < 1024);
+    checkDevice();
+    window.addEventListener("resize", checkDevice);
+    return () => window.removeEventListener("resize", checkDevice);
+  }, []);
 
   useEffect(() => {
     if (!isLoggedIn) {
@@ -1483,23 +1649,51 @@ export default function AccountPage() {
     setActiveMenu(key);
   };
 
-  const renderContent = () => {
+  const renderContent = (mobile = false) => {
     switch (activeMenu) {
       case "profile":
-        return <MyProfileContent profileId={profileId} />;
+        return <MyProfileContent profileId={profileId} isMobile={mobile} />;
       case "address":
-        return <ShippingAddressContent profileId={profileId} />;
+        return <ShippingAddressContent profileId={profileId} isMobile={mobile} />;
       case "manage":
-        return <ManageAccountContent email={user.email} />;
+        return <ManageAccountContent email={user.email} isMobile={mobile} />;
       case "coupons":
-        return <CouponsContent />;
+        return <CouponsContent isMobile={mobile} />;
       case "premium":
-        return <ProtectPremiumContent />;
+        return <ProtectPremiumContent isMobile={mobile} />;
       case "orders":
       default:
         return <MyOrdersContent />;
     }
   };
+
+  const activeLabel = MOBILE_TAB_ITEMS.find((i) => i.key === activeMenu)?.label || "My Orders";
+
+  if (isMobile) {
+    return (
+      <div className="bg-white w-full min-h-screen">
+        <MobileNav />
+        <div className="pt-[48px]">
+          <MobileTabBar activeKey={activeMenu} onSelect={handleMenuSelect} />
+          <div className="px-[20px] pb-[24px]">
+            <p className="font-['Inter:Bold',sans-serif] font-bold text-[24px] leading-[34px] text-[rgba(0,0,0,0.9)] tracking-[0.24px] pt-[10px] pb-[18px]">
+              {activeLabel}
+            </p>
+            {activeMenu === "orders" ? (
+              <div className="flex flex-col gap-[16px]">
+                {MOCK_ORDERS.map((order, idx) => (
+                  <MobileOrderCard key={idx} order={order} />
+                ))}
+              </div>
+            ) : (
+              renderContent(true)
+            )}
+          </div>
+          <Footer />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white w-full min-h-screen">

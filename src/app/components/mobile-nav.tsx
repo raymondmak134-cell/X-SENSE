@@ -4,11 +4,12 @@ import { motion } from "motion/react";
 import svgPaths from "../../imports/svg-5ypi4qa4uc";
 import menuSvg from "../../imports/svg-dhtqovvq16";
 import { useCategories } from "./use-products";
-import { getAuthUser } from "../hooks/use-auth";
+import { getAuthUser, useAuth } from "../hooks/use-auth";
 
 export default function MobileNav() {
   const navigate = useNavigate();
   const { categories } = useCategories();
+  const { user, logout, isLoggedIn } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const [visible, setVisible] = useState(false);
   const [animating, setAnimating] = useState(false);
@@ -415,38 +416,81 @@ export default function MobileNav() {
                     </div>
                   ))}
 
-                  {/* Account */}
-                  <div
-                    className="content-stretch flex gap-[8px] items-center py-[24px] relative shrink-0 w-full cursor-pointer"
-                    onClick={() => handleNavigate(getAuthUser() ? "/account" : "/login")}
-                  >
-                    <div className="overflow-clip relative shrink-0 size-[24px]">
-                      <div className="absolute inset-[12.5%_16.67%]">
-                        <div className="absolute inset-[-4.44%_-5%]">
-                          <svg
-                            className="block size-full"
-                            fill="none"
-                            preserveAspectRatio="none"
-                            viewBox="0 0 17.6 19.6"
-                          >
-                            <path
-                              d={menuSvg.p2956c800}
-                              stroke="var(--stroke-0, black)"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeOpacity="0.9"
-                              strokeWidth="1.6"
-                            />
-                          </svg>
+                  {/* Account / Logged-in user */}
+                  {isLoggedIn ? (
+                    <div className="content-stretch flex gap-[8px] items-center py-[24px] relative shrink-0 w-full">
+                      <div className="overflow-clip relative shrink-0 size-[24px]">
+                        <div className="absolute inset-[12.5%_16.67%]">
+                          <div className="absolute inset-[-4.44%_-5%]">
+                            <svg
+                              className="block size-full"
+                              fill="none"
+                              preserveAspectRatio="none"
+                              viewBox="0 0 17.6 19.6"
+                            >
+                              <path
+                                d={menuSvg.p2956c800}
+                                stroke="var(--stroke-0, black)"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeOpacity="0.9"
+                                strokeWidth="1.6"
+                              />
+                            </svg>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex-[1_0_0] min-w-0">
+                        <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold text-[16px] leading-[22px] text-[#333] truncate">
+                          {user?.email}
+                        </p>
+                      </div>
+                      <button
+                        className="shrink-0 h-[36px] px-[16px] rounded-[53px] border-2 border-solid border-[#101820] bg-transparent cursor-pointer flex items-center justify-center hover:bg-[rgba(0,0,0,0.04)] transition-colors"
+                        onClick={() => {
+                          logout();
+                          handleClose();
+                          setTimeout(() => navigate("/login"), 310);
+                        }}
+                      >
+                        <span className="font-['Inter:Semi_Bold',sans-serif] font-semibold text-[14px] leading-[20px] text-[#101820] tracking-[0.14px] whitespace-nowrap">
+                          Log out
+                        </span>
+                      </button>
+                    </div>
+                  ) : (
+                    <div
+                      className="content-stretch flex gap-[8px] items-center py-[24px] relative shrink-0 w-full cursor-pointer"
+                      onClick={() => handleNavigate("/login")}
+                    >
+                      <div className="overflow-clip relative shrink-0 size-[24px]">
+                        <div className="absolute inset-[12.5%_16.67%]">
+                          <div className="absolute inset-[-4.44%_-5%]">
+                            <svg
+                              className="block size-full"
+                              fill="none"
+                              preserveAspectRatio="none"
+                              viewBox="0 0 17.6 19.6"
+                            >
+                              <path
+                                d={menuSvg.p2956c800}
+                                stroke="var(--stroke-0, black)"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeOpacity="0.9"
+                                strokeWidth="1.6"
+                              />
+                            </svg>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="content-stretch flex flex-col items-start relative shrink-0">
+                        <div className="flex flex-col font-['Inter:Semi_Bold',sans-serif] font-semibold justify-center leading-[0] not-italic relative shrink-0 text-[#333] text-[16px] whitespace-nowrap">
+                          <p className="leading-[22px]">Account</p>
                         </div>
                       </div>
                     </div>
-                    <div className="content-stretch flex flex-col items-start relative shrink-0">
-                      <div className="flex flex-col font-['Inter:Semi_Bold',sans-serif] font-semibold justify-center leading-[0] not-italic relative shrink-0 text-[#333] text-[16px] whitespace-nowrap">
-                        <p className="leading-[22px]">Account</p>
-                      </div>
-                    </div>
-                  </div>
+                  )}
 
                   {/* United States (English) */}
                   <div className="content-stretch flex gap-[8px] items-center py-[24px] relative shrink-0 w-full cursor-pointer">
