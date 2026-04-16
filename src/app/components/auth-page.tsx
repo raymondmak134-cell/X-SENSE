@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router";
-import { ConfigProvider, Input } from "antd";
+import { ConfigProvider, Input, AutoComplete } from "antd";
 import GlobalNav from "./global-nav";
 import MobileNav from "./mobile-nav";
 import { useAuth } from "../hooks/use-auth";
@@ -22,6 +22,47 @@ const ANT_THEME = {
 };
 
 const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+const EMAIL_DOMAINS = ["x-sense.com", "gmail.com", "qq.com", "outlook.com"];
+
+function getEmailOptions(value: string) {
+  const atIndex = value.indexOf("@");
+  if (atIndex < 1) return [];
+  const prefix = value.substring(0, atIndex);
+  const domainPart = value.substring(atIndex + 1);
+  return EMAIL_DOMAINS
+    .filter((d) => d.startsWith(domainPart))
+    .map((d) => ({ value: `${prefix}@${d}`, label: `${prefix}@${d}` }));
+}
+
+function EmailAutoComplete({
+  value,
+  onChange,
+  onBlur,
+  status,
+}: {
+  value: string;
+  onChange: (val: string) => void;
+  onBlur?: () => void;
+  status?: "error";
+}) {
+  return (
+    <AutoComplete
+      value={value}
+      options={getEmailOptions(value)}
+      onChange={onChange}
+      onBlur={onBlur}
+      style={{ width: "100%" }}
+      popupMatchSelectWidth={true}
+    >
+      <Input
+        placeholder="Enter email"
+        status={status}
+        style={{ height: 52, borderRadius: INPUT_RADIUS }}
+      />
+    </AutoComplete>
+  );
+}
 
 /* ==================== Toast ==================== */
 
@@ -204,17 +245,15 @@ function LoginForm({
 
   return (
     <div className="flex flex-col gap-[24px]">
-      <Input
+      <EmailAutoComplete
         value={email}
-        onChange={(e) => {
-          setEmail(e.target.value);
-          if (emailError) validateEmail(e.target.value);
+        onChange={(val) => {
+          setEmail(val);
+          if (emailError) validateEmail(val);
           setServerError("");
         }}
         onBlur={() => email && validateEmail(email)}
-        placeholder="Enter email"
         status={emailError ? "error" : undefined}
-        style={{ height: 52, borderRadius: INPUT_RADIUS }}
       />
       {emailError && (
         <p className="text-[#ff4d4f] text-[12px] leading-[18px] -mt-[18px] font-['Inter:Regular',sans-serif]">{emailError}</p>
@@ -417,17 +456,15 @@ function ForgotPasswordForm({
         Back
       </button>
 
-      <Input
+      <EmailAutoComplete
         value={email}
-        onChange={(e) => {
-          setEmail(e.target.value);
-          if (emailError) validateEmail(e.target.value);
+        onChange={(val) => {
+          setEmail(val);
+          if (emailError) validateEmail(val);
           setServerError("");
         }}
         onBlur={() => email && validateEmail(email)}
-        placeholder="Enter email"
         status={emailError ? "error" : undefined}
-        style={{ height: 52, borderRadius: INPUT_RADIUS }}
       />
       {emailError && (
         <p className="text-[#ff4d4f] text-[12px] leading-[18px] -mt-[18px] font-['Inter:Regular',sans-serif]">
@@ -543,17 +580,15 @@ function RegisterForm({
 
   return (
     <div className="flex flex-col gap-[24px]">
-      <Input
+      <EmailAutoComplete
         value={email}
-        onChange={(e) => {
-          setEmail(e.target.value);
-          if (emailError) validateEmail(e.target.value);
+        onChange={(val) => {
+          setEmail(val);
+          if (emailError) validateEmail(val);
           setServerError("");
         }}
         onBlur={() => email && validateEmail(email)}
-        placeholder="Enter email"
         status={emailError ? "error" : undefined}
-        style={{ height: 52, borderRadius: INPUT_RADIUS }}
       />
       {emailError && (
         <p className="text-[#ff4d4f] text-[12px] leading-[18px] -mt-[18px] font-['Inter:Regular',sans-serif]">{emailError}</p>
