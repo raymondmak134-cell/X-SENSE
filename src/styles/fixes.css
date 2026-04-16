@@ -42,11 +42,20 @@ div.-translate-x-1\/2.bottom-\[93\.18%\].top-\[1\.4%\] {
 .btn-outline-dark {
   transition: background-color 0.2s ease, color 0.2s ease;
 }
-.btn-outline-dark:hover {
+@media (hover: hover) {
+  .btn-outline-dark:hover {
+    background-color: #101820 !important;
+  }
+  .btn-outline-dark:hover p,
+  .btn-outline-dark:hover span {
+    color: #fff !important;
+  }
+}
+.btn-outline-dark:active {
   background-color: #101820 !important;
 }
-.btn-outline-dark:hover p,
-.btn-outline-dark:hover span {
+.btn-outline-dark:active p,
+.btn-outline-dark:active span {
   color: #fff !important;
 }
 
