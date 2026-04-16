@@ -53,6 +53,29 @@ async function fetchWithRetry(url: string, options: RequestInit, retries = 2, de
   throw new Error("Unreachable");
 }
 
+/* ==================== Shared Outline Button ==================== */
+
+function OutlineButton({
+  children,
+  onClick,
+  className = "",
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  className?: string;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`btn-outline-dark border-2 border-[#101820] border-solid flex gap-[4px] items-center justify-center rounded-[53px] bg-transparent cursor-pointer ${className}`}
+    >
+      <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[20px] text-[14px] text-[#101820] text-center tracking-[0.14px] whitespace-nowrap">
+        {children}
+      </p>
+    </button>
+  );
+}
+
 /* ==================== Types ==================== */
 
 type OrderStatus = "Processing" | "Shipped" | "Delivered";
@@ -1370,16 +1393,8 @@ function OrderCard({ order }: { order: Order }) {
       </div>
 
       <div className="content-stretch flex gap-[16px] items-center justify-end relative shrink-0 w-full">
-        <button onClick={() => window.open("https://pdflink.to/0c692a15/", "_blank")} className="border-2 border-[#101820] border-solid content-stretch flex gap-[4px] items-center justify-center px-[16px] py-[8px] relative rounded-[53px] shrink-0 bg-transparent cursor-pointer">
-          <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[20px] not-italic relative shrink-0 text-[14px] text-[#101820] text-center tracking-[0.14px] whitespace-nowrap">
-            Invoice
-          </p>
-        </button>
-        <button className="border-2 border-[#101820] border-solid content-stretch flex gap-[4px] items-center justify-center px-[16px] py-[8px] relative rounded-[53px] shrink-0 bg-transparent cursor-pointer">
-          <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold leading-[20px] not-italic relative shrink-0 text-[14px] text-[#101820] text-center tracking-[0.14px] whitespace-nowrap">
-            Track order
-          </p>
-        </button>
+        <OutlineButton className="px-[16px] py-[8px] shrink-0" onClick={() => window.open("https://pdflink.to/0c692a15/", "_blank")}>Invoice</OutlineButton>
+        <OutlineButton className="px-[16px] py-[8px] shrink-0">Track order</OutlineButton>
       </div>
     </div>
   );
@@ -1600,16 +1615,8 @@ function MobileOrderCard({ order }: { order: Order }) {
       </div>
 
       <div className="flex gap-[16px] items-center w-full">
-        <button onClick={() => window.open("https://pdflink.to/0c692a15/", "_blank")} className="flex-1 h-[48px] rounded-[53px] border-2 border-solid border-[#101820] bg-transparent flex items-center justify-center cursor-pointer">
-          <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold text-[14px] leading-[20px] text-[#101820] text-center tracking-[0.14px] whitespace-nowrap">
-            Invoice
-          </p>
-        </button>
-        <button className="flex-1 h-[48px] rounded-[53px] border-2 border-solid border-[#101820] bg-transparent flex items-center justify-center cursor-pointer">
-          <p className="font-['Inter:Semi_Bold',sans-serif] font-semibold text-[14px] leading-[20px] text-[#101820] text-center tracking-[0.14px] whitespace-nowrap">
-            Track order
-          </p>
-        </button>
+        <OutlineButton className="flex-1 h-[48px]" onClick={() => window.open("https://pdflink.to/0c692a15/", "_blank")}>Invoice</OutlineButton>
+        <OutlineButton className="flex-1 h-[48px]">Track order</OutlineButton>
       </div>
     </div>
   );
