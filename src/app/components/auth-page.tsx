@@ -348,7 +348,12 @@ function RegisterForm({
       await register(email.trim(), password);
       onSuccess(email.trim());
     } catch (err: any) {
-      setServerError(err.message || "Registration failed");
+      const msg = err.message || "Registration failed";
+      if (msg.toLowerCase().includes("already exists")) {
+        onToast("This email is already registered. Please sign in.");
+      } else {
+        setServerError(msg);
+      }
     }
   };
 
