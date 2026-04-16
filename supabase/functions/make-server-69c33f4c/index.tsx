@@ -844,6 +844,25 @@ app.delete("/make-server-69c33f4c/auth/users/:email", async (c) => {
   }
 });
 
+// POST forgot-password (check if email is registered)
+app.post("/make-server-69c33f4c/auth/forgot-password", async (c) => {
+  try {
+    const { email } = await c.req.json();
+    if (!email) {
+      return c.json({ error: "Email is required" }, 400);
+    }
+    const normalizedEmail = email.trim().toLowerCase();
+    const user = await kv.get(`${USER_PREFIX}${normalizedEmail}`);
+    if (!user) {
+      return c.json({ error: "This email is not registered" }, 404);
+    }
+    return c.json({ success: true, message: "Password reset email sent" });
+  } catch (err) {
+    console.log(`Error in forgot-password: ${err}`);
+    return c.json({ error: `Forgot password failed: ${err}` }, 500);
+  }
+});
+
 // POST change-password
 app.post("/make-server-69c33f4c/auth/change-password", async (c) => {
   try {

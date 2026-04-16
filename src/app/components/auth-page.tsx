@@ -151,11 +151,13 @@ function LoginForm({
   onToast,
   onForgotPassword,
   shared,
+  isMobile,
 }: {
   onSuccess: () => void;
   onToast: (msg: string) => void;
   onForgotPassword: () => void;
   shared: SharedFormState;
+  isMobile?: boolean;
 }) {
   const { login, loading } = useAuth();
   const { email, setEmail, loginPassword: password, setLoginPassword: setPassword, loginAgreed: agreed, setLoginAgreed: setAgreed } = shared;
@@ -277,7 +279,7 @@ function LoginForm({
       <button
         onClick={handleSubmit}
         disabled={loading}
-        className="w-full min-h-[56px] rounded-[50px] text-white font-['Inter:Semi_Bold',sans-serif] font-semibold text-[16px] leading-[22px] flex items-center justify-center gap-[8px] cursor-pointer transition-colors disabled:opacity-60 disabled:cursor-not-allowed border-none px-[24px] py-[16px]"
+        className={`w-full ${isMobile ? "min-h-[48px] py-[13px]" : "min-h-[56px] py-[16px]"} rounded-[50px] text-white font-['Inter:Semi_Bold',sans-serif] font-semibold text-[16px] leading-[22px] flex items-center justify-center gap-[8px] cursor-pointer transition-colors disabled:opacity-60 disabled:cursor-not-allowed border-none px-[24px]`}
         style={{ backgroundColor: BRAND_RED }}
         onMouseEnter={(e) => !loading && (e.currentTarget.style.backgroundColor = "#9a001a")}
         onMouseLeave={(e) => !loading && (e.currentTarget.style.backgroundColor = BRAND_RED)}
@@ -378,8 +380,8 @@ function ForgotPasswordForm({
         <button
           onClick={onBack}
           className={`w-full ${
-            isMobile ? "min-h-[48px]" : "min-h-[56px]"
-          } rounded-[50px] text-white font-['Inter:Semi_Bold',sans-serif] font-semibold text-[16px] leading-[22px] flex items-center justify-center cursor-pointer transition-colors border-none mt-[24px] px-[24px] py-[16px]`}
+            isMobile ? "min-h-[48px] py-[13px]" : "min-h-[56px] py-[16px]"
+          } rounded-[50px] text-white font-['Inter:Semi_Bold',sans-serif] font-semibold text-[16px] leading-[22px] flex items-center justify-center cursor-pointer transition-colors border-none mt-[24px] px-[24px]`}
           style={{ backgroundColor: BRAND_RED }}
           onMouseEnter={(e) =>
             (e.currentTarget.style.backgroundColor = "#9a001a")
@@ -447,8 +449,8 @@ function ForgotPasswordForm({
         onClick={handleSubmit}
         disabled={loading}
         className={`w-full ${
-          isMobile ? "min-h-[48px]" : "min-h-[56px]"
-        } rounded-[50px] text-white font-['Inter:Semi_Bold',sans-serif] font-semibold text-[16px] leading-[22px] flex items-center justify-center gap-[8px] cursor-pointer transition-colors disabled:opacity-60 disabled:cursor-not-allowed border-none px-[24px] py-[16px]`}
+          isMobile ? "min-h-[48px] py-[13px]" : "min-h-[56px] py-[16px]"
+        } rounded-[50px] text-white font-['Inter:Semi_Bold',sans-serif] font-semibold text-[16px] leading-[22px] flex items-center justify-center gap-[8px] cursor-pointer transition-colors disabled:opacity-60 disabled:cursor-not-allowed border-none px-[24px]`}
         style={{ backgroundColor: BRAND_RED }}
         onMouseEnter={(e) =>
           !loading && (e.currentTarget.style.backgroundColor = "#9a001a")
@@ -470,10 +472,12 @@ function RegisterForm({
   onSuccess,
   onToast,
   shared,
+  isMobile,
 }: {
   onSuccess: (email: string) => void;
   onToast: (msg: string) => void;
   shared: SharedFormState;
+  isMobile?: boolean;
 }) {
   const { email, setEmail, signupPassword: password, setSignupPassword: setPassword, confirmPassword, setConfirmPassword, signupAgreed: agreed, setSignupAgreed: setAgreed } = shared;
   const { register, loading } = useAuth();
@@ -623,7 +627,7 @@ function RegisterForm({
       <button
         onClick={handleSubmit}
         disabled={loading}
-        className="w-full min-h-[56px] rounded-[50px] text-white font-['Inter:Semi_Bold',sans-serif] font-semibold text-[16px] leading-[22px] flex items-center justify-center gap-[8px] cursor-pointer transition-colors disabled:opacity-60 disabled:cursor-not-allowed border-none px-[24px] py-[16px]"
+        className={`w-full ${isMobile ? "min-h-[48px] py-[13px]" : "min-h-[56px] py-[16px]"} rounded-[50px] text-white font-['Inter:Semi_Bold',sans-serif] font-semibold text-[16px] leading-[22px] flex items-center justify-center gap-[8px] cursor-pointer transition-colors disabled:opacity-60 disabled:cursor-not-allowed border-none px-[24px]`}
         style={{ backgroundColor: BRAND_RED }}
         onMouseEnter={(e) => !loading && (e.currentTarget.style.backgroundColor = "#9a001a")}
         onMouseLeave={(e) => !loading && (e.currentTarget.style.backgroundColor = BRAND_RED)}
@@ -659,7 +663,7 @@ function RegistrationSuccess({ email, isMobile }: { email: string; isMobile?: bo
       </p>
       <button
         onClick={() => navigate("/")}
-        className={`w-full ${isMobile ? "min-h-[48px]" : "min-h-[56px]"} rounded-[50px] text-white font-['Inter:Semi_Bold',sans-serif] font-semibold text-[16px] leading-[22px] flex items-center justify-center cursor-pointer transition-colors border-none mt-[24px] px-[24px] py-[16px]`}
+        className={`w-full ${isMobile ? "min-h-[48px] py-[13px]" : "min-h-[56px] py-[16px]"} rounded-[50px] text-white font-['Inter:Semi_Bold',sans-serif] font-semibold text-[16px] leading-[22px] flex items-center justify-center cursor-pointer transition-colors border-none mt-[24px] px-[24px]`}
         style={{ backgroundColor: BRAND_RED }}
         onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#9a001a")}
         onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = BRAND_RED)}
@@ -737,12 +741,14 @@ export default function AuthPage() {
           onToast={setToastMsg}
           onForgotPassword={() => setShowForgotPassword(true)}
           shared={shared}
+          isMobile={isMobile}
         />
       ) : (
         <RegisterForm
           onSuccess={(e) => setRegisteredEmail(e)}
           onToast={setToastMsg}
           shared={shared}
+          isMobile={isMobile}
         />
       )}
     </div>

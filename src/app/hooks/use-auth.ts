@@ -92,7 +92,13 @@ export function useAuth() {
         headers: { ...AUTH_HEADER, "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
       });
-      const data = await res.json();
+      let data: any;
+      const text = await res.text();
+      try {
+        data = JSON.parse(text);
+      } catch {
+        throw new Error("Failed to send reset email");
+      }
       if (!res.ok) throw new Error(data.error || "Failed to send reset email");
       return data;
     } catch (err: any) {
