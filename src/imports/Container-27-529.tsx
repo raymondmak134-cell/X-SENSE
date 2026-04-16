@@ -212,7 +212,7 @@ export default function Container({ className, product, useNewCard }: { classNam
 
           {/* SKU dropdown */}
           <div className="content-stretch flex flex-col items-start px-[16px] relative shrink-0 w-full">
-            <SkuDropdown options={options} iconSize="sm" onSelect={setSelectedSkuIndex} />
+            <SkuDropdown options={options} onSelect={setSelectedSkuIndex} />
           </div>
         </div>
 

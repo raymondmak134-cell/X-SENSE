@@ -844,6 +844,39 @@ app.delete("/make-server-69c33f4c/auth/users/:email", async (c) => {
   }
 });
 
+// POST change-password
+app.post("/make-server-69c33f4c/auth/change-password", async (c) => {
+  try {
+    const { email, currentPassword, newPassword } = await c.req.json();
+    if (!email || !currentPassword || !newPassword) {
+      return c.json({ error: "All fields are required" }, 400);
+    }
+    const normalizedEmail = email.trim().toLowerCase();
+    const user = await kv.get(`${USER_PREFIX}${normalizedEmail}`);
+    if (!user) {
+      return c.json({ error: "User not found" }, 404);
+    }
+    const currentHash = await hashPassword(currentPassword, user.salt);
+    if (currentHash !== user.passwordHash) {
+      return c.json({ error: "Current password is incorrect" }, 401);
+    }
+    if (newPassword.length < 6) {
+      return c.json({ error: "New password must be at least 6 characters" }, 400);
+    }
+    const newSalt = generateSalt();
+    const newHash = await hashPassword(newPassword, newSalt);
+    await kv.set(`${USER_PREFIX}${normalizedEmail}`, {
+      ...user,
+      salt: newSalt,
+      passwordHash: newHash,
+    });
+    return c.json({ success: true });
+  } catch (err) {
+    console.log(`Error changing password: ${err}`);
+    return c.json({ error: `Password change failed: ${err}` }, 500);
+  }
+});
+
 // ============ Profile CRUD ============
 
 const PROFILE_PREFIX = "profile:";

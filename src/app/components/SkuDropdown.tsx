@@ -4,12 +4,11 @@ import type { SkuOption } from "./use-products";
 
 interface SkuDropdownProps {
   options: SkuOption[];
-  iconSize?: "sm" | "md";
   /** Called when user selects a different SKU */
   onSelect?: (index: number) => void;
 }
 
-export function SkuDropdown({ options, iconSize = "sm", onSelect }: SkuDropdownProps) {
+export function SkuDropdown({ options, onSelect }: SkuDropdownProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -72,13 +71,11 @@ export function SkuDropdown({ options, iconSize = "sm", onSelect }: SkuDropdownP
     onSelect?.(index);
   };
 
-  const iconSizePx = iconSize === "sm" ? 16 : 16;
-
   return (
     <>
       <div
         ref={containerRef}
-        className={`h-[40px] relative rounded-[10px] shrink-0 w-full ${isInteractive ? "cursor-pointer" : ""}`}
+        className={`h-[40px] relative rounded-[10px] shrink-0 w-full group ${isInteractive ? "cursor-pointer" : ""}`}
         data-name="Product Options"
         onClick={handleToggle}
       >
@@ -88,27 +85,17 @@ export function SkuDropdown({ options, iconSize = "sm", onSelect }: SkuDropdownP
               {selected}
             </p>
             {isInteractive && (
-              <div
-                className={`overflow-clip relative shrink-0 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
-                style={{ width: iconSizePx, height: iconSizePx }}
-                data-name="Dropdown Icon"
-              >
-                <div className="absolute inset-[29.17%_4.17%_20.83%_4.17%]">
-                  <div className="absolute inset-[0_5.78%_4%_5.78%]">
-                    <svg
-                      className="block size-full"
-                      fill="none"
-                      preserveAspectRatio="none"
-                      viewBox="0 0 19.4575 11.5201"
-                    >
-                      <path
-                        d="M8.99158 11.1958C9.38792 11.6282 10.0696 11.6282 10.4659 11.1958L19.1927 1.67573C19.7806 1.03432 19.3256 0 18.4555 0H1.00197C0.131868 0 -0.323133 1.03432 0.264818 1.67572L8.99158 11.1958Z"
-                        fill="black"
-                        fillOpacity="0.9"
-                      />
-                    </svg>
-                  </div>
-                </div>
+              <div className={`shrink-0 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}>
+                <svg className="shrink-0" width="20" height="20" viewBox="0 0 20 20" fill="none">
+                  <path
+                    d="M5 7.5L10 12.5L15 7.5"
+                    stroke="black"
+                    strokeOpacity="0.6"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
               </div>
             )}
           </div>
@@ -118,7 +105,9 @@ export function SkuDropdown({ options, iconSize = "sm", onSelect }: SkuDropdownP
           className={`absolute border border-solid inset-0 pointer-events-none rounded-[10px] transition-colors duration-150 ${
             isOpen
               ? "border-[rgba(0,0,0,0.4)]"
-              : "border-[rgba(0,0,0,0.1)]"
+              : isInteractive
+                ? "border-[rgba(0,0,0,0.1)] group-hover:border-[rgba(0,0,0,0.3)]"
+                : "border-[rgba(0,0,0,0.1)]"
           }`}
         />
       </div>

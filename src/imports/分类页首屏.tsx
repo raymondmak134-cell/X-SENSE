@@ -837,7 +837,7 @@ function MobileProductCard({ product, useNewCard }: { product: Product; useNewCa
 
           {/* SKU dropdown */}
           <div className="content-stretch flex flex-col items-start px-[16px] relative shrink-0 w-full">
-            <SkuDropdown options={product.options} iconSize="sm" onSelect={setSelectedSkuIndex} />
+            <SkuDropdown options={product.options} onSelect={setSelectedSkuIndex} />
           </div>
         </div>
 
