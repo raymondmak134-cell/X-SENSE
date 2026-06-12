@@ -95,6 +95,7 @@ const NAV_TABS = [
   { label: "Support", path: "/support" },
   { label: "Explore", path: "/" },
   { label: "Partnership", path: "/" },
+  { label: "Build System", path: "/build-system" },
 ];
 
 function Tab({

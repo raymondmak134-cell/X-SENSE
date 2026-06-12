@@ -152,7 +152,9 @@ const SplitText = ({
       display: 'inline-block',
       whiteSpace: 'normal',
       wordWrap: 'break-word',
-      willChange: 'transform, opacity'
+      willChange: 'transform, opacity',
+      paddingBottom: '0.15em',
+      marginBottom: '-0.15em'
     };
     const classes = `split-parent ${className}`;
     const Tag = tag || 'p';
