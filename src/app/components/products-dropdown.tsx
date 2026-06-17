@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router";
 import {
   useSpus,
@@ -247,7 +248,7 @@ export default function ProductsDropdown({
 
   if (!shouldRender) return null;
 
-  return (
+  return createPortal(
     <>
       {/* Backdrop overlay */}
       <div
@@ -276,7 +277,7 @@ export default function ProductsDropdown({
           className="bg-white content-stretch flex flex-col items-center overflow-hidden relative w-full"
           style={{ padding: "16px clamp(24px, 8vw, 120px) 32px" }}
         >
-          <div className="content-stretch flex gap-[24px] items-start max-w-[1312px] relative w-full">
+          <div className="content-stretch flex gap-[24px] items-start max-w-[1440px] relative w-full">
             {/* Left category sidebar */}
             <div
               className="content-stretch flex flex-col items-start relative shrink-0 w-[208px] opacity-0 translate-y-[8px] animate-[fadeSlideIn_0.35s_ease-out_forwards]"
@@ -347,6 +348,7 @@ export default function ProductsDropdown({
           </div>
         </div>
       </div>
-    </>
+    </>,
+    document.body
   );
 }

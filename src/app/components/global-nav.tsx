@@ -54,7 +54,7 @@ function RightLanguage() {
 
 function TopTipBody() {
   return (
-    <div className="content-stretch flex items-center justify-between max-w-[1312px] relative shrink-0 w-full">
+    <div className="content-stretch flex items-center justify-between max-w-[1440px] relative shrink-0 w-full">
       <Left />
       <MidSaleInfo />
       <RightLanguage />
@@ -185,7 +185,7 @@ function NavBody({
   productsOpen: boolean;
 }) {
   return (
-    <div className="content-stretch flex flex-[1_0_0] items-center justify-center max-w-[1312px] min-h-px min-w-px relative w-full">
+    <div className="content-stretch flex flex-[1_0_0] items-center justify-center max-w-[1440px] min-h-px min-w-px relative w-full">
       <div className="content-stretch flex flex-[1_0_0] gap-[32px] h-full items-center min-h-px min-w-px relative">
         <Logo />
         <Tab
@@ -224,7 +224,7 @@ export default function GlobalNav() {
       <div className="fixed content-stretch flex flex-col items-start left-0 right-0 top-0 z-50" data-name="GlobalNav">
         <div className="bg-[#f6f6f6] relative shrink-0 w-full" data-name="Top Tips">
           <div className="flex flex-col items-center justify-center overflow-clip rounded-[inherit] size-full">
-            <div className="content-stretch flex flex-col items-center justify-center w-full" style={{ padding: "0 clamp(24px, 8vw, 120px)" }}>
+            <div className="content-stretch flex flex-col items-center justify-center w-full text-white" style={{ padding: "0 clamp(24px, 8vw, 120px)" }}>
               <TopTipBody />
             </div>
           </div>
