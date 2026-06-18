@@ -101,6 +101,7 @@ export default function BuildSystemPage() {
   const phase5DescRef = useRef<HTMLParagraphElement>(null);
   const phase5RatingsRef = useRef<HTMLImageElement>(null);
   const bundleSectionRef = useRef<BundleSectionHandle>(null);
+  const bundleOverlayRef = useRef<HTMLDivElement>(null);
   const customSystemWrapperRef = useRef<HTMLDivElement>(null);
   const customSystemRef = useRef<CustomSystemSectionHandle>(null);
 
@@ -1006,12 +1007,19 @@ export default function BuildSystemPage() {
       if (p7Progress <= 0) {
         gsap.set(customSystemWrapperRef.current, { y: containerH, visibility: "hidden" });
         customSystemRef.current?.resetAnimations();
+        if (bundleOverlayRef.current) {
+          gsap.set(bundleOverlayRef.current, { opacity: 0 });
+        }
         return;
       }
 
       gsap.set(customSystemWrapperRef.current, { visibility: "visible" });
       const slideY = containerH * (1 - p7Progress);
       gsap.set(customSystemWrapperRef.current, { y: slideY });
+
+      if (bundleOverlayRef.current) {
+        gsap.set(bundleOverlayRef.current, { opacity: p7Progress * 0.8 });
+      }
 
       const bannerFadeP = Math.max(
         0,
@@ -1034,6 +1042,9 @@ export default function BuildSystemPage() {
 
     if (customSystemWrapperRef.current) {
       gsap.set(customSystemWrapperRef.current, { y: initContainerH, visibility: "hidden" });
+    }
+    if (bundleOverlayRef.current) {
+      gsap.set(bundleOverlayRef.current, { opacity: 0 });
     }
 
     // ── Phase 8: continue scrolling through custom system section content ──
@@ -1504,7 +1515,14 @@ export default function BuildSystemPage() {
               />
             </div>
           </div>
-          <BundleSection ref={bundleSectionRef} />
+          <div className="relative">
+            <BundleSection ref={bundleSectionRef} />
+            <div
+              ref={bundleOverlayRef}
+              className="pointer-events-none absolute inset-0 z-[1] bg-[#000000] opacity-0"
+              aria-hidden
+            />
+          </div>
         </div>
 
         {/* Phase 7: Custom System Section — slides up over bundle + ratings */}

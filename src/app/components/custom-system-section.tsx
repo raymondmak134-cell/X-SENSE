@@ -497,11 +497,15 @@ function SummaryItem({
 function CustomSystemSection(_props: object, ref: ForwardedRef<CustomSystemSectionHandle>) {
     const bannerTitleRef = useRef<HTMLHeadingElement>(null);
     const bannerDescRef = useRef<HTMLParagraphElement>(null);
+    const bannerGradientRef = useRef<HTMLDivElement>(null);
 
     const resetBannerFade = useCallback(() => {
       [bannerTitleRef, bannerDescRef].forEach((itemRef) => {
         if (itemRef.current) gsap.set(itemRef.current, { opacity: 0, y: 32 });
       });
+      if (bannerGradientRef.current) {
+        gsap.set(bannerGradientRef.current, { opacity: 0, clearProps: "transform" });
+      }
     }, []);
 
     const applyBannerFade = useCallback((progress: number) => {
@@ -509,6 +513,9 @@ function CustomSystemSection(_props: object, ref: ForwardedRef<CustomSystemSecti
       [bannerTitleRef, bannerDescRef].forEach((itemRef) => {
         if (itemRef.current) gsap.set(itemRef.current, { opacity: t, y: (1 - t) * 32 });
       });
+      if (bannerGradientRef.current) {
+        gsap.set(bannerGradientRef.current, { opacity: t });
+      }
     }, []);
 
     useImperativeHandle(ref, () => ({
@@ -650,7 +657,10 @@ function CustomSystemSection(_props: object, ref: ForwardedRef<CustomSystemSecti
               Try building your own and save even more
             </p>
           </div>
-          <div className="absolute bottom-0 left-0 right-0 h-[50%] translate-y-[2px] bg-gradient-to-t from-[#F6F6F6] to-transparent" />
+          <div
+            ref={bannerGradientRef}
+            className="absolute bottom-0 left-0 right-0 h-[50%] translate-y-[2px] bg-gradient-to-t from-[#F6F6F6] to-transparent opacity-0"
+          />
         </div>
 
         {/* Customize Your Safety System Content */}
