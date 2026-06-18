@@ -78,6 +78,8 @@ export type BuildSystemLayout = {
 
 const RING_COLOR_RGB = "6, 122, 217";
 const RING_OPACITIES = [0.2, 0.1, 0.05, 0.03];
+export const DESKTOP_FIGMA_W = 1920;
+export const DESKTOP_FIGMA_H = 1080;
 const MOBILE_FIGMA_W = 393;
 const MOBILE_FIGMA_CONTENT_H = 647;
 const MOBILE_BG_IMAGE_DESIGN_W = 617;
@@ -88,28 +90,34 @@ const BG_IMG_STATION_Y = 439;
 /** Figma mobile phase-1 station dot at 393px viewport width */
 const MOBILE_STATION_DOT = 8;
 
-function buildDesktopLayout(): BuildSystemLayout {
-  const BG_IMAGE_START = 384;
-  const BG_IMAGE_END = -215;
-  const ZOOM_SCALE = 5236 / 1920;
-  const ZOOM_X = -810;
-  const ZOOM_Y = -(689 + BG_IMAGE_START);
-  const PHASE3_OFFSET_Y = 80;
-  const PHASE3_SCALE = 520 / STATION_DOT;
-  const PHASE3_X = 700 - 637 * PHASE3_SCALE;
-  const PHASE3_Y = (560 + PHASE3_OFFSET_Y) - BG_IMAGE_START - 439 * PHASE3_SCALE;
-  const STATION_CX = 637 + 12;
-  const STATION_CY = 439 + 12;
+function buildDesktopLayout(containerW: number, containerH: number): BuildSystemLayout {
+  // Uniform contain-scale so 1920×1080 design fits MacBook Pro / smaller desktop viewports
+  const s = Math.min(1, containerW / DESKTOP_FIGMA_W, containerH / DESKTOP_FIGMA_H);
+  const px = (v: number) => v * s;
 
-  const fxToLocal = (fx: number) => (fx - PHASE3_X) / PHASE3_SCALE;
-  const fyToLocal = (fy: number) => (fy - BG_IMAGE_START - PHASE3_Y) / PHASE3_SCALE;
+  const BG_IMAGE_START = px(384);
+  const BG_IMAGE_END = px(-215);
+  const ZOOM_SCALE = 5236 / DESKTOP_FIGMA_W;
+  const ZOOM_X = px(-810);
+  const ZOOM_Y = px(-(689 + 384));
+  const PHASE3_OFFSET_Y = px(80);
+  const PHASE3_SCALE = 520 / STATION_DOT;
+  const PHASE3_X = px(700 - 637 * PHASE3_SCALE);
+  const PHASE3_Y = px((560 + 80) - 384 - 439 * PHASE3_SCALE);
+  const STATION_CX = px(637 + 12);
+  const STATION_CY = px(439 + 12);
+  const STATION_DOT_SCALED = px(STATION_DOT);
+  const vpCenterX = px(DESKTOP_FIGMA_W / 2);
+
+  const fxToLocal = (fx: number) => (px(fx) - PHASE3_X) / PHASE3_SCALE;
+  const fyToLocal = (fy: number) => (px(fy) - BG_IMAGE_START - PHASE3_Y) / PHASE3_SCALE;
 
   const RING_MIN_D = 735;
   const RING_MAX_D = 1060;
   const RING_STEP = (RING_MAX_D - RING_MIN_D) / 3;
   const RINGS = [0, 1, 2, 3].map((i) => {
     const diameter = RING_MIN_D + i * RING_STEP;
-    return { radius: diameter / (2 * PHASE3_SCALE) };
+    return { radius: px(diameter / (2 * PHASE3_SCALE)) };
   });
 
   const SUB_DEVICES_FIGMA = [
@@ -126,8 +134,8 @@ function buildDesktopLayout(): BuildSystemLayout {
 
   const SUB_DEVICES = SUB_DEVICES_FIGMA.map((d) => {
     const left = fxToLocal(d.x);
-    const top = fyToLocal(d.y + PHASE3_OFFSET_Y);
-    const size = d.s / PHASE3_SCALE;
+    const top = fyToLocal(d.y + 80);
+    const size = px(d.s / PHASE3_SCALE);
     const cx = left + size / 2;
     const cy = top + size / 2;
     return {
@@ -142,11 +150,11 @@ function buildDesktopLayout(): BuildSystemLayout {
     };
   });
 
-  const STATION_VP_CENTER = { x: 960, y: 820 + PHASE3_OFFSET_Y };
+  const STATION_VP_CENTER = { x: vpCenterX, y: px(820 + 80) };
   const DEVICE_CENTERS = SUB_DEVICES_FIGMA.map((d) => ({
     id: d.id,
-    x: d.x + d.s / 2,
-    y: d.y + d.s / 2 + PHASE3_OFFSET_Y,
+    x: px(d.x + d.s / 2),
+    y: px(d.y + d.s / 2 + 80),
   }));
   const DEVICE_LINE_ENDS = DEVICE_CENTERS.map((d) => ({
     id: d.id,
@@ -155,17 +163,18 @@ function buildDesktopLayout(): BuildSystemLayout {
   }));
 
   const PHASE4A_SCALE = 88 / STATION_DOT;
-  const PHASE4A_X = 916 - 637 * PHASE4A_SCALE;
-  const PHASE4A_Y = 495 - BG_IMAGE_START - 439 * PHASE4A_SCALE;
+  const PHASE4A_X = px(916 - 637 * PHASE4A_SCALE);
+  const PHASE4A_Y = px(495 - 384 - 439 * PHASE4A_SCALE);
+  const PHASE4B_WIN_W = px(1200);
 
   return {
     isMobile: false,
-    viewportScale: 1,
-    navSpacer: 104,
-    bgImageW: 1920,
-    bgCenterX: 960,
-    vpCenterX: 960,
-    overlayH: 1080,
+    viewportScale: s,
+    navSpacer: px(104),
+    bgImageW: px(DESKTOP_FIGMA_W),
+    bgCenterX: vpCenterX,
+    vpCenterX,
+    overlayH: px(DESKTOP_FIGMA_H),
     BG_IMAGE_START,
     BG_IMAGE_END,
     ZOOM_SCALE,
@@ -177,12 +186,12 @@ function buildDesktopLayout(): BuildSystemLayout {
     PHASE3_Y,
     STATION_CX,
     STATION_CY,
-    STATION_DOT,
-    BG_IMG_ORIGIN_X: BG_IMG_STATION_X,
-    BG_IMG_ORIGIN_Y: BG_IMG_STATION_Y,
+    STATION_DOT: STATION_DOT_SCALED,
+    BG_IMG_ORIGIN_X: px(BG_IMG_STATION_X),
+    BG_IMG_ORIGIN_Y: px(BG_IMG_STATION_Y),
     RINGS,
     SUB_DEVICES,
-    RING_STROKE: 4 / PHASE3_SCALE,
+    RING_STROKE: px(4 / PHASE3_SCALE),
     RING_COLOR_RGB,
     RING_OPACITIES,
     STATION_VP_CENTER,
@@ -191,43 +200,43 @@ function buildDesktopLayout(): BuildSystemLayout {
     PHASE4A_X,
     PHASE4A_Y,
     PHASE4A_BG_INIT_SCALE: PHASE3_SCALE / PHASE4A_SCALE,
-    PHASE4B_WIN_W: 1200,
-    PHASE4B_CLIP_RADIUS: 24,
-    PHASE4B_TITLE_LEFT: 48,
-    PHASE4B_TITLE_BOTTOM: 48,
-    PHASE4B_TITLE_W: 496,
-    PHASE4C_DEVICE_RING_MIN: 88,
-    PHASE4C_DEVICE_RING_MAX: 160,
-    PHASE4C_VIEWPORT_EXPAND: 160,
-    PHASE4C_FIGMA_WIN_W: 1236,
-    PHASE4C_FIGMA_WIN_H: 694,
+    PHASE4B_WIN_W,
+    PHASE4B_CLIP_RADIUS: px(24),
+    PHASE4B_TITLE_LEFT: px(48),
+    PHASE4B_TITLE_BOTTOM: px(48),
+    PHASE4B_TITLE_W: px(496),
+    PHASE4C_DEVICE_RING_MIN: px(88),
+    PHASE4C_DEVICE_RING_MAX: px(160),
+    PHASE4C_VIEWPORT_EXPAND: px(160),
+    PHASE4C_FIGMA_WIN_W: px(1236),
+    PHASE4C_FIGMA_WIN_H: px(694),
     BG_NUMBER: {
-      left: 413,
-      top: 335 + PHASE3_OFFSET_Y,
-      width: 1094,
-      fontSize: 460,
-      lineHeight: 541,
+      left: px(413),
+      top: px(335 + 80),
+      width: px(1094),
+      fontSize: px(460),
+      lineHeight: px(541),
     },
-    DASHED_LINE_CLIP_RADIUS: 630,
-    PHONE_W: 385,
-    PHONE_H: 657,
-    PHASE5_PHONE_GAP: 570,
-    PHASE5_UNIFIED_SCROLL: 600,
-    PHASE4D_VIEWPORT_SHIFT: 48,
+    DASHED_LINE_CLIP_RADIUS: px(630),
+    PHONE_W: px(385),
+    PHONE_H: px(657),
+    PHASE5_PHONE_GAP: px(570),
+    PHASE5_UNIFIED_SCROLL: px(600),
+    PHASE4D_VIEWPORT_SHIFT: px(48),
     PHASE1_SCROLL: BG_IMAGE_START - BG_IMAGE_END,
-    sectionTitleTop: 104 + 900,
-    phaseTitleTop: 224,
+    sectionTitleTop: px(104 + 900),
+    phaseTitleTop: px(224),
     PHASE3_BG_SHRINK_WINDOW: 0.3,
     PHASE3_STATION_EASE: "power2.inOut",
-    getStationScreenPos: (containerW: number) => ({
-      x: containerW / 2 - 960 + PHASE4A_X + STATION_CX * PHASE4A_SCALE,
+    getStationScreenPos: (cw: number) => ({
+      x: cw / 2 - vpCenterX + PHASE4A_X + STATION_CX * PHASE4A_SCALE,
       y: BG_IMAGE_START + PHASE4A_Y + STATION_CY * PHASE4A_SCALE,
     }),
-    getPhase4bClip: (containerW: number, containerH: number) => {
-      const winW = Math.min(1200, containerW);
-      const winH = Math.min(winW * (9 / 16), containerH);
-      const clipLeft = (containerW - winW) / 2;
-      const clipTop = (containerH - winH) / 2;
+    getPhase4bClip: (cw: number, ch: number) => {
+      const winW = Math.min(PHASE4B_WIN_W, cw);
+      const winH = Math.min(winW * (9 / 16), ch);
+      const clipLeft = (cw - winW) / 2;
+      const clipTop = (ch - winH) / 2;
       return {
         clipTop,
         clipRight: clipLeft,
@@ -440,7 +449,7 @@ export function getBuildSystemLayout(
   containerW = isMobile ? MOBILE_FIGMA_W : 1920,
   containerH = isMobile ? MOBILE_FIGMA_CONTENT_H : 1080,
 ): BuildSystemLayout {
-  return isMobile ? buildMobileLayout(containerW, containerH) : buildDesktopLayout();
+  return isMobile ? buildMobileLayout(containerW, containerH) : buildDesktopLayout(containerW, containerH);
 }
 
 // Shared scroll phase distances — transition logic unchanged

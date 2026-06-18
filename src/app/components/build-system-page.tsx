@@ -11,6 +11,7 @@ import Footer from "../../imports/Footer";
 import {
   getBuildSystemLayout,
   getScrollDistance,
+  DESKTOP_FIGMA_H,
   PHASE2_SCROLL,
   PHASE3_SCROLL,
   PHASE4_SCROLL,
@@ -156,9 +157,11 @@ export default function BuildSystemPage() {
       DASHED_LINE_CLIP_RADIUS,
       PHASE3_BG_SHRINK_WINDOW,
       PHASE3_STATION_EASE,
+      viewportScale,
     } = L;
 
-    const designFrameH = isMobile ? 695 : 1080;
+    const designFrameH = isMobile ? 695 : DESKTOP_FIGMA_H;
+    const dpx = (v: number) => (isMobile ? v : v * viewportScale);
 
     const measureCustomContentScroll = () => {
       const wrapper = customSystemWrapperRef.current;
@@ -186,24 +189,24 @@ export default function BuildSystemPage() {
     entranceTl
       .fromTo(
         iconRef.current,
-        { opacity: 0, y: 60 },
+        { opacity: 0, y: dpx(60) },
         { opacity: 1, y: 0, duration: 1 }
       )
       .fromTo(
         subtitleRef.current,
-        { opacity: 0, y: 40 },
+        { opacity: 0, y: dpx(40) },
         { opacity: 1, y: 0, duration: 0.9 },
         "-=0.4"
       )
       .fromTo(
         buttonRef.current,
-        { opacity: 0, y: 30 },
+        { opacity: 0, y: dpx(30) },
         { opacity: 1, y: 0, duration: 0.8 },
         "-=0.4"
       )
       .fromTo(
         bgRef.current,
-        { opacity: 0, y: 80 },
+        { opacity: 0, y: dpx(80) },
         { opacity: 1, y: 0, duration: 1.4, ease: "power2.out" },
         "-=0.8"
       );
@@ -253,7 +256,7 @@ export default function BuildSystemPage() {
     // Phase 1 at 80%: section title fades in
     scrollTl.fromTo(
       sectionTitleRef.current,
-      { opacity: 0, y: 20 },
+      { opacity: 0, y: dpx(20) },
       { opacity: 1, y: 0, duration: 0.2, ease: "power2.out" },
       0.8
     );
@@ -263,7 +266,7 @@ export default function BuildSystemPage() {
     // Phase 2: section title drifts up and fades out (parallax)
     scrollTl.to(
       sectionTitleRef.current,
-      { opacity: 0, y: -60, duration: p2Ratio * 0.4, ease: "power1.in" },
+      { opacity: 0, y: dpx(-60), duration: p2Ratio * 0.4, ease: "power1.in" },
       1
     );
 
@@ -383,7 +386,7 @@ export default function BuildSystemPage() {
     // Phase 3 at 80%–95%: Phase 3 title appears from below
     scrollTl.fromTo(
       phase3TitleRef.current,
-      { opacity: 0, y: 40 },
+      { opacity: 0, y: dpx(40) },
       { opacity: 1, y: 0, duration: p3Ratio * 0.15, ease: "power2.out" },
       phase3Start + p3Ratio * 0.8
     );
@@ -402,7 +405,7 @@ export default function BuildSystemPage() {
     // Phase 4 0%–15%: Phase 3 title drifts up and fades out
     scrollTl.to(
       phase3TitleRef.current,
-      { opacity: 0, y: -40, duration: p4Ratio * 0.15, ease: "power1.in" },
+      { opacity: 0, y: dpx(-40), duration: p4Ratio * 0.15, ease: "power1.in" },
       phase4Start
     );
 
@@ -424,7 +427,7 @@ export default function BuildSystemPage() {
     const numberStart = lineGrowStart + p4Ratio * 0.65 * 0.3;
     scrollTl.fromTo(
       bgNumberRef.current,
-      { opacity: 0, y: 30 },
+      { opacity: 0, y: dpx(30) },
       { opacity: 1, y: 0, duration: p4Ratio * 0.1, ease: "power2.out" },
       phase4Start + numberStart
     );
@@ -460,7 +463,7 @@ export default function BuildSystemPage() {
     // Phase 4 at 80%–95%: Phase 4 title appears from below
     scrollTl.fromTo(
       phase4TitleRef.current,
-      { opacity: 0, y: 40 },
+      { opacity: 0, y: dpx(40) },
       { opacity: 1, y: 0, duration: p4Ratio * 0.15, ease: "power2.out" },
       phase4Start + p4Ratio * 0.8
     );
@@ -506,7 +509,7 @@ export default function BuildSystemPage() {
     // Phase 4a 0%–30%: Phase 4 title moves up and fades out
     scrollTl.to(
       phase4TitleRef.current,
-      { opacity: 0, y: -60, duration: p4aRatio * 0.3, ease: "power1.in" },
+      { opacity: 0, y: dpx(-60), duration: p4aRatio * 0.3, ease: "power1.in" },
       phase4aStart
     );
 
@@ -578,7 +581,7 @@ export default function BuildSystemPage() {
     // Phase 4b at 80%–95%: title and subtitle appear from below
     scrollTl.fromTo(
       phase4bTitleRef.current,
-      { opacity: 0, y: 40 },
+      { opacity: 0, y: dpx(40) },
       { opacity: 1, y: 0, duration: p4bRatio * 0.15, ease: "power2.out" },
       phase4bStart + p4bRatio * 0.8
     );
@@ -614,7 +617,7 @@ export default function BuildSystemPage() {
       const cycleIndex = Math.floor(totalT);
       const cycleT = totalT - cycleIndex;
 
-      const pageW = pageRef.current?.getBoundingClientRect().width ?? (isMobile ? 393 : 1920);
+      const pageW = pageRef.current?.getBoundingClientRect().width ?? containerW;
       const station = L.getStationScreenPos(pageW);
 
       applyPhase4bClip(1);
@@ -631,7 +634,7 @@ export default function BuildSystemPage() {
           width: diameter,
           height: diameter,
           opacity,
-          borderWidth: PHASE4C_RING_STROKE,
+          borderWidth: PHASE4C_RING_STROKE * viewportScale,
           borderStyle: "solid",
           boxShadow: `0 0 ${8 + t * 12}px rgba(232, 78, 98, ${opacity * 0.4})`,
         });
@@ -663,7 +666,7 @@ export default function BuildSystemPage() {
           width: winW + expandW,
           height: winH + expandH,
           opacity,
-          borderWidth: PHASE4C_RING_STROKE,
+          borderWidth: PHASE4C_RING_STROKE * viewportScale,
           borderStyle: "solid",
           borderRadius: PHASE4B_CLIP_RADIUS + (expandW + expandH) / 4,
           boxShadow: `0 0 ${12 + t * 16}px rgba(232, 78, 98, ${opacity * 0.3})`,
@@ -749,7 +752,7 @@ export default function BuildSystemPage() {
 
       if (p4dProgress <= 0) {
         resetPhoneScreenAnim();
-        gsap.set(phoneRef.current, { opacity: 0, y: 80, scale: phoneScale });
+        gsap.set(phoneRef.current, { opacity: 0, y: dpx(80), scale: phoneScale });
         applyViewportParallax(0);
         return;
       }
@@ -803,7 +806,7 @@ export default function BuildSystemPage() {
 
     const resetPhase5Content = () => {
       [phase5TitleRef, phase5DescRef, phase5RatingsRef].forEach((ref) => {
-        if (ref.current) gsap.set(ref.current, { opacity: 0, y: 32 });
+        if (ref.current) gsap.set(ref.current, { opacity: 0, y: dpx(32) });
       });
     };
 
@@ -836,7 +839,7 @@ export default function BuildSystemPage() {
       const containerH = pageRef.current?.getBoundingClientRect().height ?? designFrameH;
       const { phoneScale, phoneTop } = getPhoneMetrics(containerH);
       const handoffSlide = Math.max(0, containerH - phoneTop - PHASE5_PHONE_GAP);
-      const unifiedScroll = PHASE5_UNIFIED_SCROLL * (containerH / (isMobile ? 695 : 1080));
+      const unifiedScroll = PHASE5_UNIFIED_SCROLL * (containerH / designFrameH);
       const totalSlide = handoffSlide + unifiedScroll;
       const slide = p5Progress * totalSlide;
       const baseViewportY = -PHASE4D_VIEWPORT_SHIFT;
@@ -921,7 +924,7 @@ export default function BuildSystemPage() {
     const getPhase5EndSlide = (containerH: number) => {
       const { phoneTop } = getPhoneMetrics(containerH);
       const handoffSlide = Math.max(0, containerH - phoneTop - PHASE5_PHONE_GAP);
-      const unifiedScroll = PHASE5_UNIFIED_SCROLL * (containerH / (isMobile ? 695 : 1080));
+      const unifiedScroll = PHASE5_UNIFIED_SCROLL * (containerH / designFrameH);
       return { handoffSlide, unifiedScroll, totalSlide: handoffSlide + unifiedScroll };
     };
 
@@ -1173,8 +1176,8 @@ export default function BuildSystemPage() {
   const overlayFrameStyle = {
     left: layout.isMobile ? 0 : `calc(50% - ${layout.vpCenterX}px)`,
     top: 0,
-    width: layout.isMobile ? "100%" : "1920px",
-    height: layout.isMobile ? `${layout.overlayH}px` : "1080px",
+    width: layout.isMobile ? "100%" : `${layout.bgImageW}px`,
+    height: `${layout.overlayH}px`,
   };
 
   const phoneScale = layout.PHONE_W / 385;
@@ -1204,10 +1207,20 @@ export default function BuildSystemPage() {
           ref={contentRef}
           className="absolute inset-0 w-full h-full flex flex-col items-center z-[1]"
         >
-          <div className="shrink-0 h-[48px] md:h-[104px]" />
+          <div className="shrink-0" style={{ height: layout.navSpacer }} />
 
-          <div className="flex flex-col items-center w-full px-5 md:px-0 max-w-[1440px] pt-[64px] md:pt-[180px]">
-            <div ref={iconRef} className="shrink-0 w-[80px] h-[80px] opacity-0">
+          <div
+            className="flex flex-col items-center w-full px-5 md:px-0 max-w-[1440px]"
+            style={{ paddingTop: layout.isMobile ? 64 : 180 * layout.viewportScale }}
+          >
+            <div
+              ref={iconRef}
+              className="shrink-0 opacity-0"
+              style={{
+                width: layout.isMobile ? 80 : 80 * layout.viewportScale,
+                height: layout.isMobile ? 80 : 80 * layout.viewportScale,
+              }}
+            >
               <img
                 src="/images/build_system _main.svg"
                 alt="Build system icon"
@@ -1319,7 +1332,7 @@ export default function BuildSystemPage() {
               x2={d.x}
               y2={d.y}
               stroke={`rgba(${layout.RING_COLOR_RGB}, 0.5)`}
-              strokeWidth={1}
+              strokeWidth={layout.viewportScale}
               strokeDasharray="8 6"
               fill="none"
             />
@@ -1396,7 +1409,7 @@ export default function BuildSystemPage() {
               style={{
                 borderStyle: "solid",
                 borderColor: PHASE4C_RING_COLOR,
-                borderWidth: PHASE4C_RING_STROKE,
+                borderWidth: PHASE4C_RING_STROKE * layout.viewportScale,
                 opacity: 0,
               }}
             />
