@@ -1,5 +1,7 @@
 import { useCallback, useState } from "react";
 
+const PAGE_HORIZONTAL_PADDING = "clamp(24px, 8vw, 120px)";
+
 type FaqItem = {
   id: string;
   question: string;
@@ -136,7 +138,10 @@ export default function BuildSystemFaqSection() {
 
   return (
     <div className="w-full bg-white">
-      <div className="mx-auto w-full max-w-[1440px] px-5 md:px-0 py-[64px]">
+      <div
+        className="mx-auto w-full max-w-[1440px] py-[64px]"
+        style={{ paddingLeft: PAGE_HORIZONTAL_PADDING, paddingRight: PAGE_HORIZONTAL_PADDING }}
+      >
         <h2 className="font-['Inter',sans-serif] text-[32px] font-bold leading-[44px] text-[rgba(0,0,0,0.9)]">
           Questions? Answers.
         </h2>

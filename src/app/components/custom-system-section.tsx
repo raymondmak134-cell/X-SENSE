@@ -59,6 +59,8 @@ type CartItem = {
   quantity: number;
 };
 
+const PAGE_HORIZONTAL_PADDING = "clamp(24px, 8vw, 120px)";
+
 const CATEGORIES: Category[] = [
   {
     id: "base-station",
@@ -664,7 +666,10 @@ function CustomSystemSection(_props: object, ref: ForwardedRef<CustomSystemSecti
         </div>
 
         {/* Customize Your Safety System Content */}
-        <div className="mx-auto w-full max-w-[1440px] px-0 pb-[80px]">
+        <div
+          className="mx-auto w-full max-w-[1440px] pb-[80px]"
+          style={{ paddingLeft: PAGE_HORIZONTAL_PADDING, paddingRight: PAGE_HORIZONTAL_PADDING }}
+        >
           <h2
             className="font-['Inter',sans-serif] text-[32px] font-bold leading-[44px] text-[rgba(0,0,0,0.9)]"
           >

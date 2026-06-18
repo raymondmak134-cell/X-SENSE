@@ -165,6 +165,7 @@ const BUNDLE_TABS: BundleTab[] = [
   },
 ];
 
+const PAGE_HORIZONTAL_PADDING = "clamp(24px, 8vw, 120px)";
 const TAB_SWITCH_DURATION = 0.35;
 const FLOOR_PLAN_FADE_DURATION = 0.4;
 const FEATURE_LIGHT_UP_DURATION = 0.38;
@@ -758,7 +759,10 @@ export default function BundleSection() {
 
   return (
     <div className="w-full bg-white py-[48px] md:py-[80px]">
-      <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-[24px] px-5 md:px-6 lg:flex-row lg:items-start lg:gap-[64px] lg:px-0">
+      <div
+        className="mx-auto flex w-full max-w-[1440px] flex-col gap-[24px] lg:flex-row lg:items-start lg:gap-[64px]"
+        style={{ padding: `0 ${PAGE_HORIZONTAL_PADDING}` }}
+      >
         <div ref={floorPlanRef} className="w-full shrink-0 lg:w-[720px]">
           <div className="relative aspect-square w-full overflow-hidden rounded-[16px] md:rounded-[24px]">
             <img
