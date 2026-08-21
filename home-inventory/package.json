@@ -1,0 +1,19 @@
+{
+  "name": "home-inventory",
+  "private": true,
+  "version": "1.0.0",
+  "description": "家庭物品入库出库统计系统",
+  "scripts": {
+    "dev": "concurrently -n server,client -c blue,green \"npm run dev -w server\" \"npm run dev -w client\"",
+    "build": "npm run build -w client && npm run build -w server",
+    "start": "npm run start -w server",
+    "install:all": "npm install"
+  },
+  "workspaces": [
+    "server",
+    "client"
+  ],
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

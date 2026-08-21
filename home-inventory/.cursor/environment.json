@@ -1,0 +1,14 @@
+{
+  "name": "家物仓 home-inventory",
+  "install": "bash scripts/install.sh",
+  "terminals": [
+    {
+      "name": "inventory-api",
+      "command": "npm run dev -w server"
+    },
+    {
+      "name": "inventory-web",
+      "command": "npm run dev -w client"
+    }
+  ]
+}

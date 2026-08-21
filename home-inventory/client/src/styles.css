@@ -1,0 +1,55 @@
+:root {
+  --bg: #1a3a2f;
+  --ink: #f5f1e8;
+  --muted: rgba(245, 241, 232, 0.72);
+  --font-display: "ZCOOL XiaoWei", "Songti SC", serif;
+  --font-body: "Noto Sans SC", "PingFang SC", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  color: var(--ink);
+  background:
+    radial-gradient(ellipse 70% 50% at 0% 0%, rgba(232, 168, 124, 0.2), transparent 55%),
+    linear-gradient(160deg, #13261f, var(--bg));
+}
+
+.placeholder {
+  min-height: 100vh;
+  display: grid;
+  align-content: center;
+  gap: 0.6rem;
+  padding: 2rem;
+  width: min(640px, 100%);
+  margin: 0 auto;
+}
+
+.brand {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 2rem;
+  letter-spacing: 0.06em;
+}
+
+h1 {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 600;
+}
+
+p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
